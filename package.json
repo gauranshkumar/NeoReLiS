@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "NeoReLiS",
   "private": true,
   "scripts": {
     "build": "turbo run build",
