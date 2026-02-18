@@ -1,0 +1,28 @@
+{
+  "name": "primary-backend",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot src/server.ts",
+    "start": "bun run src/server.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "zod": "^3.23.0",
+    "@hono/zod-validator": "^0.4.0",
+    "@hono/node-server": "^1.12.0",
+    "hono-rate-limiter": "^0.4.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "dotenv": "^16.4.0",
+    "@neorelis/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.0",
+    "typescript": "^5.7.0"
+  }
+}

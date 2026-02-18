@@ -1,0 +1,753 @@
+// Prisma Schema for NeoReLiS
+// Based on docs/relis-db-schema.md and docs/domain-map.md
+// Single database with project_id scoping (MVP approach)
+// Using UUID for all primary keys
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  REVIEWER
+  VALIDATOR
+  VIEWER
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ScreeningStatus {
+  PENDING
+  IN_REVIEW
+  INCLUDED
+  EXCLUDED
+  IN_CONFLICT
+  RESOLVED_INCLUDED
+  RESOLVED_EXCLUDED
+}
+
+enum ClassificationStatus {
+  WAITING
+  TO_CLASSIFY
+  CLASSIFIED
+}
+
+enum DecisionType {
+  INCLUDE
+  EXCLUDE
+  MAYBE
+}
+
+enum ConflictType {
+  INCLUDE_EXCLUDE
+  INCLUSION_CRITERIA
+  EXCLUSION_CRITERIA
+  ALL_CRITERIA
+}
+
+enum ConflictResolution {
+  UNANIMITY
+  MAJORITY
+}
+
+enum ExtractionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  VALIDATED
+}
+
+enum ImportStatus {
+  UPLOADED
+  PARSING
+  VALIDATED
+  PERSISTED
+  COMPLETED
+  FAILED
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum LogType {
+  AUTH
+  PROJECT
+  MEMBERSHIP
+  SCREENING
+  EXTRACTION
+  IMPORT
+  EXPORT
+  SYSTEM
+}
+
+enum InfoType {
+  HOME
+  FEATURES
+  HELP
+  REFERENCE
+}
+
+// ============================================
+// ADMINISTRATIVE TABLES
+// ============================================
+
+model User {
+  id           String    @id @default(uuid()) @map("user_id") @db.Uuid
+  name         String    @map("user_name") @db.VarChar(50)
+  username     String    @unique @map("user_username") @db.VarChar(20)
+  email        String?   @map("user_mail") @db.VarChar(100)
+  passwordHash String?   @map("user_password") @db.VarChar(255)
+  picture      Bytes?    @map("user_picture")
+  userGroupId  String    @map("user_usergroup") @db.Uuid
+  userGroup    UserGroup @relation(fields: [userGroupId], references: [id])
+  createdBy    String    @default("00000000-0000-0000-0000-000000000001") @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("creation_time")
+  state        Int       @default(1) @map("user_state")
+  active       Int       @default(1) @map("user_active")
+
+  // Relations
+  projectMemberships ProjectMember[]
+  sessions           Session[]
+  auditLogs          AuditLog[]
+  createdProjects    Project[]        @relation("ProjectCreator")
+  papersAdded        Paper[]          @relation("PaperCreator")
+
+  @@map("users")
+}
+
+model UserGroup {
+  id          String  @id @default(uuid()) @map("usergroup_id") @db.Uuid
+  name        String  @unique @map("usergroup_name") @db.VarChar(100)
+  description String? @map("usergroup_description") @db.VarChar(100)
+  active      Int     @default(1) @map("usergroup_active")
+
+  users User[]
+
+  @@map("usergroup")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  ipAddress String?  @map("ip_address") @db.VarChar(50)
+  userAgent String?  @map("user_agent") @db.VarChar(150)
+
+  @@map("sessions")
+}
+
+model Project {
+  id          String        @id @default(uuid()) @map("project_id") @db.Uuid
+  label       String        @unique @map("project_label") @db.VarChar(100)
+  title       String        @map("project_title") @db.VarChar(250)
+  description String?       @map("project_description") @db.VarChar(1000)
+  icon        Bytes?        @map("project_icon")
+  creatorId   String        @map("project_creator") @db.Uuid
+  creator     User          @relation("ProjectCreator", fields: [creatorId], references: [id])
+  createdAt   DateTime      @default(now()) @map("creation_time")
+  status      ProjectStatus @default(DRAFT) @map("project_status")
+  isPublic    Int           @default(0) @map("project_public")
+  active      Int           @default(1) @map("project_active")
+
+  // Relations
+  members          ProjectMember[]
+  papers           Paper[]
+  screeningPhases  ScreeningPhase[]
+  importJobs      ImportJob[]
+  exports         Export[]
+  config          ProjectConfig?
+  auditLogs       AuditLog[]
+  venues          Venue[]
+  qaTemplates      QATemplate[]
+  extractionForms  ExtractionForm[]
+  reportSnapshots  ReportSnapshot[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String   @map("project_id") @db.Uuid
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  role      UserRole @default(REVIEWER) @map("user_role")
+  addedBy   String   @default("00000000-0000-0000-0000-000000000001") @map("added_by") @db.Uuid
+  addedAt   DateTime @default(now()) @map("add_time")
+  active    Int      @default(1) @map("userproject_active")
+
+  @@unique([userId, projectId])
+  @@map("userproject")
+}
+
+model ProjectConfig {
+  id      String @id @default(uuid()) @db.Uuid
+  projectId String @unique @map("project_id") @db.Uuid
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  configType String @default("default") @map("config_type") @db.VarChar(100)
+
+  // Import settings
+  importPapersOn     Int @default(1) @map("import_papers_on")
+  sourcePapersOn     Int @default(0) @map("source_papers_on")
+  searchStrategyOn   Int @default(0) @map("search_strategy_on")
+
+  // Assignment settings
+  assignPapersOn        Int @default(1) @map("assign_papers_on")
+  screeningReviewerNum  Int @default(2) @map("screening_reviewer_number")
+
+  // Screening settings
+  screeningOn              Int               @default(0) @map("screening_on")
+  screeningValidationOn    Int               @default(1) @map("screening_validation_on")
+  screeningResultOn        Int               @default(1) @map("screening_result_on")
+  screeningConflictType    ConflictType      @default(INCLUDE_EXCLUDE) @map("screening_conflict_type")
+  screeningConflictRes    ConflictResolution @default(UNANIMITY) @map("screening_screening_conflict_resolution")
+  screeningStatusToValidate String           @default("Excluded") @map("screening_status_to_validate") @db.VarChar(50)
+  validationDefaultPercent Int               @default(20) @map("validation_default_percentage")
+
+  // Classification/Extraction settings
+  classificationOn Int @default(0) @map("classification_on")
+
+  // QA settings
+  qaOn            Int  @default(0) @map("qa_on")
+  qaOpen          Int  @default(0) @map("qa_open")
+  qaValidationOn  Int  @default(0) @map("qa_validation_on")
+  qaCutoffScore   Int? @map("qa_cutt_off_score")
+
+  // Key generation
+  paperPrefix String @default("Paper_") @map("key_paper_prefix") @db.VarChar(20)
+  paperSerial Int    @default(1) @map("key_paper_serial")
+
+  // CSV settings
+  csvFieldSeparator       String @default(";") @map("csv_field_separator") @db.VarChar(1)
+  csvFieldSeparatorExport String @default(",") @map("csv_field_separator_export") @db.VarChar(1)
+
+  // Editor settings
+  editorUrl           String? @map("editor_url") @db.VarChar(100)
+  editorGeneratedPath String? @map("editor_generated_path") @db.VarChar(100)
+
+  // References
+  inclusionCriteria InclusionCriteria[]
+  exclusionCriteria ExclusionCriteria[]
+
+  @@map("config")
+}
+
+// ============================================
+// PAPER MANAGEMENT
+// ============================================
+
+model Paper {
+  id              String               @id @default(uuid()) @db.Uuid
+  projectId       String               @map("project_id") @db.Uuid
+  project         Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  bibtexKey       String?              @map("bibtexKey") @db.VarChar(100)
+  title           String               @db.Text
+  preview         String?              @db.Text
+  abstract        String?              @map("paper_abstract") @db.Text
+  doi             String?              @db.VarChar(100)
+  year            Int?
+  bibtex          String?              @db.Text
+  venueId         String?              @map("venue_id") @db.Uuid
+  venue           Venue?               @relation(fields: [venueId], references: [id])
+
+  // Source tracking
+  source          String? @map("papers_sources") @db.VarChar(100)
+  searchStrategy  String? @map("search_strategy") @db.VarChar(100)
+
+  // Status
+  screeningStatus       ScreeningStatus      @default(PENDING) @map("screening_status")
+  classificationStatus  ClassificationStatus @default(WAITING) @map("classification_status")
+
+  // Metadata
+  addedBy       String   @map("added_by") @db.Uuid
+  creator       User     @relation("PaperCreator", fields: [addedBy], references: [id])
+  addedAt       DateTime @default(now()) @map("add_time")
+  additionMode  String?  @map("addition_mode") @db.VarChar(50)
+  operationCode String?  @map("operation_code") @db.VarChar(100)
+  active        Int      @default(1) @map("paper_active")
+  excluded      Int      @default(0) @map("paper_excluded")
+
+  // Relations
+  authors              PaperAuthor[]
+  screeningAssignments ScreeningAssignment[]
+  screeningDecisions   ScreeningDecision[]
+  qaAssignments        QAAssignment[]
+  qaEntries            QAEntry[]
+  extractionEntries    ExtractionEntry[]
+  classification       Classification?
+
+  @@unique([projectId, bibtexKey])
+  @@index([projectId])
+  @@index([projectId, screeningStatus])
+  @@index([projectId, doi])
+  @@map("papers")
+}
+
+model Author {
+  id        String @id @default(uuid()) @db.Uuid
+  lastName  String @map("author_lastname") @db.VarChar(50)
+  firstName String? @map("author_firstname") @db.VarChar(50)
+  email     String? @map("author_email") @db.VarChar(100)
+
+  papers PaperAuthor[]
+
+  @@map("author")
+}
+
+model PaperAuthor {
+  id       String @id @default(uuid()) @db.Uuid
+  paperId  String @map("paper_id") @db.Uuid
+  paper    Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  authorId String @map("author_id") @db.Uuid
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  order    Int    @default(0) @map("author_order")
+
+  @@unique([paperId, authorId])
+  @@map("paper_author")
+}
+
+model Venue {
+  id        String  @id @default(uuid()) @db.Uuid
+  projectId String  @map("project_id") @db.Uuid
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String  @db.VarChar(200)
+  type      String? @map("venue_type") @db.VarChar(50)
+
+  papers Paper[]
+
+  @@unique([projectId, name])
+  @@map("venue")
+}
+
+// ============================================
+// SCREENING
+// ============================================
+
+model ScreeningPhase {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @map("project_id") @db.Uuid
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String @db.VarChar(100)
+  description String? @db.Text
+  order       Int    @default(0)
+  active      Int    @default(1) @map("phase_active")
+
+  assignments ScreeningAssignment[]
+  decisions   ScreeningDecision[]
+  inclusions  ScreeningInclusionMapping[]
+  reportSnapshots ReportSnapshot[]
+
+  @@unique([projectId, name])
+  @@map("screen_phase")
+}
+
+model ScreeningAssignment {
+  id         String   @id @default(uuid()) @db.Uuid
+  paperId    String   @map("paper_id") @db.Uuid
+  paper      Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  phaseId    String   @map("screen_phase_id") @db.Uuid
+  phase      ScreeningPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  userId     String   @map("assigned_user_id") @db.Uuid
+  note       String?  @map("assigned_note") @db.Text
+  assignedBy String   @map("assigned_by") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_time")
+  active     Int      @default(1) @map("assigned_active")
+
+  decisions ScreeningDecision[]
+
+  @@unique([paperId, phaseId, userId])
+  @@map("assigned")
+}
+
+model ScreeningDecision {
+  id           String         @id @default(uuid()) @db.Uuid
+  assignmentId String         @unique @map("assignment_id") @db.Uuid
+  assignment   ScreeningAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  paperId      String         @map("paper_id") @db.Uuid
+  paper        Paper          @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  phaseId      String         @map("screen_phase_id") @db.Uuid
+  phase        ScreeningPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  userId       String         @map("user_id") @db.Uuid
+  decision     DecisionType   @map("decision_type")
+  criteria     String?        @map("decision_criteria") @db.Text
+  rationale    String?        @map("decision_rationale") @db.Text
+  createdAt    DateTime       @default(now()) @map("decision_time")
+  active       Int            @default(1) @map("decision_active")
+
+  conflict ScreeningConflict?
+
+  @@map("screen_decison")
+}
+
+model ScreeningConflict {
+  id             String        @id @default(uuid()) @db.Uuid
+  decisionId     String        @unique @map("decision_id") @db.Uuid
+  decision       ScreeningDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  paperId        String        @map("paper_id") @db.Uuid
+  phaseId        String        @map("screen_phase_id") @db.Uuid
+  conflictType   ConflictType  @default(INCLUDE_EXCLUDE) @map("conflict_type")
+  resolvedBy     String?       @map("resolved_by") @db.Uuid
+  resolution     DecisionType? @map("resolution")
+  resolvedAt     DateTime?     @map("resolved_at")
+  resolutionNote String?        @map("resolution_note") @db.Text
+  createdAt      DateTime      @default(now())
+
+  @@index([paperId, phaseId])
+  @@map("screening_conflict")
+}
+
+model ScreeningInclusionMapping {
+  id         String            @id @default(uuid()) @db.Uuid
+  phaseId    String            @map("screen_phase_id") @db.Uuid
+  phase      ScreeningPhase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  criteriaId String            @map("criteria_id") @db.Uuid
+  criteria   InclusionCriteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+  order      Int               @default(0)
+
+  @@unique([phaseId, criteriaId])
+  @@map("screening_inclusion_mapping")
+}
+
+model InclusionCriteria {
+  id          String         @id @default(uuid()) @db.Uuid
+  configId    String         @map("config_id") @db.Uuid
+  config      ProjectConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+  title       String         @db.VarChar(200)
+  description String?        @db.Text
+  order       Int            @default(0)
+  active      Int            @default(1)
+
+  mappings ScreeningInclusionMapping[]
+
+  @@map("inclusioncrieria")
+}
+
+model ExclusionCriteria {
+  id          String         @id @default(uuid()) @db.Uuid
+  configId    String         @map("config_id") @db.Uuid
+  config      ProjectConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+  title       String         @db.VarChar(200)
+  description String?        @db.Text
+  order       Int            @default(0)
+  active      Int            @default(1)
+
+  @@map("exclusioncrieria")
+}
+
+// ============================================
+// QUALITY ASSESSMENT
+// ============================================
+
+model QATemplate {
+  id          String    @id @default(uuid()) @db.Uuid
+  projectId   String    @map("project_id") @db.Uuid
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  active      Int       @default(1)
+  createdAt   DateTime  @default(now())
+
+  questions    QAQuestion[]
+  assignments  QAAssignment[]
+
+  @@map("qa_template")
+}
+
+model QAQuestion {
+  id          String    @id @default(uuid()) @db.Uuid
+  templateId  String    @map("template_id") @db.Uuid
+  template    QATemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  text        String    @db.Text
+  type        String    @default("binary") @map("question_type") @db.VarChar(20)
+  order       Int       @default(0)
+  required    Int       @default(1)
+
+  options QAOption[]
+  entries QAEntry[]
+
+  @@map("qa_questions")
+}
+
+model QAOption {
+  id         String    @id @default(uuid()) @db.Uuid
+  questionId String    @map("question_id") @db.Uuid
+  question   QAQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  value      String    @db.VarChar(50)
+  label      String    @db.VarChar(100)
+  weight     Float     @default(1.0)
+  isPositive Int       @default(1) @map("is_positive")
+
+  entries QAEntry[]
+
+  @@map("qa_responses")
+}
+
+model QAAssignment {
+  id         String    @id @default(uuid()) @db.Uuid
+  paperId    String    @map("paper_id") @db.Uuid
+  paper      Paper     @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  templateId String    @map("template_id") @db.Uuid
+  template   QATemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  userId     String    @map("assigned_user_id") @db.Uuid
+  assignedBy String    @map("assigned_by") @db.Uuid
+  assignedAt DateTime  @default(now())
+  active     Int       @default(1)
+
+  entries QAEntry[]
+
+  @@unique([paperId, templateId, userId])
+  @@map("qa_assignment")
+}
+
+model QAEntry {
+  id           String     @id @default(uuid()) @db.Uuid
+  assignmentId String     @map("assignment_id") @db.Uuid
+  assignment   QAAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  paperId      String     @map("paper_id") @db.Uuid
+  paper        Paper      @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  questionId   String     @map("question_id") @db.Uuid
+  question     QAQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionId     String?    @map("option_id") @db.Uuid
+  option       QAOption?  @relation(fields: [optionId], references: [id])
+  value        String?    @map("entry_value") @db.VarChar(100)
+  score        Float?     @map("entry_score")
+  submittedAt  DateTime?  @map("submitted_at")
+  validatedAt  DateTime?  @map("validated_at")
+  validatedBy  String?    @map("validated_by") @db.Uuid
+  active       Int        @default(1)
+
+  @@unique([assignmentId, questionId])
+  @@map("qa_result")
+}
+
+// ============================================
+// DATA EXTRACTION / CLASSIFICATION
+// ============================================
+
+model ExtractionForm {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  version     Int      @default(1)
+  isPublished Int      @default(0) @map("is_published")
+  isLocked    Int      @default(0) @map("is_locked")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  fields  ExtractionField[]
+  entries ExtractionEntry[]
+
+  @@map("extraction_form")
+}
+
+model ExtractionField {
+  id         String  @id @default(uuid()) @db.Uuid
+  formId     String  @map("form_id") @db.Uuid
+  form       ExtractionForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  name       String  @db.VarChar(50)
+  label      String  @db.VarChar(200)
+  fieldType  String  @map("field_type") @db.VarChar(20)
+  isRequired Int     @default(0) @map("is_required")
+  order      Int     @default(0)
+  config     Json?
+  active     Int     @default(1)
+
+  values ExtractionEntryValue[]
+
+  @@unique([formId, name])
+  @@map("extraction_field")
+}
+
+model ExtractionEntry {
+  id          String           @id @default(uuid()) @db.Uuid
+  paperId     String           @map("paper_id") @db.Uuid
+  paper       Paper            @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  formId      String           @map("form_id") @db.Uuid
+  form        ExtractionForm   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  userId      String           @map("user_id") @db.Uuid
+  status      ExtractionStatus @default(NOT_STARTED)
+  version     Int              @default(1)
+  submittedAt DateTime?        @map("submitted_at")
+  validatedAt DateTime?        @map("validated_at")
+  validatedBy String?          @map("validated_by") @db.Uuid
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  values ExtractionEntryValue[]
+
+  @@unique([paperId, formId, version])
+  @@map("extraction_entry")
+}
+
+model ExtractionEntryValue {
+  id       String            @id @default(uuid()) @db.Uuid
+  entryId  String            @map("entry_id") @db.Uuid
+  entry    ExtractionEntry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  fieldId  String            @map("field_id") @db.Uuid
+  field    ExtractionField  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value    String?           @db.Text
+
+  @@unique([entryId, fieldId])
+  @@map("extraction_entry_value")
+}
+
+model Classification {
+  id      String  @id @default(uuid()) @db.Uuid
+  paperId String  @unique @map("class_paper_id") @db.Uuid
+  paper   Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  note    String? @db.VarChar(500)
+  active  Int     @default(1) @map("class_active")
+
+  @@map("classification")
+}
+
+// ============================================
+// IMPORT / EXPORT
+// ============================================
+
+model ImportJob {
+  id            String       @id @default(uuid()) @db.Uuid
+  projectId     String       @map("project_id") @db.Uuid
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  filename      String       @db.VarChar(255)
+  fileType      String       @map("file_type") @db.VarChar(20)
+  status        ImportStatus @default(UPLOADED)
+  totalRows     Int          @default(0) @map("total_rows")
+  processedRows Int          @default(0) @map("processed_rows")
+  successRows   Int          @default(0) @map("success_rows")
+  duplicateRows Int          @default(0) @map("duplicate_rows")
+  errorRows     Int          @default(0) @map("error_rows")
+  errors        Json?
+  createdBy     String       @map("created_by") @db.Uuid
+  createdAt     DateTime     @default(now()) @map("created_at")
+  completedAt   DateTime?    @map("completed_at")
+
+  @@map("imports")
+}
+
+model Export {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @map("project_id") @db.Uuid
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  exportType  String       @map("export_type") @db.VarChar(50)
+  filename    String?      @db.VarChar(255)
+  filters     Json?
+  status      ExportStatus @default(PENDING)
+  filePath    String?      @map("file_path") @db.VarChar(500)
+  error       String?      @db.Text
+  createdBy   String       @map("created_by") @db.Uuid
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?    @map("completed_at")
+
+  @@map("exports")
+}
+
+// ============================================
+// REPORTING
+// ============================================
+
+model ReportSnapshot {
+  id           String         @id @default(uuid()) @db.Uuid
+  projectId    String         @map("project_id") @db.Uuid
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phaseId      String?        @map("screen_phase_id") @db.Uuid
+  phase        ScreeningPhase? @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  snapshotType String         @map("snapshot_type") @db.VarChar(50)
+  data         Json
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  @@index([projectId, phaseId])
+  @@map("report_snapshots")
+}
+
+// ============================================
+// AUDIT & SYSTEM
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String?  @map("project_id") @db.Uuid
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId     String?  @map("user_id") @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  logType    LogType  @map("log_type")
+  event      String   @db.Text @map("log_event")
+  ipAddress  String?  @map("log_ip_address") @db.VarChar(50)
+  userAgent  String?  @map("log_user_agent") @db.VarChar(150)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("log_time")
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("log")
+}
+
+model Info {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @map("info_title") @db.VarChar(500)
+  description String?  @map("info_desc") @db.Text
+  link        String?  @map("info_link") @db.VarChar(500)
+  type        InfoType @default(HELP) @map("info_type")
+  order       Int      @default(1) @map("info_order")
+  active      Int      @default(1) @map("info_active")
+
+  @@map("info")
+}
+
+model AdminConfig {
+  id          String  @id @default(uuid()) @db.Uuid
+  label       String  @unique @map("config_label") @db.VarChar(100)
+  value       String  @map("config_value") @db.VarChar(100)
+  description String? @map("config_description") @db.VarChar(500)
+  userId      String  @default("00000000-0000-0000-0000-000000000000") @map("config_user") @db.Uuid
+  active      Int     @default(1) @map("config_active")
+
+  @@map("admin_config")
+}
+
+model StringResource {
+  id         String @id @default(uuid()) @db.Uuid
+  label      String @map("str_label") @db.VarChar(500)
+  text       String @map("str_text") @db.VarChar(1000)
+  category   String @default("default") @map("str_category") @db.VarChar(20)
+  lang       String @default("en") @map("str_lang") @db.VarChar(3)
+  active     Int    @default(1) @map("str_active")
+
+  @@unique([label, lang])
+  @@map("str_management")
+}
+
+model UserCreation {
+  id                String @id @default(uuid()) @db.Uuid
+  userId            String @unique @map("creation_user_id") @db.Uuid
+  confirmationCode  String @map("confirmation_code") @db.VarChar(50)
+  expiration        Int    @map("confirmation_expiration")
+  attempts          Int    @default(0) @map("confirmation_try")
+  active            Int    @default(1) @map("user_creation_active")
+
+  @@map("user_creation")
+}
