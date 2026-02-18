@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { Lock, Mail, User, Eye, Info } from "lucide-react";
