@@ -85,7 +85,7 @@ export async function validateCredentials(email?: string, username?: string, pas
 }
 
 export async function findUserByEmail(email: string) {
-  return prisma.user.findUnique({
+  return prisma.user.findFirst({
     where: { email },
   })
 }

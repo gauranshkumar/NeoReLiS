@@ -1,7 +1,8 @@
 # Project Overview
 
 
-## always use bun instead of npm 
+## always use bun instead of npm and always refer to the /docs folder for all the context of the app 
+
 
 This project is complete rewrite of a already exisitng tool called ReLis (https://relis.iro.umontreal.ca/go )
 

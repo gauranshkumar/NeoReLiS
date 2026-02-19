@@ -1,4 +1,4 @@
-import { Context, Next } from 'hono'
+import type { Context, Next } from 'hono'
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt'
 import { prisma } from '@neorelis/db'
 

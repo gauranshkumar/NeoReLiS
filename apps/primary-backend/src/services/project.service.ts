@@ -1,5 +1,6 @@
 import { prisma } from '@neorelis/db'
-import type { UserRole } from '@prisma/client'
+
+type UserRole = 'ADMIN' | 'MANAGER' | 'REVIEWER' | 'VALIDATOR' | 'VIEWER'
 
 export async function findProjectsByUserId(userId: string) {
   return prisma.projectMember.findMany({

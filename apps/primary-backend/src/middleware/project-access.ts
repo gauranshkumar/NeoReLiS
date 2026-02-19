@@ -1,4 +1,4 @@
-import { Context, Next } from 'hono'
+import type { Context, Next } from 'hono'
 import { prisma } from '@neorelis/db'
 import type { AuthContext } from './auth'
 
@@ -42,11 +42,12 @@ export function requireProjectAccess(requiredRoles?: ProjectRole[]) {
     }
 
     try {
-      // Check if user is a member of the project
+      // Check if user is an ACTIVE member of the project
       const membership = await prisma.projectMember.findFirst({
         where: {
           projectId,
           userId: authContext.userId,
+          active: 1,  // Only active memberships grant access
         },
         include: {
           project: {
@@ -55,6 +56,8 @@ export function requireProjectAccess(requiredRoles?: ProjectRole[]) {
               label: true,
               title: true,
               description: true,
+              status: true,
+              active: true,
             },
           },
         },

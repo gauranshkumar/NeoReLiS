@@ -118,7 +118,7 @@ model User {
   picture      Bytes?    @map("user_picture")
   userGroupId  String    @map("user_usergroup") @db.Uuid
   userGroup    UserGroup @relation(fields: [userGroupId], references: [id])
-  createdBy    String    @default("00000000-0000-0000-0000-000000000001") @map("created_by") @db.Uuid
+  createdBy    String    @default(uuid()) @map("created_by") @db.Uuid
   createdAt    DateTime  @default(now()) @map("creation_time")
   state        Int       @default(1) @map("user_state")
   active       Int       @default(1) @map("user_active")
@@ -138,9 +138,7 @@ model UserGroup {
   name        String  @unique @map("usergroup_name") @db.VarChar(100)
   description String? @map("usergroup_description") @db.VarChar(100)
   active      Int     @default(1) @map("usergroup_active")
-
   users User[]
-
   @@map("usergroup")
 }
 
@@ -193,7 +191,7 @@ model ProjectMember {
   projectId String   @map("project_id") @db.Uuid
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   role      UserRole @default(REVIEWER) @map("user_role")
-  addedBy   String   @default("00000000-0000-0000-0000-000000000001") @map("added_by") @db.Uuid
+  addedBy   String   @default(uuid()) @map("added_by") @db.Uuid
   addedAt   DateTime @default(now()) @map("add_time")
   active    Int      @default(1) @map("userproject_active")
 
@@ -723,7 +721,7 @@ model AdminConfig {
   label       String  @unique @map("config_label") @db.VarChar(100)
   value       String  @map("config_value") @db.VarChar(100)
   description String? @map("config_description") @db.VarChar(500)
-  userId      String  @default("00000000-0000-0000-0000-000000000000") @map("config_user") @db.Uuid
+  userId      String  @default(uuid()) @map("config_user") @db.Uuid
   active      Int     @default(1) @map("config_active")
 
   @@map("admin_config")

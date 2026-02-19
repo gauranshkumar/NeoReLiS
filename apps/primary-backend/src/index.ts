@@ -24,9 +24,10 @@ app.use("*", prettyJSON());
 app.use(
   "*",
   cors({
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "*",
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   }),
 );
 

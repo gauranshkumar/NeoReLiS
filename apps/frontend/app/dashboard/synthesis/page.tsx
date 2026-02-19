@@ -1,13 +1,88 @@
-import { Share2, Settings, Download, MoreHorizontal, ChevronDown, ChevronRight, Sliders, Activity } from "lucide-react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Share2, Settings, Download, ChevronDown, ChevronRight, Sliders, Activity, Loader2 } from "lucide-react";
+import { paperApi, projectApi, Paper, Project } from "@/lib/api";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 export default function SynthesisPage() {
+    const { isAuthenticated } = useAuth();
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [papers, setPapers] = useState<Paper[]>([]);
+    const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [analysisMode, setAnalysisMode] = useState<"quantitative" | "qualitative">("quantitative");
+    const [notes, setNotes] = useState("");
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        fetchProjects();
+    }, [isAuthenticated]);
+
+    const fetchProjects = async () => {
+        setLoading(true);
+        const res = await projectApi.list();
+        if (res.data) {
+            setProjects(res.data.projects);
+            if (res.data.projects.length > 0) {
+                setSelectedProject(res.data.projects[0]);
+            }
+        }
+        setLoading(false);
+    };
+
+    // Fetch papers for selected project
+    useEffect(() => {
+        if (!selectedProject) {
+            setPapers([]);
+            return;
+        }
+        fetchPapers(selectedProject.id);
+    }, [selectedProject]);
+
+    const fetchPapers = async (projectId: string) => {
+        const res = await paperApi.list({ projectId, limit: 50 });
+        if (res.data) {
+            setPapers(res.data.papers || []);
+            if (res.data.papers && res.data.papers.length > 0) {
+                setSelectedPaper(res.data.papers[0]);
+            } else {
+                setSelectedPaper(null);
+            }
+        }
+    };
+
+    const getStatusInfo = (paper: Paper) => {
+        switch (paper.status) {
+            case "included":
+                return { label: "SELECTED", color: "text-cyan-500", progressColor: "bg-cyan-500", progress: 100 };
+            case "excluded":
+                return { label: "EXCLUDED", color: "text-red-500", progressColor: "bg-red-500", progress: 100 };
+            default:
+                return { label: "PENDING", color: "text-gray-500", progressColor: "bg-gray-700", progress: 0 };
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+                <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
+            </div>
+        );
+    }
+
     return (
         <div className="flex h-[calc(100vh-4rem)]">
             {/* Left Sidebar (Studies List) */}
             <div className="w-80 border-r border-[#262626] bg-[#0A0A0A] flex flex-col">
                 <div className="p-4 border-b border-[#262626]">
                     <div className="relative">
-                        <input type="text" placeholder="Filter 24 studies..." className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500" />
+                        <input
+                            type="text"
+                            placeholder={`Filter ${papers.length} studies...`}
+                            className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                        />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
                             <Settings className="w-4 h-4" />
                         </div>
@@ -15,41 +90,51 @@ export default function SynthesisPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    <StudyItem
-                        status="SELECTED"
-                        id="#084"
-                        title="Chen et al. (2023)"
-                        desc="Neuro-plasticity in adolescent cohorts..."
-                        progress={100}
-                        active
-                    />
-                    <StudyItem
-                        status="EXTRACTED"
-                        id="#042"
-                        title="Miller & Smith (2022)"
-                        desc="Longitudinal study on memory retention..."
-                        progress={90}
-                        color="text-green-500"
-                        progressColor="bg-green-500"
-                    />
-                    <StudyItem
-                        status="IN PROGRESS"
-                        id="#112"
-                        title="Rodriguez (2021)"
-                        desc="Comparative analysis of cognitive styles..."
-                        progress={35}
-                        color="text-yellow-500"
-                        progressColor="bg-yellow-500"
-                    />
-                    <StudyItem
-                        status="PENDING"
-                        id="#056"
-                        title="Sato et al. (2022)"
-                        desc="Impact of environment on focus..."
-                        progress={0}
-                        color="text-gray-500"
-                        progressColor="bg-gray-700"
-                    />
+                    {papers.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 text-sm">No papers in this project.</p>
+                            <p className="text-gray-600 text-xs mt-1">Import papers to begin synthesis.</p>
+                        </div>
+                    ) : (
+                        papers.map((paper) => {
+                            const info = getStatusInfo(paper);
+                            const isActive = selectedPaper?.id === paper.id;
+                            const authors =
+                                paper.authors?.length > 0
+                                    ? `${paper.authors[0].lastName}${paper.authors.length > 1 ? " et al." : ""} (${paper.year || "—"})`
+                                    : `Paper (${paper.year || "—"})`;
+
+                            return (
+                                <div
+                                    key={paper.id}
+                                    onClick={() => setSelectedPaper(paper)}
+                                    className={`p-3 rounded-lg border ${isActive
+                                            ? "bg-[#1A1D21] border-cyan-500/30"
+                                            : "bg-transparent border-transparent hover:bg-[#1A1D21]"
+                                        } transition-colors cursor-pointer group`}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className={`text-[10px] font-bold ${info.color}`}>
+                                            {info.label}
+                                        </span>
+                                        <span className="text-[10px] text-gray-600 font-mono">
+                                            ID: #{paper.id.slice(-4)}
+                                        </span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-cyan-400 transition-colors truncate">
+                                        {authors}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 mb-2 truncate">{paper.title}</p>
+                                    <div className="h-1 bg-[#333] rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${info.progressColor}`}
+                                            style={{ width: `${info.progress}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 
@@ -58,16 +143,47 @@ export default function SynthesisPage() {
                 {/* Workspace Header */}
                 <header className="h-14 border-b border-[#262626] flex items-center justify-between px-6 bg-[#0A0A0A]">
                     <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <span>Project Alpha</span>
-                        <ChevronRight className="w-4 h-4" />
-                        <span>Meta-Analysis</span>
+                        {/* Project selector */}
+                        <select
+                            value={selectedProject?.id || ""}
+                            onChange={(e) => {
+                                const proj = projects.find((p) => p.id === e.target.value);
+                                setSelectedProject(proj || null);
+                            }}
+                            className="bg-transparent text-white border-none outline-none text-sm cursor-pointer"
+                        >
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id} className="bg-[#1A1D21] text-white">
+                                    {p.title}
+                                </option>
+                            ))}
+                            {projects.length === 0 && (
+                                <option value="" className="bg-[#1A1D21]">No projects</option>
+                            )}
+                        </select>
                         <ChevronRight className="w-4 h-4" />
                         <span className="text-white font-medium">Synthesis Workspace</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex bg-[#1A1D21] rounded p-1">
-                            <button className="px-3 py-1 text-xs font-bold text-white bg-[#262626] rounded shadow-sm">Quantitative</button>
-                            <button className="px-3 py-1 text-xs font-bold text-gray-400 hover:text-white">Qualitative</button>
+                            <button
+                                onClick={() => setAnalysisMode("quantitative")}
+                                className={`px-3 py-1 text-xs font-bold rounded ${analysisMode === "quantitative"
+                                        ? "text-white bg-[#262626] shadow-sm"
+                                        : "text-gray-400 hover:text-white"
+                                    }`}
+                            >
+                                Quantitative
+                            </button>
+                            <button
+                                onClick={() => setAnalysisMode("qualitative")}
+                                className={`px-3 py-1 text-xs font-bold rounded ${analysisMode === "qualitative"
+                                        ? "text-white bg-[#262626] shadow-sm"
+                                        : "text-gray-400 hover:text-white"
+                                    }`}
+                            >
+                                Qualitative
+                            </button>
                         </div>
                         <button className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-colors">
                             <Activity className="w-4 h-4" /> Generate Plot
@@ -83,81 +199,106 @@ export default function SynthesisPage() {
                     <div className="flex flex-col justify-center border-r border-[#262626] pr-8 h-full">
                         <span className="text-[10px] font-bold text-gray-500 uppercase">CURRENT STATISTICS</span>
                         <div className="flex gap-4">
-                            <span className="text-gray-400 text-xs">Total N: <strong className="text-white">1,240</strong></span>
-                            <span className="text-gray-400 text-xs">I²: <strong className="text-white">42%</strong></span>
-                            <span className="text-gray-400 text-xs">P-value: <strong className="text-cyan-400">&lt; 0.001</strong></span>
+                            <span className="text-gray-400 text-xs">
+                                Total N: <strong className="text-white">{papers.length}</strong>
+                            </span>
+                            <span className="text-gray-400 text-xs">
+                                Selected: <strong className="text-white">
+                                    {papers.filter((p) => p.status === "included").length}
+                                </strong>
+                            </span>
+                            <span className="text-gray-400 text-xs">
+                                Pending: <strong className="text-cyan-400">
+                                    {papers.filter((p) => !p.status || p.status === "pending").length}
+                                </strong>
+                            </span>
                         </div>
                     </div>
                     <div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">MODEL TYPE</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">
+                            MODEL TYPE
+                        </span>
                         <button className="flex items-center gap-1 text-xs font-bold text-white hover:text-cyan-400">
                             Random Effects <ChevronDown className="w-3 h-3" />
                         </button>
                     </div>
                 </div>
 
-                {/* Forest Plot Area */}
+                {/* Workspace Content */}
                 <div className="flex-1 p-6 overflow-hidden flex flex-col">
-                    <div className="flex-1 bg-[#0A0A0A] border border-[#262626] rounded-xl p-6 relative">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-bold text-white">Forest Plot: Cognitive Outcome</h2>
-                            <div className="flex gap-2">
-                                <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
-                                    <Download className="w-3 h-3" /> SVG
-                                </button>
-                                <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
-                                    <Sliders className="w-3 h-3" /> Adjust
-                                </button>
-                            </div>
+                    {!selectedPaper ? (
+                        <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+                            Select a paper from the left panel to view synthesis data.
                         </div>
-
-                        {/* Mock Forest Plot */}
-                        <div className="relative h-[300px] w-full border-t border-[#262626] mt-4 pt-4">
-                            {/* Vertical Line for Null Effect */}
-                            <div className="absolute top-0 bottom-8 left-[60%] w-px bg-gray-700 border-l border-dashed border-gray-500 opacity-50"></div>
-                            <div className="absolute  bottom-0 left-[60%] -translate-x-1/2 text-[10px] text-gray-500">Null</div>
-                            <div className="absolute bottom-0 left-0 text-[10px] text-gray-500">Favors Control</div>
-                            <div className="absolute bottom-0 right-0 text-[10px] text-gray-500">Favors Intervention</div>
-
-                            {/* Study Lines */}
-                            <PlotLine study="Chen (2023)" left="50%" width="20%" point="60%" weight="15.2%" top="10%" />
-                            <PlotLine study="Miller (2022)" left="65%" width="15%" point="72%" weight="22.8%" top="30%" />
-                            <PlotLine study="Rodriguez (2021)" left="55%" width="12%" point="61%" weight="11.1%" top="50%" />
-                            <PlotLine study="Sato (2022)" left="58%" width="25%" point="70%" weight="18.4%" top="70%" />
-
-                            {/* Diamond (RE Model) */}
-                            <div className="absolute bottom-16 left-0 right-0 flex items-center">
-                                <span className="text-sm font-bold text-white w-1/4">RE Model</span>
-                                <div className="flex-1 relative h-8">
-                                    {/* Diamond shape using borders */}
-                                    <div className="absolute left-[66%] top-1/2 -translate-y-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[10px] border-b-[10px] border-l-transparent border-r-transparent border-t-cyan-500 border-b-cyan-500 opacity-80 scale-x-150"></div>
+                    ) : (
+                        <div className="flex-1 bg-[#0A0A0A] border border-[#262626] rounded-xl p-6 relative">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-lg font-bold text-white truncate max-w-[70%]">
+                                    {selectedPaper.title}
+                                </h2>
+                                <div className="flex gap-2">
+                                    <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
+                                        <Download className="w-3 h-3" /> SVG
+                                    </button>
+                                    <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
+                                        <Sliders className="w-3 h-3" /> Adjust
+                                    </button>
                                 </div>
-                                <span className="text-sm font-bold text-white w-16 text-right">100.0%</span>
+                            </div>
+
+                            {/* Paper details */}
+                            <div className="space-y-4 border-t border-[#262626] pt-4">
+                                {selectedPaper.abstract ? (
+                                    <div>
+                                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">Abstract</h3>
+                                        <p className="text-sm text-gray-300 leading-relaxed">
+                                            {selectedPaper.abstract}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">No abstract available for this paper.</p>
+                                )}
+                                <div className="grid grid-cols-3 gap-4 text-xs">
+                                    <div>
+                                        <span className="text-gray-500">Year:</span>{" "}
+                                        <span className="text-white font-medium">{selectedPaper.year || "—"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">DOI:</span>{" "}
+                                        <span className="text-white font-mono">{selectedPaper.doi || "—"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Source:</span>{" "}
+                                        <span className="text-white">{selectedPaper.source || "—"}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Data Input Panel */}
-                <div className="h-64 border-t border-[#262626] bg-[#0A0A0A] p-6 grid grid-cols-3 gap-8">
+                <div className="h-48 border-t border-[#262626] bg-[#0A0A0A] p-6 grid grid-cols-3 gap-8">
                     <div>
-                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">EFFECT DATA (CHEN ET AL.)</h3>
+                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">
+                            STUDY DATA {selectedPaper ? `(${selectedPaper.title.slice(0, 20)}...)` : ""}
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-[10px] text-gray-500 block mb-1">Mean (Int)</label>
-                                <input type="text" value="14.2" className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white" />
+                                <input
+                                    type="text"
+                                    placeholder="—"
+                                    className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white"
+                                />
                             </div>
                             <div>
                                 <label className="text-[10px] text-gray-500 block mb-1">Mean (Ctrl)</label>
-                                <input type="text" value="12.1" className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white" />
-                            </div>
-                            <div>
-                                <label className="text-[10px] text-gray-500 block mb-1">SD (Int)</label>
-                                <input type="text" value="2.4" className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white" />
-                            </div>
-                            <div>
-                                <label className="text-[10px] text-gray-500 block mb-1">SD (Ctrl)</label>
-                                <input type="text" value="2.8" className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white" />
+                                <input
+                                    type="text"
+                                    placeholder="—"
+                                    className="w-full bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-sm text-white"
+                                />
                             </div>
                         </div>
                     </div>
@@ -165,14 +306,6 @@ export default function SynthesisPage() {
                     <div>
                         <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4">MODERATORS</h3>
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-xs">
-                                <span className="text-gray-400">Age Cohort</span>
-                                <span className="font-bold text-white">Adolescent</span>
-                            </div>
-                            <div className="flex justify-between items-center bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-xs">
-                                <span className="text-gray-400">Geography</span>
-                                <span className="font-bold text-white">Global North</span>
-                            </div>
                             <button className="w-full border border-dashed border-[#333] rounded px-3 py-2 text-xs text-gray-500 hover:text-white hover:border-gray-500 transition-colors">
                                 + Add Moderator
                             </button>
@@ -184,6 +317,8 @@ export default function SynthesisPage() {
                         <textarea
                             className="flex-1 bg-[#1A1D21] border border-[#333] rounded p-3 text-xs text-gray-300 resize-none focus:outline-none focus:border-cyan-500"
                             placeholder="Add observations for this study's contribution to the model..."
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
                         ></textarea>
                         <button className="bg-cyan-500 text-black font-bold text-xs py-2 rounded mt-3 hover:bg-cyan-400 transition-colors">
                             Save Study Synthesis
@@ -193,35 +328,4 @@ export default function SynthesisPage() {
             </div>
         </div>
     );
-}
-
-function StudyItem({ status, id, title, desc, progress, active, color = "text-cyan-500", progressColor = "bg-cyan-500" }: any) {
-    return (
-        <div className={`p-3 rounded-lg border ${active ? 'bg-[#1A1D21] border-cyan-500/30' : 'bg-transparent border-transparent hover:bg-[#1A1D21]'} transition-colors cursor-pointer group`}>
-            <div className="flex justify-between items-center mb-1">
-                <span className={`text-[10px] font-bold ${color}`}>{status}</span>
-                <span className="text-[10px] text-gray-600 font-mono">ID: {id}</span>
-            </div>
-            <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-cyan-400 transition-colors">{title}</h4>
-            <p className="text-xs text-gray-500 mb-2 truncate">{desc}</p>
-            <div className="h-1 bg-[#333] rounded-full overflow-hidden">
-                <div className={`h-full ${progressColor}`} style={{ width: `${progress}%` }}></div>
-            </div>
-        </div>
-    )
-}
-
-function PlotLine({ study, left, width, point, weight, top }: any) {
-    return (
-        <div className="absolute left-0 right-0 flex items-center" style={{ top }}>
-            <span className="text-xs text-gray-400 w-1/4 truncate pr-4">{study}</span>
-            <div className="flex-1 relative h-4">
-                {/* CI Line */}
-                <div className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-gray-600" style={{ left, width }}></div>
-                {/* Mean Point (Box) */}
-                <div className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-cyan-500 transform -translate-x-1/2" style={{ left: point }}></div>
-            </div>
-            <span className="text-xs text-gray-500 w-16 text-right font-mono">{weight}</span>
-        </div>
-    )
 }

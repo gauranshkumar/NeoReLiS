@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
+import { prisma } from '@neorelis/db'
+import { authMiddleware } from '../middleware/auth'
+import type { AuthContext } from '../middleware/auth'
 
 const reporting = new Hono()
 
@@ -247,30 +250,139 @@ reporting.get('/exports/:id/download', async (c) => {
 })
 
 // GET /api/v1/reporting/stats - Get overall project statistics
-reporting.get('/stats', async (c) => {
-  const projectId = c.req.query('projectId')
+reporting.get('/stats', authMiddleware, async (c) => {
+  const authContext = c.get('user') as AuthContext
+  const userId = authContext.userId
+  const projectIdFilter = c.req.query('projectId')
 
-  // TODO: Calculate overall project statistics
-  return c.json({
-    projectId: projectId || '1',
-    papers: {
-      total: 100,
-      imported: 100,
-    },
-    screening: {
-      totalAssigned: 200,
-      completed: 150,
-      conflicts: 5,
-    },
-    qualityAssessment: {
-      totalAssigned: 50,
-      completed: 40,
-    },
-    dataExtraction: {
-      totalAssigned: 50,
-      completed: 30,
+  try {
+    // Get all project IDs the user is a member of
+    let projectIds: string[] = []
+
+    if (projectIdFilter) {
+      // If a specific project is requested, verify membership
+      const membership = await prisma.projectMember.findFirst({
+        where: { userId, projectId: projectIdFilter, active: 1 },
+      })
+      if (membership) {
+        projectIds = [projectIdFilter]
+      }
+    } else {
+      // Get all projects the user belongs to
+      const memberships = await prisma.projectMember.findMany({
+        where: { userId, active: 1 },
+        select: { projectId: true },
+      })
+      projectIds = memberships.map((m) => m.projectId)
     }
-  })
+
+    if (projectIds.length === 0) {
+      return c.json({
+        papers: { total: 0, imported: 0 },
+        screening: { totalAssigned: 0, completed: 0, conflicts: 0 },
+        qualityAssessment: { totalAssigned: 0, completed: 0 },
+        dataExtraction: { totalAssigned: 0, completed: 0 },
+      })
+    }
+
+    // Run all counts in parallel for performance
+    const [
+      totalPapers,
+      importedPapers,
+      screeningAssigned,
+      screeningCompleted,
+      screeningConflicts,
+      qaAssigned,
+      qaCompleted,
+      extractionTotal,
+      extractionCompleted,
+    ] = await Promise.all([
+      // Papers
+      prisma.paper.count({
+        where: { projectId: { in: projectIds }, active: 1 },
+      }),
+      prisma.paper.count({
+        where: { projectId: { in: projectIds }, active: 1 },
+      }),
+      // Screening
+      prisma.screeningAssignment.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+          active: 1,
+        },
+      }),
+      prisma.screeningDecision.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+          active: 1,
+        },
+      }),
+      prisma.screeningConflict.count({
+        where: {
+          paperId: {
+            in: await prisma.paper
+              .findMany({
+                where: { projectId: { in: projectIds }, active: 1 },
+                select: { id: true },
+              })
+              .then((papers) => papers.map((p) => p.id)),
+          },
+        },
+      }),
+      // QA
+      prisma.qAAssignment.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+          active: 1,
+        },
+      }),
+      prisma.qAEntry.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+          submittedAt: { not: null },
+          active: 1,
+        },
+      }),
+      // Data Extraction
+      prisma.extractionEntry.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+        },
+      }),
+      prisma.extractionEntry.count({
+        where: {
+          paper: { projectId: { in: projectIds } },
+          status: { in: ['SUBMITTED', 'VALIDATED'] },
+        },
+      }),
+    ])
+
+    return c.json({
+      papers: {
+        total: totalPapers,
+        imported: importedPapers,
+      },
+      screening: {
+        totalAssigned: screeningAssigned,
+        completed: screeningCompleted,
+        conflicts: screeningConflicts,
+      },
+      qualityAssessment: {
+        totalAssigned: qaAssigned,
+        completed: qaCompleted,
+      },
+      dataExtraction: {
+        totalAssigned: extractionTotal,
+        completed: extractionCompleted,
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+    return c.json(
+      { code: 'INTERNAL_ERROR', message: 'Failed to fetch statistics' },
+      500
+    )
+  }
 })
 
 export default reporting

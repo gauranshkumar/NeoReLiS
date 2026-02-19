@@ -22,9 +22,7 @@ export function generateToken(user: Pick<User, 'id' | 'username' | 'email'>): st
     email: user.email,
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRY,
-  })
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY } as jwt.SignOptions)
 }
 
 /**
@@ -58,5 +56,5 @@ export function extractTokenFromHeader(authHeader: string | undefined): string |
     return null
   }
 
-  return parts[1]
+  return parts[1] ?? null
 }

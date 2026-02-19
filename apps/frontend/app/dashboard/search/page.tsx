@@ -1,14 +1,104 @@
-import { Search, Filter, BookOpen, Users, FileText, ChevronRight, Share2, Bell, Bookmark, MoreHorizontal } from "lucide-react";
+"use client";
+
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Search, BookOpen, Users, ChevronRight, Share2, Bell, Bookmark, MoreHorizontal, Loader2 } from "lucide-react";
+import { paperApi, Paper } from "@/lib/api";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 export default function GlobalSearchPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
+                </div>
+            }
+        >
+            <GlobalSearchContent />
+        </Suspense>
+    );
+}
+
+function GlobalSearchContent() {
+    const searchParams = useSearchParams();
+    const initialQuery = searchParams.get("q") || "";
+    const { isAuthenticated } = useAuth();
+
+    const [query, setQuery] = useState(initialQuery);
+    const [results, setResults] = useState<Paper[]>([]);
+    const [totalResults, setTotalResults] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [searched, setSearched] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
+    // Search when query changes (debounced) or page changes
+    useEffect(() => {
+        if (!query.trim() || !isAuthenticated) {
+            setResults([]);
+            setTotalResults(0);
+            setSearched(false);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            performSearch();
+        }, 400);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [query, page, isAuthenticated]);
+
+    // Sync from URL search param
+    useEffect(() => {
+        const q = searchParams.get("q");
+        if (q && q !== query) {
+            setQuery(q);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
+    const performSearch = async () => {
+        setLoading(true);
+        setSearched(true);
+        // Search across all projects — the backend papers endpoint supports a search param
+        const res = await paperApi.list({
+            search: query,
+            page,
+            limit,
+        });
+        if (res.data) {
+            setResults(res.data.papers || []);
+            setTotalResults(res.data.total || 0);
+        } else {
+            setResults([]);
+            setTotalResults(0);
+        }
+        setLoading(false);
+    };
+
+    const totalPages = Math.ceil(totalResults / limit) || 1;
+
     return (
         <div className="flex h-[calc(100vh-4rem)]">
             {/* Main Content */}
             <div className="flex-1 p-8 overflow-y-auto">
                 <div className="flex items-center gap-4 mb-6">
                     <Search className="w-5 h-5 text-cyan-500" />
-                    <h1 className="text-lg font-medium text-white">Machine Learning in Genomics</h1>
-                    <span className="ml-auto text-xs text-gray-500 bg-[#1A1D21] px-2 py-1 rounded border border-[#333]">CMD + K</span>
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPage(1);
+                        }}
+                        placeholder="Search papers by title, author, DOI..."
+                        className="flex-1 text-lg font-medium text-white bg-transparent border-none outline-none placeholder:text-gray-600"
+                    />
+                    <span className="ml-auto text-xs text-gray-500 bg-[#1A1D21] px-2 py-1 rounded border border-[#333]">
+                        CMD + K
+                    </span>
                 </div>
 
                 {/* Filters Bar */}
@@ -25,95 +115,117 @@ export default function GlobalSearchPage() {
                     <button className="bg-[#1A1D21] border border-[#333] rounded px-3 py-1.5 text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2">
                         DOI
                     </button>
-                    <span className="ml-auto text-xs text-gray-500">8,245 results found</span>
+                    <span className="ml-auto text-xs text-gray-500">
+                        {searched ? `${totalResults} result${totalResults !== 1 ? "s" : ""} found` : ""}
+                    </span>
                 </div>
 
-                {/* Results List */}
+                {/* Results */}
                 <div className="space-y-4">
-                    <SearchResult
-                        journal="NATURE GENETICS"
-                        year="2023"
-                        doi="10.1038/s41588-023-01452-1"
-                        title="Deep Learning for Genomic Discovery: A Comprehensive Review of Emerging Architectures"
-                        snippet="Genomic sequencing has reached an unprecedented scale, necessitating the development of novel deep learning..."
-                        authors="A. Chen, M. Rodriguez, +4 others"
-                        citations="1,245"
-                        impact="9.8"
-                        image="/dna-helix.jpg" // Placeholder logic in component
-                    />
-                    <SearchResult
-                        journal="BIOINFORMATICS JOURNAL"
-                        year="2022"
-                        doi="10.1101/2022.05.08"
-                        title="Transformers for Protein Folding: Predicting 3D Structure from Sequence Alone"
-                        snippet="The protein folding problem has been revolutionized by attention-based architectures. Here we evaluate the limits of..."
-                        authors="L. Schmidt, S. Kim"
-                        citations="842"
-                        impact="8.4"
-                        image="/protein.jpg"
-                        color="text-blue-400"
-                    />
-                    <SearchResult
-                        journal="SCIENCE ADVANCES"
-                        year="2023"
-                        doi="10.1126/sciadv.adf0242"
-                        title="Automated Annotation of Genomic Sequences using Recurrent Neural Networks"
-                        snippet="Current annotation pipelines often fail to capture long-range dependencies in non-coding regions. We introduce a gated RN..."
-                        authors="P. Gupta, T. Müller, K. Sato"
-                        citations="215"
-                        impact="7.9"
-                        image="/neural-grid.jpg"
-                        color="text-purple-400"
-                    />
+                    {loading ? (
+                        <div className="flex items-center justify-center py-16">
+                            <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
+                        </div>
+                    ) : !searched ? (
+                        <div className="text-center py-16">
+                            <Search className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                            <p className="text-gray-500 text-sm">
+                                Start typing to search across your papers and projects.
+                            </p>
+                        </div>
+                    ) : results.length === 0 ? (
+                        <div className="text-center py-16">
+                            <p className="text-gray-400 text-sm mb-2">
+                                No results found for &quot;{query}&quot;
+                            </p>
+                            <p className="text-gray-600 text-xs">
+                                Try different keywords or broaden your search.
+                            </p>
+                        </div>
+                    ) : (
+                        results.map((paper) => (
+                            <SearchResult
+                                key={paper.id}
+                                journal={paper.source || "UNKNOWN"}
+                                year={paper.year ? String(paper.year) : "—"}
+                                doi={paper.doi || "—"}
+                                title={paper.title}
+                                snippet={paper.abstract || "No abstract available."}
+                                authors={
+                                    paper.authors && paper.authors.length > 0
+                                        ? paper.authors
+                                            .map((a) => `${a.firstName} ${a.lastName}`)
+                                            .join(", ")
+                                        : "Unknown"
+                                }
+                            />
+                        ))
+                    )}
                 </div>
 
                 {/* Pagination */}
-                <div className="flex justify-center mt-8 gap-2 pb-8">
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-[#1A1D21] border border-[#333] text-gray-400 hover:text-white"><ChevronRight className="w-4 h-4 rotate-180" /></button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-cyan-500 text-black font-bold">1</button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-transparent text-gray-400 hover:text-white">2</button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-transparent text-gray-400 hover:text-white">3</button>
-                    <span className="w-8 h-8 flex items-center justify-center text-gray-500">...</span>
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-transparent text-gray-400 hover:text-white">12</button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded bg-[#1A1D21] border border-[#333] text-gray-400 hover:text-white"><ChevronRight className="w-4 h-4" /></button>
-                </div>
-
+                {searched && totalResults > limit && (
+                    <div className="flex justify-center mt-8 gap-2 pb-8">
+                        <button
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded bg-[#1A1D21] border border-[#333] text-gray-400 hover:text-white disabled:opacity-30"
+                        >
+                            <ChevronRight className="w-4 h-4 rotate-180" />
+                        </button>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            const pageNum = i + 1;
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setPage(pageNum)}
+                                    className={`w-8 h-8 flex items-center justify-center rounded font-bold ${page === pageNum
+                                        ? "bg-cyan-500 text-black"
+                                        : "bg-transparent text-gray-400 hover:text-white"
+                                        }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+                        {totalPages > 5 && (
+                            <span className="w-8 h-8 flex items-center justify-center text-gray-500">
+                                ...
+                            </span>
+                        )}
+                        <button
+                            disabled={page >= totalPages}
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded bg-[#1A1D21] border border-[#333] text-gray-400 hover:text-white disabled:opacity-30"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Right Sidebar */}
             <div className="w-80 border-l border-[#262626] p-6 bg-[#0A0A0A]">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">REFINE RESULTS</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">
+                    REFINE RESULTS
+                </h3>
 
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-bold text-white">Publication Date</span>
-                        <span className="text-cyan-500 text-xs font-bold">2018-2023</span>
+                        <span className="text-cyan-500 text-xs font-bold">All Years</span>
                     </div>
                     <div className="h-1 bg-[#333] rounded-full relative">
-                        <div className="absolute left-1/4 right-0 h-full bg-cyan-500 rounded-full"></div>
-                        <div className="absolute left-1/4 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-cyan-500"></div>
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-cyan-500"></div>
+                        <div className="absolute left-0 right-0 h-full bg-cyan-500 rounded-full"></div>
                     </div>
                 </div>
 
                 <div className="mb-8">
-                    <span className="text-sm font-bold text-white mb-4 block">Popular Journals</span>
-                    <div className="space-y-2">
-                        <Checkbox label="Nature Genetics" count="1.2k" checked />
-                        <Checkbox label="Bioinformatics" count="842" checked />
-                        <Checkbox label="Science Advances" count="612" />
-                        <Checkbox label="Genome Biology" count="215" />
-                        <button className="text-xs text-cyan-500 font-bold mt-2">View all 48 journals</button>
-                    </div>
-                </div>
-
-                <div className="mb-8">
-                    <span className="text-sm font-bold text-white mb-4 block">Minimum Impact Score</span>
-                    <div className="flex gap-2">
-                        <div className="bg-[#1A1D21] border border-cyan-500/50 text-cyan-500 text-xs font-bold px-3 py-1.5 rounded cursor-pointer">5.0+</div>
-                        <div className="bg-cyan-500 text-black text-xs font-bold px-3 py-1.5 rounded cursor-pointer">7.5+</div>
-                        <div className="bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-3 py-1.5 rounded hover:text-white cursor-pointer">9.0+</div>
-                        <div className="bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-3 py-1.5 rounded hover:text-white cursor-pointer">Top</div>
+                    <span className="text-sm font-bold text-white mb-4 block">Source Filters</span>
+                    <div className="space-y-2 text-sm text-gray-400">
+                        <p className="text-xs text-gray-600">
+                            Filters will appear based on available data in your projects.
+                        </p>
                     </div>
                 </div>
 
@@ -125,43 +237,52 @@ export default function GlobalSearchPage() {
                         <Share2 className="w-4 h-4" /> Share Search
                     </button>
                 </div>
-
             </div>
         </div>
     );
 }
 
-function SearchResult({ journal, year, doi, title, snippet, authors, citations, impact, image, color }: any) {
+function SearchResult({
+    journal,
+    year,
+    doi,
+    title,
+    snippet,
+    authors,
+}: {
+    journal: string;
+    year: string;
+    doi: string;
+    title: string;
+    snippet: string;
+    authors: string;
+}) {
     return (
         <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-6 hover:border-cyan-500/20 transition-colors flex gap-6">
             <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2 text-xs">
-                    <span className={`font-bold px-2 py-0.5 bg-cyan-950/30 text-cyan-400 rounded uppercase tracking-wider ${color === 'text-blue-400' ? 'text-blue-400 bg-blue-950/30' : color === 'text-purple-400' ? 'text-purple-400 bg-purple-950/30' : ''}`}>{journal}</span>
-                    <span className="text-gray-500">{year} • DOI: {doi}</span>
+                    <span className="font-bold px-2 py-0.5 bg-cyan-950/30 text-cyan-400 rounded uppercase tracking-wider">
+                        {journal}
+                    </span>
+                    <span className="text-gray-500">
+                        {year}
+                        {doi !== "—" ? ` • DOI: ${doi}` : ""}
+                    </span>
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2 leading-tight hover:text-cyan-400 cursor-pointer">{title}</h2>
+                <h2 className="text-xl font-bold text-white mb-2 leading-tight hover:text-cyan-400 cursor-pointer">
+                    {title}
+                </h2>
                 <p className="text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2">{snippet}</p>
-
                 <div className="flex items-center gap-6 text-xs text-gray-500">
-                    <span className="flex items-center gap-1.5"><Users className="w-3 h-3" /> {authors}</span>
-                    <span className="flex items-center gap-1.5 font-bold text-cyan-500">❝ {citations} citations</span>
-                    <span className="flex items-center gap-1.5 font-bold text-green-400">📊 {impact} Impact</span>
+                    <span className="flex items-center gap-1.5">
+                        <Users className="w-3 h-3" /> {authors}
+                    </span>
                 </div>
             </div>
-
-            <div className="flex flex-col justify-between items-end gap-4 min-w-[160px]">
-                {/* Image Placeholder */}
-                <div className="w-full h-24 rounded-lg bg-[#1A1D21] border border-[#333] overflow-hidden relative group">
-                    <div className={`absolute inset-0 opacity-50 ${color ? color.replace('text-', 'bg-') : 'bg-cyan-500'} mix-blend-overlay`}></div>
-                    {/* Simulating image content */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 border border-white/20 rounded-full"></div>
-                    </div>
-                </div>
-
+            <div className="flex flex-col justify-end items-end gap-2 min-w-[120px]">
                 <div className="flex items-center gap-2">
                     <button className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-colors">
-                        <Users className="w-3 h-3" /> Project
+                        <Users className="w-3 h-3" /> View
                     </button>
                     <button className="p-2 rounded bg-[#1A1D21] border border-[#333] text-gray-400 hover:text-white transition-colors">
                         <Bookmark className="w-3 h-3" />
@@ -172,19 +293,5 @@ function SearchResult({ journal, year, doi, title, snippet, authors, citations, 
                 </div>
             </div>
         </div>
-    )
-}
-
-function Checkbox({ label, count, checked }: any) {
-    return (
-        <div className="flex items-center justify-between group cursor-pointer">
-            <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${checked ? 'bg-cyan-500 border-cyan-500' : 'border-[#333] bg-[#1A1D21] group-hover:border-gray-500'}`}>
-                    {checked && <div className="w-2 h-2 bg-black rounded-[1px]"></div>}
-                </div>
-                <span className={`text-sm ${checked ? 'text-white font-medium' : 'text-gray-400 group-hover:text-gray-300'}`}>{label}</span>
-            </div>
-            <span className="text-xs text-gray-600 font-mono">{count}</span>
-        </div>
-    )
+    );
 }

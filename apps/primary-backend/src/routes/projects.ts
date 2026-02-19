@@ -7,6 +7,7 @@ import type { AuthContext } from '../middleware/auth'
 import * as projectService from '../services/project.service'
 import * as userService from '../services/user.service'
 import * as projectView from '../views/project.view'
+import { prisma } from '@neorelis/db'
 
 const projects = new Hono()
 
@@ -84,8 +85,34 @@ projects.post('/', authMiddleware, zValidator('json', createProjectSchema), asyn
 })
 
 projects.get('/:id', authMiddleware, requireProjectAccess(), async (c) => {
-  const project = c.get('project')
-  return c.json({ project: projectView.projectDetail(project) })
+  const projectId = c.req.param('id')
+  const membership = c.get('projectMembership') as { role: string }
+
+  try {
+    // Fetch full project with counts in parallel
+    const [project, paperCount, memberCount, members] = await Promise.all([
+      projectService.findProjectById(projectId),
+      prisma.paper.count({ where: { projectId, active: 1 } }),
+      prisma.projectMember.count({ where: { projectId, active: 1 } }),
+      projectService.findProjectMembers(projectId),
+    ])
+
+    if (!project) {
+      return c.json({ code: 'NOT_FOUND', message: 'Project not found' }, 404)
+    }
+
+    return c.json({
+      project: {
+        ...projectView.projectSummary(project, membership.role),
+        paperCount,
+        memberCount,
+        members: members.map((m) => projectView.projectMember(m)),
+      },
+    })
+  } catch (error) {
+    console.error('Get project error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to fetch project' }, 500)
+  }
 })
 
 projects.put(
@@ -196,7 +223,8 @@ projects.post(
 )
 
 projects.delete('/:id/members/:memberId', authMiddleware, requireManagerOrAdmin(), async (c) => {
-  const { id: projectId, memberId } = c.req.param()
+  const projectId = c.req.param('id')
+  const memberId = c.req.param('memberId')
   try {
     const member = await projectService.findProjectMemberById(memberId)
     if (!member || member.projectId !== projectId) {
@@ -222,7 +250,8 @@ projects.put(
   requireManagerOrAdmin(),
   zValidator('json', updateMemberSchema),
   async (c) => {
-    const { id: projectId, memberId } = c.req.param()
+    const projectId = c.req.param('id')
+    const memberId = c.req.param('memberId')
     const body = c.req.valid('json')
     try {
       const member = await projectService.findProjectMemberById(memberId)

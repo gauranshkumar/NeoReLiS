@@ -1,9 +1,8 @@
-import { LandingFooter } from "@/components/landing/footer"; // Reuse footer
-import { LandingHeader } from "@/components/landing/header"; // Reuse header or create specialized
+import { LandingHeader } from "@/components/landing/header";
+import { LandingFooter } from "@/components/landing/footer";
 import { Search, Rocket, ListChecks, Database, Users, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
-// Help Center Header is unique, so inline it or simple component
 function HelpHeader() {
     return (
         <div className="w-full bg-[#0A0A0A] py-16 flex flex-col items-center justify-center text-center px-6">
@@ -30,85 +29,80 @@ function HelpHeader() {
 export default function HelpCenterPage() {
     return (
         <div className="min-h-screen bg-[#FDFDFD] dark:bg-white font-sans text-black">
-            {/* Assuming standard header is navigation */}
-            <nav className="bg-[#0A0A0A] border-b border-[#262626] p-4 flex justify-between items-center text-white">
-                <div className="font-bold text-xl">ReLiS Help Center</div>
-                <Link href="/" className="text-sm text-gray-400 hover:text-white">Back to App</Link>
-            </nav>
+            <LandingHeader />
 
-            <HelpHeader />
+            <div className="pt-20"> {/* Add padding for fixed header */}
+                <HelpHeader />
 
-            <main className="max-w-6xl mx-auto px-6 py-16">
-                <div className="flex justify-end mb-8">
-                    <Link href="#" className="text-cyan-600 font-medium hover:underline text-sm flex items-center gap-1">
-                        View all guides →
-                    </Link>
-                </div>
+                <main className="max-w-6xl mx-auto px-6 py-16">
+                    <div className="flex justify-end mb-8">
+                        <Link href="#" className="text-cyan-600 font-medium hover:underline text-sm flex items-center gap-1">
+                            View all guides →
+                        </Link>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-                    <HelpCard
-                        icon={<Rocket className="w-6 h-6 text-cyan-500" />}
-                        title="Getting Started"
-                        desc="Account setup, project creation, and team onboarding to get your research moving."
-                        links={["Creating your first project", "Inviting team members"]}
-                    />
-                    <HelpCard
-                        icon={<ListChecks className="w-6 h-6 text-cyan-500" />}
-                        title="Screening Workflow"
-                        desc="Title/Abstract screening, full-text review, and efficiently resolving conflicts."
-                        links={["Screening inclusion criteria", "Conflict resolution guide"]}
-                    />
-                    <HelpCard
-                        icon={<Database className="w-6 h-6 text-cyan-500" />}
-                        title="Data Extraction"
-                        desc="Customizing forms, exporting data, and performing quality assessment."
-                        links={["Form builder basics", "Exporting to Excel/CSV"]}
-                    />
-                    <HelpCard
-                        icon={<Users className="w-6 h-6 text-cyan-500" />}
-                        title="Collaborating"
-                        desc="Managing permissions, shared comments, and real-time updates across your lab."
-                        links={["Role-based access control", "Shared internal annotations"]}
-                    />
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                        <HelpCard
+                            icon={<Rocket className="w-6 h-6 text-cyan-500" />}
+                            title="Getting Started"
+                            desc="Account setup, project creation, and team onboarding to get your research moving."
+                            links={["Creating your first project", "Inviting team members"]}
+                        />
+                        <HelpCard
+                            icon={<ListChecks className="w-6 h-6 text-cyan-500" />}
+                            title="Screening Workflow"
+                            desc="Title/Abstract screening, full-text review, and efficiently resolving conflicts."
+                            links={["Screening inclusion criteria", "Conflict resolution guide"]}
+                        />
+                        <HelpCard
+                            icon={<Database className="w-6 h-6 text-cyan-500" />}
+                            title="Data Extraction"
+                            desc="Customizing forms, exporting data, and performing quality assessment."
+                            links={["Form builder basics", "Exporting to Excel/CSV"]}
+                        />
+                        <HelpCard
+                            icon={<Users className="w-6 h-6 text-cyan-500" />}
+                            title="Collaborating"
+                            desc="Managing permissions, shared comments, and real-time updates across your lab."
+                            links={["Role-based access control", "Shared internal annotations"]}
+                        />
+                    </div>
 
-                <div className="border-t border-gray-200 pt-16 pb-16">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div>
-                            <h3 className="font-bold text-gray-900 mb-2">Automating Deduplication</h3>
-                            <p className="text-sm text-gray-500">Learn how ReLiS handles duplicate records across multiple databases automatically.</p>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900 mb-2">Setting up PRISMA 2020</h3>
-                            <p className="text-sm text-gray-500">A step-by-step guide to generating compliant PRISMA flow diagrams for publication.</p>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900 mb-2">Bulk Import from Zotero</h3>
-                            <p className="text-sm text-gray-500">Directly sync your reference library with our new browser extension and API integration.</p>
+                    <div className="border-t border-gray-200 pt-16 pb-16">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                                <h3 className="font-bold text-gray-900 mb-2">Automating Deduplication</h3>
+                                <p className="text-sm text-gray-500">Learn how ReLiS handles duplicate records across multiple databases automatically.</p>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 mb-2">Setting up PRISMA 2020</h3>
+                                <p className="text-sm text-gray-500">A step-by-step guide to generating compliant PRISMA flow diagrams for publication.</p>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 mb-2">Bulk Import from Zotero</h3>
+                                <p className="text-sm text-gray-500">Directly sync your reference library with our new browser extension and API integration.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="bg-[#415058] rounded-2xl p-16 text-center text-white relative overflow-hidden">
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 mx-auto bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-400 mb-6">
-                            <MessageCircle className="w-6 h-6" />
+                    <div className="bg-[#415058] rounded-2xl p-16 text-center text-white relative overflow-hidden">
+                        <div className="relative z-10">
+                            <div className="w-12 h-12 mx-auto bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-400 mb-6">
+                                <MessageCircle className="w-6 h-6" />
+                            </div>
+                            <h2 className="text-2xl font-bold mb-4">Can't find what you're looking for?</h2>
+                            <p className="text-gray-300 max-w-lg mx-auto mb-8">
+                                Our support team is available 24/5 to help you with your systematic review workflow and technical questions.
+                            </p>
+                            <button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-3 px-8 rounded-md transition-colors">
+                                Contact Support
+                            </button>
                         </div>
-                        <h2 className="text-2xl font-bold mb-4">Can't find what you're looking for?</h2>
-                        <p className="text-gray-300 max-w-lg mx-auto mb-8">
-                            Our support team is available 24/5 to help you with your systematic review workflow and technical questions.
-                        </p>
-                        <button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-3 px-8 rounded-md transition-colors">
-                            Contact Support
-                        </button>
                     </div>
-                </div>
-            </main>
+                </main>
+            </div>
 
-            {/* Simple footer for help center */}
-            <footer className="bg-white border-t border-gray-200 py-8 text-center text-gray-500 text-sm">
-                © 2024 ReLiS AI Inc. Help Center.
-            </footer>
+            <LandingFooter />
         </div>
     );
 }

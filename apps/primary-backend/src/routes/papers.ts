@@ -1,6 +1,11 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
+import { authMiddleware } from '../middleware/auth'
+import { requireProjectAccess } from '../middleware/project-access'
+import type { AuthContext } from '../middleware/auth'
+import * as paperService from '../services/paper.service'
+import { prisma } from '@neorelis/db'
 
 const papers = new Hono()
 
@@ -31,37 +36,77 @@ const importPapersSchema = z.object({
   projectId: z.string().min(1),
 })
 
-// GET /api/v1/papers - List papers for a project
-papers.get('/', async (c) => {
+// GET /api/v1/papers - List papers for a project (or all user's projects if no projectId)
+papers.get('/', authMiddleware, async (c) => {
   const projectId = c.req.query('projectId')
-  
-  // TODO: Get papers from database filtered by projectId
-  return c.json({
-    papers: [
-      {
-        id: '1',
-        title: 'Sample Paper',
-        authors: 'John Doe, Jane Smith',
-        abstract: 'This is a sample paper abstract',
-        year: 2024,
-        doi: '10.1234/sample',
-        projectId: projectId || '1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+  const search = c.req.query('search')
+  const status = c.req.query('status')
+  const page = parseInt(c.req.query('page') || '1')
+  const limit = parseInt(c.req.query('limit') || '50')
+  const authContext = c.get('user') as AuthContext
+
+  try {
+    let effectiveProjectIds: string[] = []
+
+    if (projectId) {
+      effectiveProjectIds = [projectId]
+    } else {
+      // No projectId — fetch papers across all user's projects
+      const memberships = await prisma.projectMember.findMany({
+        where: { userId: authContext.userId, active: 1 },
+        select: { projectId: true },
+      })
+      effectiveProjectIds = memberships.map((m) => m.projectId)
+
+      if (effectiveProjectIds.length === 0) {
+        return c.json({ papers: [], total: 0, page, limit })
       }
-    ],
-    total: 1
-  })
+    }
+
+    const { papers: paperList, total } = await paperService.findPapersByProjectIds(
+      effectiveProjectIds,
+      {
+        skip: (page - 1) * limit,
+        take: limit,
+        search,
+        status,
+      }
+    )
+
+    return c.json({
+      papers: paperList.map((p) => ({
+        id: p.id,
+        title: p.title,
+        abstract: p.abstract,
+        year: p.year,
+        doi: p.doi,
+        source: p.source,
+        projectId: p.projectId,
+        status: p.screeningStatus,
+        authors: p.authors.map((a) => ({
+          firstName: a.author.firstName,
+          lastName: a.author.lastName,
+        })),
+        createdAt: p.addedAt,
+        updatedAt: p.addedAt,
+      })),
+      total,
+      page,
+      limit,
+    })
+  } catch (error) {
+    console.error('List papers error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to fetch papers' }, 500)
+  }
 })
 
 // POST /api/v1/papers - Create new paper
-papers.post('/', zValidator('json', createPaperSchema), async (c) => {
+papers.post('/', authMiddleware, zValidator('json', createPaperSchema), async (c) => {
   const body = c.req.valid('json')
+  const authContext = c.get('user') as AuthContext
 
-  // TODO: Create paper in database
-  return c.json({
-    paper: {
-      id: '1',
+  try {
+    const paper = await paperService.createPaper({
       title: body.title,
       authors: body.authors,
       abstract: body.abstract,
@@ -70,97 +115,133 @@ papers.post('/', zValidator('json', createPaperSchema), async (c) => {
       url: body.url,
       source: body.source,
       projectId: body.projectId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-  }, 201)
+      addedBy: authContext.userId,
+    })
+
+    return c.json({ paper }, 201)
+  } catch (error) {
+    console.error('Create paper error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to create paper' }, 500)
+  }
 })
 
-// GET /api/v1/papers/:id - Get paper by ID
-papers.get('/:id', async (c) => {
+// GET /api/v1/papers/:id - Get paper by ID (with venue + project context)
+papers.get('/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
 
-  // TODO: Get paper from database with project membership check
-  return c.json({
-    paper: {
-      id,
-      title: 'Sample Paper',
-      authors: 'John Doe, Jane Smith',
-      abstract: 'This is a sample paper abstract',
-      year: 2024,
-      doi: '10.1234/sample',
-      projectId: '1',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  try {
+    const paper = await prisma.paper.findUnique({
+      where: { id, active: 1 },
+      include: {
+        venue: { select: { name: true, type: true } },
+        authors: {
+          include: { author: true },
+          orderBy: { order: 'asc' },
+        },
+        project: {
+          select: { id: true, title: true, label: true, status: true },
+        },
+      },
+    })
+
+    if (!paper) {
+      return c.json({ code: 'NOT_FOUND', message: 'Paper not found' }, 404)
     }
-  })
+
+    return c.json({
+      paper: {
+        id: paper.id,
+        title: paper.title,
+        abstract: paper.abstract,
+        year: paper.year,
+        doi: paper.doi,
+        source: paper.source,
+        screeningStatus: paper.screeningStatus,
+        additionMode: paper.additionMode,
+        bibtexKey: paper.bibtexKey,
+        createdAt: paper.addedAt,
+        projectId: paper.projectId,
+        project: paper.project,
+        venue: paper.venue ? { name: paper.venue.name, type: paper.venue.type } : null,
+        authors: paper.authors.map((a) => ({
+          firstName: a.author.firstName,
+          lastName: a.author.lastName,
+          order: a.order,
+        })),
+      },
+    })
+  } catch (error) {
+    console.error('Get paper error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to fetch paper' }, 500)
+  }
 })
 
 // PUT /api/v1/papers/:id - Update paper
-papers.put('/:id', zValidator('json', updatePaperSchema), async (c) => {
+papers.put('/:id', authMiddleware, zValidator('json', updatePaperSchema), async (c) => {
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  // TODO: Update paper in database
-  return c.json({
-    paper: {
-      id,
-      title: body.title || 'Sample Paper',
-      authors: body.authors,
-      abstract: body.abstract,
-      year: body.year,
-      doi: body.doi,
-      url: body.url,
-      updatedAt: new Date().toISOString(),
+  try {
+    const paper = await paperService.updatePaper(id, body)
+
+    if (!paper) {
+      return c.json({ code: 'NOT_FOUND', message: 'Paper not found' }, 404)
     }
-  })
+
+    return c.json({ paper })
+  } catch (error) {
+    console.error('Update paper error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to update paper' }, 500)
+  }
 })
 
 // DELETE /api/v1/papers/:id - Delete paper
-papers.delete('/:id', async (c) => {
+papers.delete('/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
 
-  // TODO: Delete paper from database
-  return c.json({ message: 'Paper deleted successfully' })
+  try {
+    await paperService.deletePaper(id)
+    return c.json({ message: 'Paper deleted successfully' })
+  } catch (error) {
+    console.error('Delete paper error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to delete paper' }, 500)
+  }
 })
 
 // POST /api/v1/papers/import - Import papers from BibTeX/EndNote/CSV
-papers.post('/import', zValidator('json', importPapersSchema), async (c) => {
+papers.post('/import', authMiddleware, zValidator('json', importPapersSchema), async (c) => {
   const body = c.req.valid('json')
 
-  // TODO: Parse and import papers based on format
-  // - BibTeX: Use bibler service
-  // - EndNote: Parse EndNote format
-  // - CSV: Parse CSV and normalize
+  // TODO: Implement actual import logic with bibler service
   return c.json({
     message: `Importing papers from ${body.format}`,
     imported: 0,
-    errors: []
+    errors: [],
   }, 202)
 })
 
 // GET /api/v1/papers/:id/export - Export paper as BibTeX/CSV
-papers.get('/:id/export', async (c) => {
+papers.get('/:id/export', authMiddleware, async (c) => {
   const id = c.req.param('id')
   const format = c.req.query('format') || 'bibtex'
 
-  // TODO: Export paper in requested format
+  // TODO: Implement actual export
   return c.json({
     format,
-    content: `@article{sample2024,\n  title={Sample Paper},\n  author={Doe, John and Smith, Jane},\n  year={2024}\n}`
+    content: '',
   })
 })
 
 // POST /api/v1/papers/export - Export multiple papers
-papers.post('/export', async (c) => {
+papers.post('/export', authMiddleware, async (c) => {
   const body = await c.req.json()
   const { paperIds, format } = body
 
-  // TODO: Export multiple papers in requested format
+  // TODO: Implement actual export
   return c.json({
     format: format || 'bibtex',
     content: '',
-    count: paperIds?.length || 0
+    count: paperIds?.length || 0,
   })
 })
 
