@@ -129,9 +129,10 @@ export interface PaginationMeta {
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
   username: string;
   name: string;
+  isEmailVerified?: boolean;
   role?: string;
   active?: number;
   state?: number;
@@ -144,6 +145,13 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface RegisterResponse {
+  message: string;
+  requiresEmailVerification: boolean;
+  email: string;
+  codeExpiresInMinutes: number;
+}
+
 export const authApi = {
   register: async (data: {
     email: string;
@@ -151,11 +159,7 @@ export const authApi = {
     username: string;
     name: string;
   }) => {
-    const response = await api.post<AuthResponse>('/api/v1/auth/register', data);
-    if (response.data?.token) {
-      api.setToken(response.data.token);
-    }
-    return response;
+    return api.post<RegisterResponse>('/api/v1/auth/register', data);
   },
 
   login: async (data: { email?: string; username?: string; password: string }) => {
@@ -185,6 +189,21 @@ export const authApi = {
       token,
       newPassword,
     });
+  },
+
+  verifyEmail: async (data: { email: string; code: string }) => {
+    const response = await api.post<AuthResponse>('/api/v1/auth/verify-email', data);
+    if (response.data?.token) {
+      api.setToken(response.data.token);
+    }
+    return response;
+  },
+
+  resendVerificationCode: async (email: string) => {
+    return api.post<{ message: string; codeExpiresInMinutes?: number }>(
+      '/api/v1/auth/resend-verification-code',
+      { email }
+    );
   },
 };
 

@@ -25,6 +25,9 @@ export default function LoginPage() {
 
     if (result.success) {
       router.push("/dashboard");
+    } else if (result.requiresEmailVerification) {
+      const verificationEmail = result.email || email;
+      router.push(`/verify-email?email=${encodeURIComponent(verificationEmail)}`);
     } else {
       setError(result.error || "Login failed");
       setIsLoading(false);

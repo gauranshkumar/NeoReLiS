@@ -20,8 +20,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "nodemailer": "^8.0.1"
-  }
+  ]
 }

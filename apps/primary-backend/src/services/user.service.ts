@@ -42,6 +42,7 @@ export async function findUserById(id: string) {
       username: true,
       email: true,
       name: true,
+      isEmailVerified: true,
       active: true,
       state: true,
     },
@@ -72,6 +73,7 @@ export async function createUser(params: {
       username: true,
       email: true,
       name: true,
+      isEmailVerified: true,
       createdAt: true,
     },
   })
@@ -87,5 +89,26 @@ export async function validateCredentials(email?: string, username?: string, pas
 export async function findUserByEmail(email: string) {
   return prisma.user.findFirst({
     where: { email },
+  })
+}
+
+export async function findUserByEmailWithGroup(email: string) {
+  return prisma.user.findFirst({
+    where: { email },
+    include: {
+      userGroup: { select: { id: true, name: true } },
+    },
+  })
+}
+
+export async function markUserEmailVerified(userId: string) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      isEmailVerified: true,
+    },
+    include: {
+      userGroup: { select: { id: true, name: true } },
+    },
   })
 }

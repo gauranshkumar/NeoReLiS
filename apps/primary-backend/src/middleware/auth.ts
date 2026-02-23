@@ -43,6 +43,7 @@ export async function authMiddleware(c: Context, next: Next) {
         username: true,
         email: true,
         name: true,
+        isEmailVerified: true,
         active: true,
         state: true,
       },
@@ -63,6 +64,18 @@ export async function authMiddleware(c: Context, next: Next) {
         {
           code: 'FORBIDDEN',
           message: 'User account is inactive',
+        },
+        403
+      )
+    }
+
+    if (!user.isEmailVerified) {
+      return c.json(
+        {
+          code: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email before continuing',
+          requiresEmailVerification: true,
+          email: user.email,
         },
         403
       )
@@ -107,12 +120,13 @@ export async function optionalAuthMiddleware(c: Context, next: Next) {
           username: true,
           email: true,
           name: true,
+          isEmailVerified: true,
           active: true,
           state: true,
         },
       })
 
-      if (user && user.active === 1 && user.state === 1) {
+      if (user && user.active === 1 && user.state === 1 && user.isEmailVerified) {
         c.set('user', {
           userId: user.id,
           username: user.username,

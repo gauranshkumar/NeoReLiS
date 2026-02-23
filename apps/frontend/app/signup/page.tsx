@@ -33,7 +33,10 @@ export default function SignupPage() {
       name,
     });
 
-    if (result.success) {
+    if (result.success && result.requiresEmailVerification) {
+      const verificationEmail = result.email || email;
+      router.push(`/verify-email?email=${encodeURIComponent(verificationEmail)}`);
+    } else if (result.success) {
       router.push("/dashboard");
     } else {
       setError(result.error || "Registration failed");

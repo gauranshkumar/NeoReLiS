@@ -155,8 +155,22 @@ model User {
   auditLogs          AuditLog[]
   createdProjects    Project[]       @relation("ProjectCreator")
   papersAdded        Paper[]         @relation("PaperCreator")
+  emailVerification  EmailVerificationCode?
 
   @@map("users")
+  @@schema("neorelis_default")
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String   @map("code_hash") @db.VarChar(64)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("email_verification_codes")
   @@schema("neorelis_default")
 }
 

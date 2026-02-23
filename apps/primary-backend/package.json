@@ -9,15 +9,16 @@
     "test": "bun test"
   },
   "dependencies": {
-    "hono": "^4.0.0",
-    "zod": "^3.23.0",
-    "@hono/zod-validator": "^0.4.0",
     "@hono/node-server": "^1.12.0",
-    "hono-rate-limiter": "^0.4.0",
+    "@hono/zod-validator": "^0.4.0",
+    "@neorelis/db": "workspace:*",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.0",
     "dotenv": "^16.4.0",
-    "@neorelis/db": "workspace:*"
+    "hono": "^4.0.0",
+    "hono-rate-limiter": "^0.4.0",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^8.0.1",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

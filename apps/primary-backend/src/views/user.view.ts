@@ -8,12 +8,14 @@ export function userPublic(user: {
   username: string
   email: string | null
   name: string
+  isEmailVerified?: boolean
 }) {
   return {
     id: user.id,
     username: user.username,
     email: user.email,
     name: user.name,
+    isEmailVerified: user.isEmailVerified ?? false,
   }
 }
 
