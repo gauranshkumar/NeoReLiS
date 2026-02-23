@@ -95,10 +95,6 @@ export default function SignupPage() {
                   className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-1">
-                <Info className="w-3 h-3" />
-                <span>INSTITUTIONAL ACCOUNTS GET PRIORITY COMPUTE ACCESS</span>
-              </div>
             </div>
 
             <div className="space-y-2">
