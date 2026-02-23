@@ -1,4 +1,6 @@
 import { prisma } from '@neorelis/db'
+import { ReviewProtocolSchema, type ReviewProtocol } from '../lib/protocol-schema'
+import { compileProtocol, type CompileResult } from '../lib/protocol-compiler'
 
 type UserRole = 'ADMIN' | 'MANAGER' | 'REVIEWER' | 'VALIDATOR' | 'VIEWER'
 
@@ -243,4 +245,34 @@ export async function updateProjectConfig(
     where: { projectId },
     data: scalar as never,
   })
+}
+
+// ─── Protocol-based project creation ───────────────────────────────
+
+/**
+ * Validate a raw JSON payload against the ReviewProtocol schema,
+ * then compile it into a fully-provisioned project.
+ *
+ * Used by both the web wizard and future CLI tools.
+ *
+ * @param rawJson - Unvalidated protocol object from the client
+ * @param creatorId - UUID of the authenticated user
+ * @returns The compiled project result
+ * @throws ZodError if the protocol is invalid
+ */
+export async function createProjectFromProtocol(
+  rawJson: unknown,
+  creatorId: string
+): Promise<CompileResult> {
+  // 1. Parse & validate
+  const protocol: ReviewProtocol = ReviewProtocolSchema.parse(rawJson)
+
+  // 2. Check label uniqueness
+  const existing = await findProjectByLabel(protocol.project.short_name.toLowerCase())
+  if (existing) {
+    throw new Error(`Project label "${protocol.project.short_name}" already exists`)
+  }
+
+  // 3. Compile into DB entities
+  return compileProtocol(protocol, creatorId)
 }

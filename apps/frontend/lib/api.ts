@@ -301,6 +301,14 @@ export const projectApi = {
   updateSettings: async (projectId: string, settings: Partial<ProjectSettings>) => {
     return api.put<{ settings: ProjectSettings }>(`/api/v1/projects/${projectId}/settings`, settings);
   },
+
+  /** Create a full project from a ReviewProtocol JSON (wizard / CLI) */
+  createFromProtocol: async (protocol: Record<string, unknown>) => {
+    return api.post<{ project: Project & { protocolApplied: boolean } }>(
+      '/api/v1/projects/create-from-protocol',
+      protocol
+    );
+  },
 };
 
 // ─── Papers ───────────────────────────────────────────────────────────

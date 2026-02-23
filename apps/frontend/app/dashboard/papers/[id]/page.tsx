@@ -100,7 +100,7 @@ export default function PaperDetailPage() {
 
                 {paper.project && (
                     <Link
-                        href={`/projects/${paper.project.id}`}
+                        href={`/dashboard/projects/${paper.project.id}`}
                         className="flex items-center gap-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 rounded-lg px-3 py-1.5 transition-colors"
                     >
                         <Layers className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export default function PaperDetailPage() {
                     <div className="col-span-1 space-y-4">
                         {/* Project card */}
                         {paper.project && (
-                            <Link href={`/projects/${paper.project.id}`}>
+                            <Link href={`/dashboard/projects/${paper.project.id}`}>
                                 <div className="bg-gradient-to-br from-cyan-900/20 to-blue-900/10 border border-cyan-500/20 rounded-2xl p-5 hover:border-cyan-500/40 transition-colors group cursor-pointer">
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Project</span>

@@ -373,7 +373,7 @@ function ReviewCard({
         : "DRAFT";
 
   return (
-    <Link href={`/projects/${projectId}`}>
+    <Link href={`/dashboard/projects/${projectId}`}>
       <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-6 hover:border-cyan-500/50 transition-colors group flex flex-col justify-between h-full cursor-pointer">
         <div>
           <div className="flex justify-between items-start mb-2">

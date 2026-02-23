@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { ZodError } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { authMiddleware } from '../middleware/auth'
 import { requireProjectAccess, requireManagerOrAdmin } from '../middleware/project-access'
@@ -79,6 +80,59 @@ projects.post('/', authMiddleware, zValidator('json', createProjectSchema), asyn
     console.error('Create project error:', error)
     return c.json(
       { code: 'INTERNAL_ERROR', message: 'Failed to create project' },
+      500
+    )
+  }
+})
+
+// ─── POST /create-from-protocol — Create a full project from a ReviewProtocol JSON ───
+// Used by the wizard UI and future CLI tool.
+projects.post('/create-from-protocol', authMiddleware, async (c) => {
+  const authContext = c.get('user') as AuthContext
+  try {
+    const body = await c.req.json()
+    const result = await projectService.createProjectFromProtocol(body, authContext.userId)
+
+    // Fetch the created project for the response
+    const project = await projectService.findProjectById(result.projectId)
+    if (!project) {
+      return c.json({ code: 'INTERNAL_ERROR', message: 'Project created but not found' }, 500)
+    }
+
+    return c.json(
+      {
+        project: {
+          ...projectView.projectSummary(project, 'ADMIN'),
+          protocolApplied: true,
+        },
+      },
+      201
+    )
+  } catch (error) {
+    // Zod validation errors → 422
+    if (error instanceof ZodError) {
+      return c.json(
+        {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid protocol configuration',
+          errors: error.errors.map((e) => ({
+            path: e.path.join('.'),
+            message: e.message,
+          })),
+        },
+        422
+      )
+    }
+    // Label conflict → 409
+    if (error instanceof Error && error.message.includes('already exists')) {
+      return c.json(
+        { code: 'CONFLICT', message: error.message },
+        409
+      )
+    }
+    console.error('Create from protocol error:', error)
+    return c.json(
+      { code: 'INTERNAL_ERROR', message: 'Failed to create project from protocol' },
       500
     )
   }

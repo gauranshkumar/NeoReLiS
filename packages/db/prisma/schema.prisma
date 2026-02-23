@@ -290,6 +290,13 @@ model ProjectConfig {
   editorUrl           String? @map("editor_url") @db.VarChar(100)
   editorGeneratedPath String? @map("editor_generated_path") @db.VarChar(100)
 
+  // Protocol JSON — stores the full review protocol config from the wizard/CLI
+  // This is the single source of truth from which all entities are derived
+  protocolJson Json? @map("protocol_json")
+
+  // Validation assignment mode for screening
+  validationAssignmentMode String @default("Normal") @map("validation_assignment_mode") @db.VarChar(10)
+
   // References
   inclusionCriteria InclusionCriteria[]
   exclusionCriteria ExclusionCriteria[]
@@ -400,6 +407,7 @@ model ScreeningPhase {
   name        String  @db.VarChar(100)
   description String? @db.Text
   order       Int     @default(0)
+  fields      Json?   @map("phase_fields")
   active      Int     @default(1) @map("phase_active")
 
   assignments     ScreeningAssignment[]

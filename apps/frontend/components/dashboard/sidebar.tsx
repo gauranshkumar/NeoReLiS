@@ -132,7 +132,7 @@ export function Sidebar() {
                             recentProjects.map((project) => (
                                 <Link
                                     key={project.id}
-                                    href={`/projects/${project.id}`}
+                                    href={`/dashboard/projects/${project.id}`}
                                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-400 hover:bg-[#1A1D21] hover:text-white transition-colors"
                                 >
                                     <span

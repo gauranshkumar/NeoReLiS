@@ -119,7 +119,10 @@ export default function ProjectsPage() {
                     >
                         Completed
                     </button>
-                    <button className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded text-xs font-bold flex items-center gap-2 transition-colors">
+                    <button
+                        onClick={() => router.push("/dashboard/projects/new")}
+                        className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded text-xs font-bold flex items-center gap-2 transition-colors"
+                    >
                         <Plus className="w-3 h-3" /> New Project
                     </button>
                 </div>
@@ -151,7 +154,10 @@ export default function ProjectsPage() {
                 })}
 
                 {/* New Project Card Placeholder if empty or just as CTA */}
-                <div className="border-2 border-dashed border-[#262626] rounded-xl flex flex-col items-center justify-center p-12 min-h-[320px] bg-[#0A0A0A] hover:bg-[#111] transition-colors cursor-pointer group">
+                <div
+                    onClick={() => router.push("/dashboard/projects/new")}
+                    className="border-2 border-dashed border-[#262626] rounded-xl flex flex-col items-center justify-center p-12 min-h-[320px] bg-[#0A0A0A] hover:bg-[#111] transition-colors cursor-pointer group"
+                >
                     <div className="w-16 h-16 rounded-full bg-[#1A1D21] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                         <Plus className="w-8 h-8 text-white" />
                     </div>
@@ -182,7 +188,7 @@ export default function ProjectsPage() {
 
 function ProjectCard({ title, desc, progress, screened, members, label, labelColor, projectId }: any) {
     return (
-        <Link href={`/projects/${projectId}`}>
+        <Link href={`/dashboard/projects/${projectId}`}>
             <div className="rounded-xl overflow-hidden bg-[#1A1D21] border border-[#262626] relative group h-[340px] flex flex-col justify-end cursor-pointer hover:border-cyan-500/50 transition-colors">
                 {/* Abstract Background Visual */}
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
