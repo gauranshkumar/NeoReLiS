@@ -1,4 +1,3 @@
-import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
 import { Zap, Shield, Eye, Scale, FlaskConical, BrainCircuit, Cpu } from "lucide-react";
 import Link from "next/link";
@@ -6,7 +5,6 @@ import Link from "next/link";
 export default function AboutUsPage() {
     return (
         <div className="min-h-screen bg-[#0A0A0A] font-sans text-white selection:bg-cyan-500/30">
-            <LandingHeader />
             <main className="pt-20">
 
                 {/* Hero */}

@@ -1,13 +1,10 @@
 import Link from 'next/link';
 import { Microscope, ArrowLeft } from 'lucide-react';
-import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
 
 export default function NotFound() {
     return (
         <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans">
-            <LandingHeader />
-
             <main className="flex-1 flex flex-col items-center justify-center px-6 pt-32 pb-12 relative overflow-hidden">
                 {/* Background Decorative Glows */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/10 blur-[120px] rounded-full -z-10" />

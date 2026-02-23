@@ -1,4 +1,3 @@
-import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
 import { Search, Rocket, ListChecks, Database, Users, MessageCircle } from "lucide-react";
 import Link from "next/link";
@@ -29,8 +28,6 @@ function HelpHeader() {
 export default function HelpCenterPage() {
     return (
         <div className="min-h-screen bg-[#FDFDFD] dark:bg-white font-sans text-black">
-            <LandingHeader />
-
             <div className="pt-20"> {/* Add padding for fixed header */}
                 <HelpHeader />
 

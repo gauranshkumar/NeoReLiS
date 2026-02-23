@@ -165,7 +165,7 @@ export default function DashboardPage() {
                   No projects yet. Start your first review!
                 </p>
                 <Link
-                  href="/projects"
+                  href="/dashboard/projects"
                   className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-6 py-2.5 rounded-lg transition-colors text-sm"
                 >
                   Create Project

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
@@ -13,6 +13,7 @@ import {
     User,
     LogOut,
     Loader2,
+    ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -24,10 +25,18 @@ export function Sidebar() {
     const { user, logout, isAuthenticated } = useAuth();
     const [recentProjects, setRecentProjects] = useState<Project[]>([]);
     const [projectsLoading, setProjectsLoading] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
 
     const handleLogout = async () => {
         await logout();
         router.push("/login");
+        setShowProfileMenu(false);
+    };
+
+    const handleSettingsClick = () => {
+        router.push("/dashboard/settings");
+        setShowProfileMenu(false);
     };
 
     // Fetch recent projects for the sidebar
@@ -46,6 +55,22 @@ export function Sidebar() {
 
         fetchProjects();
     }, [isAuthenticated]);
+
+    // Close profile menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setShowProfileMenu(false);
+            }
+        }
+
+        if (showProfileMenu) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        }
+    }, [showProfileMenu]);
 
     const navItems = [
         { name: "Overview", href: "/dashboard", icon: LayoutGrid },
@@ -121,55 +146,61 @@ export function Sidebar() {
                 </div>
             </div>
 
-            <div className="border-t border-[#262626] p-4">
+            <div className="border-t border-[#262626] p-4 relative" ref={profileMenuRef}>
                 {isAuthenticated && user ? (
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href="/dashboard/settings"
-                            className={cn(
-                                "flex items-center flex-1 gap-3 p-2 rounded-lg transition-colors text-left group",
-                                pathname === "/dashboard/settings"
-                                    ? "bg-[#1A1D21]"
-                                    : "hover:bg-[#1A1D21]"
-                            )}
-                        >
-                            <div className="w-8 h-8 rounded-full bg-cyan-900 flex items-center justify-center text-cyan-200">
-                                <User className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p
+                    <>
+                        {/* Dropdown Menu */}
+                        {showProfileMenu && (
+                            <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#1A1D21] border border-[#262626] rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <button
+                                    onClick={handleSettingsClick}
                                     className={cn(
-                                        "text-sm font-medium group-hover:text-cyan-400 truncate",
+                                        "flex items-center gap-3 w-full px-4 py-3 text-left transition-colors",
                                         pathname === "/dashboard/settings"
-                                            ? "text-cyan-400"
-                                            : "text-white"
+                                            ? "bg-cyan-500/10 text-cyan-400"
+                                            : "text-gray-300 hover:bg-[#0A0A0A] hover:text-white"
                                     )}
                                 >
-                                    {user.name}
+                                    <Settings className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Settings</span>
+                                </button>
+                                <div className="h-px bg-[#262626]"></div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-300 hover:bg-[#0A0A0A] hover:text-red-400 transition-colors"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Logout</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Profile Card */}
+                        <button
+                            onClick={() => setShowProfileMenu(!showProfileMenu)}
+                            className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-[#1A1D21] transition-colors group"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-black font-semibold shrink-0">
+                                {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                                <p className="text-sm font-medium text-white truncate group-hover:text-cyan-400 transition-colors">
+                                    {user.name || user.username}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
                             </div>
-                            <Settings
+                            <ChevronUp
                                 className={cn(
-                                    "w-4 h-4 group-hover:text-white",
-                                    pathname === "/dashboard/settings"
-                                        ? "text-white"
-                                        : "text-gray-500"
+                                    "w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0",
+                                    showProfileMenu ? "rotate-180" : ""
                                 )}
                             />
-                        </Link>
-                        <button
-                            onClick={handleLogout}
-                            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1A1D21] transition-colors"
-                            title="Logout"
-                        >
-                            <LogOut className="w-4 h-4" />
                         </button>
-                    </div>
+                    </>
                 ) : (
                     <Link
                         href="/login"
-                        className="flex items-center gap-3 p-2 rounded-lg text-gray-400 hover:bg-[#1A1D21] hover:text-white transition-colors"
+                        className="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-[#1A1D21] hover:text-white transition-colors"
                     >
                         <User className="w-5 h-5" />
                         <span className="text-sm">Sign In</span>
