@@ -112,3 +112,38 @@ export async function markUserEmailVerified(userId: string) {
     },
   })
 }
+
+/**
+ * Search users by partial name, username, or email.
+ * Optionally exclude a list of user IDs (e.g. existing project members).
+ */
+export async function searchUsers(
+  query: string,
+  options?: { excludeIds?: string[]; limit?: number }
+) {
+  const limit = options?.limit ?? 20
+  const term = `%${query}%`
+
+  return prisma.user.findMany({
+    where: {
+      active: 1,
+      isEmailVerified: true,
+      ...(options?.excludeIds?.length
+        ? { id: { notIn: options.excludeIds } }
+        : {}),
+      OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        { username: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
+      ],
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      name: true,
+    },
+    take: limit,
+    orderBy: { name: 'asc' },
+  })
+}

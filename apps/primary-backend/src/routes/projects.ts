@@ -6,7 +6,10 @@ import { authMiddleware } from '../middleware/auth'
 import { requireProjectAccess, requireManagerOrAdmin } from '../middleware/project-access'
 import type { AuthContext } from '../middleware/auth'
 import * as projectService from '../services/project.service'
+import * as draftService from '../services/draft.service'
 import * as userService from '../services/user.service'
+import * as notificationService from '../services/notification.service'
+import * as emailService from '../services/email.service'
 import * as projectView from '../views/project.view'
 import { prisma } from '@neorelis/db'
 
@@ -72,6 +75,16 @@ projects.post('/', authMiddleware, zValidator('json', createProjectSchema), asyn
       description: body.description,
       creatorId: authContext.userId,
     })
+
+    // In-app notification (fire-and-forget)
+    notificationService.createNotification({
+      userId: authContext.userId,
+      type: 'PROJECT_CREATED',
+      title: 'Project created',
+      message: `Your project "${body.title}" has been created successfully`,
+      data: { projectId: project.id },
+    }).catch((e) => console.error('Notification error:', e))
+
     return c.json(
       { project: projectView.projectSummary(project) },
       201
@@ -138,6 +151,83 @@ projects.post('/create-from-protocol', authMiddleware, async (c) => {
   }
 })
 
+// ─── Protocol Drafts (save & resume wizard) ────────────────────────
+// These routes MUST come before /:id to avoid "drafts" matching as a project ID.
+
+const saveDraftSchema = z.object({
+  name: z.string().max(200).default('Untitled Draft'),
+  currentStep: z.number().int().min(0).max(5).default(0),
+  formData: z.record(z.unknown()),
+})
+
+// GET /drafts — list caller's drafts
+projects.get('/drafts', authMiddleware, async (c) => {
+  const auth = c.get('user') as AuthContext
+  try {
+    const drafts = await draftService.listDrafts(auth.userId)
+    return c.json({ drafts })
+  } catch (error) {
+    console.error('List drafts error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to list drafts' }, 500)
+  }
+})
+
+// GET /drafts/:draftId — get one draft
+projects.get('/drafts/:draftId', authMiddleware, async (c) => {
+  const auth = c.get('user') as AuthContext
+  const draftId = c.req.param('draftId')
+  try {
+    const draft = await draftService.getDraft(draftId, auth.userId)
+    if (!draft) {
+      return c.json({ code: 'NOT_FOUND', message: 'Draft not found' }, 404)
+    }
+    return c.json({ draft })
+  } catch (error) {
+    console.error('Get draft error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to get draft' }, 500)
+  }
+})
+
+// PUT /drafts/:draftId — create or update a draft
+projects.put('/drafts/:draftId', authMiddleware, zValidator('json', saveDraftSchema), async (c) => {
+  const auth = c.get('user') as AuthContext
+  const draftId = c.req.param('draftId')
+  const body = c.req.valid('json')
+  try {
+    const draft = await draftService.saveDraft(draftId, auth.userId, body)
+
+    // In-app notification (fire-and-forget)
+    notificationService.createNotification({
+      userId: auth.userId,
+      type: 'DRAFT_SAVED',
+      title: 'Draft saved',
+      message: `Your draft "${body.name}" has been saved`,
+      data: { draftId },
+    }).catch((e) => console.error('Notification error:', e))
+
+    return c.json({ draft })
+  } catch (error) {
+    console.error('Save draft error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to save draft' }, 500)
+  }
+})
+
+// DELETE /drafts/:draftId — remove a draft
+projects.delete('/drafts/:draftId', authMiddleware, async (c) => {
+  const auth = c.get('user') as AuthContext
+  const draftId = c.req.param('draftId')
+  try {
+    const deleted = await draftService.deleteDraft(draftId, auth.userId)
+    if (!deleted) {
+      return c.json({ code: 'NOT_FOUND', message: 'Draft not found' }, 404)
+    }
+    return c.json({ message: 'Draft deleted' })
+  } catch (error) {
+    console.error('Delete draft error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to delete draft' }, 500)
+  }
+})
+
 projects.get('/:id', authMiddleware, requireProjectAccess(), async (c) => {
   const projectId = c.req.param('id')
   const membership = c.get('projectMembership') as { role: string }
@@ -196,13 +286,18 @@ projects.put(
 
 projects.delete('/:id', authMiddleware, requireManagerOrAdmin(), async (c) => {
   const projectId = c.req.param('id')
+  const permanent = c.req.query('permanent') === 'true'
   try {
+    if (permanent) {
+      await projectService.deleteProjectPermanently(projectId)
+      return c.json({ message: 'Project deleted permanently' })
+    }
     await projectService.archiveProject(projectId)
     return c.json({ message: 'Project archived successfully' })
   } catch (error) {
-    console.error('Archive project error:', error)
+    console.error('Delete/archive project error:', error)
     return c.json(
-      { code: 'INTERNAL_ERROR', message: 'Failed to archive project' },
+      { code: 'INTERNAL_ERROR', message: 'Failed to delete project' },
       500
     )
   }
@@ -241,6 +336,14 @@ projects.post(
           404
         )
       }
+      // Fetch project title and inviter name for notifications
+      const [project, inviter] = await Promise.all([
+        projectService.findProjectById(projectId),
+        userService.findUserById(authContext.userId),
+      ])
+      const projectTitle = project?.title ?? 'a project'
+      const inviterName = inviter?.name ?? 'Someone'
+
       const existing = await projectService.findExistingMembership(projectId, body.userId)
       if (existing) {
         if (existing.active === 1) {
@@ -254,6 +357,26 @@ projects.post(
           body.role,
           authContext.userId
         )
+
+        // Send notification + email (fire-and-forget)
+        notificationService.createNotification({
+          userId: body.userId,
+          type: 'PROJECT_MEMBER_ADDED',
+          title: 'Added to project',
+          message: `${inviterName} added you to "${projectTitle}" as ${body.role}`,
+          data: { projectId, role: body.role, addedBy: authContext.userId },
+        }).catch((e) => console.error('Notification error:', e))
+
+        if (user.email) {
+          emailService.sendProjectMemberAddedEmail({
+            to: user.email,
+            memberName: user.name,
+            projectTitle,
+            role: body.role,
+            addedByName: inviterName,
+          }).catch((e) => console.error('Email error:', e))
+        }
+
         return c.json({ member: projectView.projectMember(member) }, 200)
       }
       const member = await projectService.addProjectMember({
@@ -262,6 +385,26 @@ projects.post(
         role: body.role,
         addedBy: authContext.userId,
       })
+
+      // Send notification + email (fire-and-forget)
+      notificationService.createNotification({
+        userId: body.userId,
+        type: 'PROJECT_MEMBER_ADDED',
+        title: 'Added to project',
+        message: `${inviterName} added you to "${projectTitle}" as ${body.role}`,
+        data: { projectId, role: body.role, addedBy: authContext.userId },
+      }).catch((e) => console.error('Notification error:', e))
+
+      if (user.email) {
+        emailService.sendProjectMemberAddedEmail({
+          to: user.email,
+          memberName: user.name,
+          projectTitle,
+          role: body.role,
+          addedByName: inviterName,
+        }).catch((e) => console.error('Email error:', e))
+      }
+
       return c.json(
         { member: projectView.projectMember(member) },
         201
@@ -288,6 +431,17 @@ projects.delete('/:id/members/:memberId', authMiddleware, requireManagerOrAdmin(
       )
     }
     await projectService.deactivateProjectMember(memberId)
+
+    // Notify the removed user (fire-and-forget)
+    const project = await projectService.findProjectById(projectId)
+    notificationService.createNotification({
+      userId: member.userId,
+      type: 'PROJECT_MEMBER_REMOVED',
+      title: 'Removed from project',
+      message: `You have been removed from "${project?.title ?? 'a project'}"`,
+      data: { projectId },
+    }).catch((e) => console.error('Notification error:', e))
+
     return c.json({ message: 'Member removed successfully' })
   } catch (error) {
     console.error('Remove member error:', error)

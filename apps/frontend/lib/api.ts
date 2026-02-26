@@ -59,19 +59,33 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       const response = await fetch(url, {
         ...options,
         headers,
+        signal: controller.signal,
       });
 
-      const data = await response.json();
+      let data: Record<string, unknown>;
+      try {
+        data = await response.json();
+      } catch {
+        return {
+          error: {
+            code: 'PARSE_ERROR',
+            message: `Server returned non-JSON response (status ${response.status})`,
+          },
+        };
+      }
 
       if (!response.ok) {
         return {
           error: {
-            code: data.code || 'ERROR',
-            message: data.message || 'An error occurred',
+            code: data.code as string || 'ERROR',
+            message: data.message as string || 'An error occurred',
             details: data.details,
           },
         };
@@ -79,12 +93,22 @@ class ApiClient {
 
       return { data: data as T };
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return {
+          error: {
+            code: 'TIMEOUT_ERROR',
+            message: 'Request timed out',
+          },
+        };
+      }
       return {
         error: {
           code: 'NETWORK_ERROR',
           message: error instanceof Error ? error.message : 'Network error',
         },
       };
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -207,6 +231,66 @@ export const authApi = {
   },
 };
 
+// ─── Users ────────────────────────────────────────────────────────────
+
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  email: string | null;
+  name: string;
+}
+
+export const userApi = {
+  search: async (query: string, excludeIds?: string[]) => {
+    const params = new URLSearchParams({ q: query });
+    if (excludeIds?.length) {
+      params.set('excludeIds', excludeIds.join(','));
+    }
+    return api.get<{ users: UserSearchResult[] }>(`/api/v1/users/search?${params.toString()}`);
+  },
+};
+
+// ─── Notifications ────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  data?: Record<string, unknown> | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export const notificationApi = {
+  list: async (options?: { unreadOnly?: boolean; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (options?.unreadOnly) params.set('unreadOnly', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    const qs = params.toString();
+    return api.get<{ notifications: Notification[]; unreadCount: number }>(
+      `/api/v1/notifications${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  unreadCount: async () => {
+    return api.get<{ unreadCount: number }>('/api/v1/notifications/unread-count');
+  },
+
+  markAsRead: async (id: string) => {
+    return api.put<{ message: string }>(`/api/v1/notifications/${id}/read`);
+  },
+
+  markAllAsRead: async () => {
+    return api.put<{ message: string }>('/api/v1/notifications/read-all');
+  },
+
+  delete: async (id: string) => {
+    return api.delete<{ message: string }>(`/api/v1/notifications/${id}`);
+  },
+};
+
 // ─── Projects ─────────────────────────────────────────────────────────
 
 export interface Project {
@@ -273,6 +357,10 @@ export const projectApi = {
     return api.delete<{ message: string }>(`/api/v1/projects/${id}`);
   },
 
+  permanentDelete: async (id: string) => {
+    return api.delete<{ message: string }>(`/api/v1/projects/${id}?permanent=true`);
+  },
+
   // Members
   getMembers: async (projectId: string) => {
     return api.get<{ members: ProjectMember[] }>(`/api/v1/projects/${projectId}/members`);
@@ -308,6 +396,35 @@ export const projectApi = {
       '/api/v1/projects/create-from-protocol',
       protocol
     );
+  },
+};
+
+// ─── Protocol Drafts ──────────────────────────────────────────────────
+
+export interface ProtocolDraft {
+  id: string;
+  name: string;
+  currentStep: number;
+  formData: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const draftApi = {
+  list: async () => {
+    return api.get<{ drafts: ProtocolDraft[] }>('/api/v1/projects/drafts');
+  },
+
+  get: async (draftId: string) => {
+    return api.get<{ draft: ProtocolDraft }>(`/api/v1/projects/drafts/${draftId}`);
+  },
+
+  save: async (draftId: string, data: { name: string; currentStep: number; formData: Record<string, unknown> }) => {
+    return api.put<{ draft: ProtocolDraft }>(`/api/v1/projects/drafts/${draftId}`, data);
+  },
+
+  delete: async (draftId: string) => {
+    return api.delete<{ message: string }>(`/api/v1/projects/drafts/${draftId}`);
   },
 };
 

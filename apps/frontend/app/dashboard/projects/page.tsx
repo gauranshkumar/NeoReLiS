@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Filter, Loader2 } from "lucide-react";
+import { Search, Plus, Filter, Loader2, FileEdit, Trash2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { projectApi, reportingApi, Project, ProjectStats } from "@/lib/api";
+import { projectApi, reportingApi, draftApi, Project, ProjectStats, ProtocolDraft } from "@/lib/api";
 
 export default function ProjectsPage() {
     const router = useRouter();
@@ -16,6 +16,7 @@ export default function ProjectsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED">("ALL");
     const [stats, setStats] = useState<ProjectStats | null>(null);
+    const [drafts, setDrafts] = useState<ProtocolDraft[]>([]);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -29,9 +30,10 @@ export default function ProjectsPage() {
             if (!isAuthenticated) return;
 
             setIsLoading(true);
-            const [projectsRes, statsRes] = await Promise.all([
+            const [projectsRes, statsRes, draftsRes] = await Promise.all([
                 projectApi.list(),
                 reportingApi.getProjectStats(),
+                draftApi.list(),
             ]);
 
             if (projectsRes.error) {
@@ -41,6 +43,9 @@ export default function ProjectsPage() {
             }
             if (statsRes.data) {
                 setStats(statsRes.data);
+            }
+            if (draftsRes.data) {
+                setDrafts(draftsRes.data.drafts);
             }
             setIsLoading(false);
         };
@@ -131,6 +136,29 @@ export default function ProjectsPage() {
             {error && (
                 <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
                     {error}
+                </div>
+            )}
+
+            {/* Unfinished Drafts */}
+            {drafts.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <FileEdit className="w-3.5 h-3.5" />
+                        Unfinished Drafts
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {drafts.map((draft) => (
+                            <DraftCard
+                                key={draft.id}
+                                draft={draft}
+                                onResume={() => router.push(`/dashboard/projects/new?draft=${draft.id}`)}
+                                onDelete={async () => {
+                                    await draftApi.delete(draft.id);
+                                    setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+                                }}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -234,5 +262,83 @@ function ProjectCard({ title, desc, progress, screened, members, label, labelCol
                 </div>
             </div>
         </Link>
+    );
+}
+
+const STEP_LABELS = ["General", "Screening", "QA", "Extraction", "Reporting", "Review"];
+
+function DraftCard({
+    draft,
+    onResume,
+    onDelete,
+}: {
+    draft: ProtocolDraft;
+    onResume: () => void;
+    onDelete: () => void;
+}) {
+    const formData = draft.formData as Record<string, unknown>;
+    const protocol = formData?.protocol as Record<string, unknown> | undefined;
+    const projectInfo = protocol?.project as Record<string, unknown> | undefined;
+    const title = (projectInfo?.name as string) || draft.name || "Untitled Draft";
+    const shortName = (projectInfo?.short_name as string) || "";
+    const completedSteps = draft.currentStep;
+    const progressPct = Math.round((completedSteps / 6) * 100);
+
+    return (
+        <div className="rounded-xl overflow-hidden bg-[#1A1D21] border border-orange-500/30 relative group h-50 flex flex-col cursor-pointer hover:border-orange-400/60 transition-colors">
+            {/* Gradient accent */}
+            <div className="absolute inset-0 bg-linear-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            {/* Tag */}
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                    UNFINISHED DRAFT
+                </span>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                    }}
+                    className="p-1 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete draft"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
+            </div>
+
+            {/* Content */}
+            <div className="relative p-5 z-10 flex flex-col h-full justify-between" onClick={onResume}>
+                <div>
+                    <h3 className="text-base font-bold text-white mb-1 line-clamp-1 pr-32">{title}</h3>
+                    {shortName && (
+                        <p className="text-[11px] text-gray-500 font-mono">{shortName}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                        Step {completedSteps + 1} of 6 — {STEP_LABELS[completedSteps] || "Review"}
+                    </p>
+                </div>
+
+                <div>
+                    {/* Progress */}
+                    <div className="mb-3">
+                        <div className="flex justify-between text-[10px] font-bold uppercase mb-1.5 text-gray-500">
+                            <span>PROGRESS</span>
+                            <span className="text-orange-400">{progressPct}%</span>
+                        </div>
+                        <div className="h-1 bg-[#333] rounded-full overflow-hidden">
+                            <div className="h-full bg-orange-400 transition-all" style={{ width: `${progressPct}%` }} />
+                        </div>
+                    </div>
+
+                    {/* Resume button */}
+                    <button
+                        onClick={onResume}
+                        className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                    >
+                        Resume <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

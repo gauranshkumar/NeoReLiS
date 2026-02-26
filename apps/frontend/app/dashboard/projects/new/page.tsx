@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Loader2, ChevronRight } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, Check, Loader2, ChevronRight, Save, FileText, Trash2, X } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { projectApi } from "@/lib/api";
+import { projectApi, draftApi, ProtocolDraft } from "@/lib/api";
 
 // ─── Types mirroring the backend protocol schema ────────────────────
 
@@ -140,8 +140,13 @@ function defaultProtocol(): ReviewProtocol {
 
 // ─── Main Component ─────────────────────────────────────────────────
 
+function generateUUID() {
+  return crypto.randomUUID();
+}
+
 export default function NewProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState(0);
   const [protocol, setProtocol] = useState<ReviewProtocol>(defaultProtocol);
@@ -149,6 +154,134 @@ export default function NewProjectPage() {
   const [error, setError] = useState("");
   const [enableScreening, setEnableScreening] = useState(true);
   const [enableQA, setEnableQA] = useState(false);
+
+  // ─── Draft state ────────────────────────────────────────────────
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<ProtocolDraft[]>([]);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"" | "saved" | "error">("");
+  const [draftLoading, setDraftLoading] = useState(true);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Load draft on mount ────────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setDraftLoading(false);
+      return;
+    }
+
+    const loadDrafts = async () => {
+      setDraftLoading(true);
+      const draftParam = searchParams.get("draft");
+
+      if (draftParam) {
+        // URL has ?draft=<id> — load that draft directly
+        const res = await draftApi.get(draftParam);
+        if (res.data?.draft) {
+          restoreDraft(res.data.draft);
+        }
+        setDraftLoading(false);
+        return;
+      }
+
+      // No URL param — check if user has any existing drafts
+      const res = await draftApi.list();
+      if (res.data?.drafts && res.data.drafts.length > 0) {
+        setDrafts(res.data.drafts);
+        setShowResumeModal(true);
+      }
+      setDraftLoading(false);
+    };
+
+    loadDrafts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  // ─── Restore draft into form state ──────────────────────────────
+  const restoreDraft = (draft: ProtocolDraft) => {
+    const fd = draft.formData as Record<string, unknown>;
+    setDraftId(draft.id);
+    setStep(draft.currentStep);
+    if (fd.protocol) setProtocol(fd.protocol as ReviewProtocol);
+    if (fd.enableScreening !== undefined) setEnableScreening(fd.enableScreening as boolean);
+    if (fd.enableQA !== undefined) setEnableQA(fd.enableQA as boolean);
+  };
+
+  // ─── Build form data blob for saving ────────────────────────────
+  const buildFormData = useCallback(() => {
+    return {
+      protocol,
+      enableScreening,
+      enableQA,
+    } as Record<string, unknown>;
+  }, [protocol, enableScreening, enableQA]);
+
+  // ─── Save draft ─────────────────────────────────────────────────
+  const saveDraft = useCallback(
+    async (currentStep?: number) => {
+      const id = draftId || generateUUID();
+      if (!draftId) setDraftId(id);
+
+      setIsSaving(true);
+      setSaveStatus("");
+      const res = await draftApi.save(id, {
+        name: protocol.project.name || protocol.project.short_name || "Untitled Draft",
+        currentStep: currentStep ?? step,
+        formData: buildFormData(),
+      });
+
+      setIsSaving(false);
+      if (res.error) {
+        setSaveStatus("error");
+      } else {
+        setSaveStatus("saved");
+        // Update URL to include draft ID (without full navigation)
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has("draft")) {
+          url.searchParams.set("draft", id);
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+
+      // Clear status after 3s
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => setSaveStatus(""), 3000);
+    },
+    [draftId, protocol, step, buildFormData]
+  );
+
+  // ─── Auto-save on step change ───────────────────────────────────
+  const handleStepChange = useCallback(
+    (newStep: number) => {
+      setStep(newStep);
+      // Only auto-save if a draft already exists
+      if (draftId) {
+        saveDraft(newStep);
+      }
+    },
+    [draftId, saveDraft]
+  );
+
+  // ─── Resume modal handlers ─────────────────────────────────────
+  const handleResumeDraft = async (draft: ProtocolDraft) => {
+    // The list endpoint only returns summary — fetch full draft
+    const res = await draftApi.get(draft.id);
+    if (res.data?.draft) {
+      restoreDraft(res.data.draft);
+    }
+    setShowResumeModal(false);
+  };
+
+  const handleStartFresh = () => {
+    setShowResumeModal(false);
+  };
+
+  const handleDeleteDraft = async (id: string) => {
+    await draftApi.delete(id);
+    setDrafts((prev) => prev.filter((d) => d.id !== id));
+    if (drafts.length <= 1) setShowResumeModal(false);
+  };
 
   const updateProject = useCallback(
     (field: keyof ProtocolProject, value: string) => {
@@ -223,11 +356,14 @@ export default function NewProjectPage() {
       return;
     }
 
-    // Success — redirect to the new project
+    // Success — clean up draft if it exists, then redirect
+    if (draftId) {
+      await draftApi.delete(draftId);
+    }
     router.push(`/dashboard/projects`);
   };
 
-  if (authLoading) {
+  if (authLoading || draftLoading) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
@@ -242,6 +378,68 @@ export default function NewProjectPage() {
 
   return (
     <div className="max-w-275 mx-auto">
+      {/* Resume Draft Modal */}
+      {showResumeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1A1D21] border border-[#262626] rounded-xl w-full max-w-lg p-6 mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white text-lg font-bold">Resume a Draft?</h2>
+              <button onClick={handleStartFresh} className="text-gray-500 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-400 text-sm mb-5">
+              You have unsaved drafts from previous sessions. Pick one to continue, or start fresh.
+            </p>
+            <div className="space-y-2 max-h-64 overflow-y-auto mb-5">
+              {drafts.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex items-center justify-between bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-3 hover:border-cyan-500/40 transition-colors group"
+                >
+                  <button
+                    onClick={() => handleResumeDraft(d)}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <FileText className="w-4 h-4 text-cyan-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{d.name}</p>
+                      <p className="text-gray-500 text-xs">
+                        Step {d.currentStep + 1} of 6 · Updated{" "}
+                        {new Date(d.updatedAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDraft(d.id);
+                    }}
+                    className="p-1.5 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete draft"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleStartFresh}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-[#0A0A0A] text-gray-300 border border-[#333] hover:text-white transition-colors"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button
@@ -250,12 +448,21 @@ export default function NewProjectPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-white text-2xl font-bold">New Review</h1>
           <p className="text-gray-500 text-sm">
             Configure your systematic literature review protocol
           </p>
         </div>
+        {/* Save status indicator */}
+        {saveStatus === "saved" && (
+          <span className="text-xs text-green-500 flex items-center gap-1 animate-in fade-in">
+            <Check className="w-3 h-3" /> Draft saved
+          </span>
+        )}
+        {saveStatus === "error" && (
+          <span className="text-xs text-red-400">Save failed</span>
+        )}
       </div>
 
       {/* Step Indicator */}
@@ -263,7 +470,7 @@ export default function NewProjectPage() {
         {STEPS.map((s, i) => (
           <button
             key={s.id}
-            onClick={() => setStep(i)}
+            onClick={() => handleStepChange(i)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
               step === i
                 ? "bg-cyan-500/10 text-cyan-500 border border-cyan-500/30"
@@ -349,7 +556,7 @@ export default function NewProjectPage() {
       {/* Navigation */}
       <div className="flex justify-between mt-6">
         <button
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          onClick={() => handleStepChange(Math.max(0, step - 1))}
           disabled={step === 0}
           className="px-6 py-2.5 rounded-lg text-sm font-medium bg-[#1A1D21] text-gray-400 border border-[#333] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
@@ -358,32 +565,50 @@ export default function NewProjectPage() {
           </span>
         </button>
 
-        {step < STEPS.length - 1 ? (
+        <div className="flex items-center gap-3">
+          {/* Save Draft Button */}
           <button
-            onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-            className="px-6 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition-colors"
+            onClick={() => saveDraft()}
+            disabled={isSaving}
+            className="px-5 py-2.5 rounded-lg text-sm font-medium bg-[#1A1D21] text-gray-300 border border-[#333] hover:text-white hover:border-cyan-500/40 disabled:opacity-50 transition-colors"
           >
             <span className="flex items-center gap-2">
-              Next <ArrowRight className="w-4 h-4" />
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Draft
             </span>
           </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !protocol.project.short_name || !protocol.project.name}
-            className="px-8 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? (
+
+          {step < STEPS.length - 1 ? (
+            <button
+              onClick={() => handleStepChange(Math.min(STEPS.length - 1, step + 1))}
+              className="px-6 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition-colors"
+            >
               <span className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Creating…
+                Next <ArrowRight className="w-4 h-4" />
               </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4" /> Create Review
-              </span>
-            )}
-          </button>
-        )}
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !protocol.project.short_name || !protocol.project.name}
+              className="px-8 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Creating…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Check className="w-4 h-4" /> Create Review
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import dataExtractionRoutes from "./routes/data-extraction";
 import reportingRoutes from "./routes/reporting";
 import elementRoutes from "./routes/element";
 import managerRoutes from "./routes/manager";
+import userRoutes from "./routes/users";
+import notificationRoutes from "./routes/notifications";
 
 const app = new Hono();
 
@@ -55,6 +57,8 @@ app.get("/api/v1", (c) =>
       "/api/v1/reporting",
       "/api/v1/element",
       "/api/v1/manager",
+      "/api/v1/users",
+      "/api/v1/notifications",
     ],
   }),
 );
@@ -69,6 +73,8 @@ app.route("/api/v1/data-extraction", dataExtractionRoutes);
 app.route("/api/v1/reporting", reportingRoutes);
 app.route("/api/v1/element", elementRoutes);
 app.route("/api/v1/manager", managerRoutes);
+app.route("/api/v1/users", userRoutes);
+app.route("/api/v1/notifications", notificationRoutes);
 
 // 404 handler
 app.notFound((c) =>
@@ -81,7 +87,7 @@ app.onError((err, c) => {
   return c.json(
     {
       code: "INTERNAL_ERROR",
-      message: err.message || "Internal server error",
+      message: "Internal server error",
       requestId: c.get("requestId"),
     },
     500,

@@ -218,11 +218,13 @@ export default function ProjectDetailPage({
                     value={project.paperCount ?? 0}
                     icon={<FileText className="w-4 h-4 text-cyan-500" />}
                 />
-                <StatCard
-                    label="Team Members"
-                    value={project.memberCount ?? 0}
-                    icon={<Users className="w-4 h-4 text-cyan-500" />}
-                />
+                <Link href={`/dashboard/projects/${id}/team`}>
+                    <StatCard
+                        label="Team Members"
+                        value={project.memberCount ?? 0}
+                        icon={<Users className="w-4 h-4 text-cyan-500" />}
+                    />
+                </Link>
                 <StatCard
                     label="Screening"
                     value={settings?.screeningOn ? "Enabled" : "Disabled"}
@@ -278,11 +280,19 @@ export default function ProjectDetailPage({
             </div>
 
             {/* Team Members */}
-            {project.members && project.members.length > 0 && (
-                <div className="mb-8">
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                         Team
                     </h2>
+                    <Link
+                        href={`/dashboard/projects/${id}/team`}
+                        className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
+                    >
+                        Manage Team →
+                    </Link>
+                </div>
+                {project.members && project.members.length > 0 ? (
                     <div className="bg-[#1A1D21] border border-[#262626] rounded-xl overflow-hidden">
                         <div className="divide-y divide-[#262626]">
                             {project.members.map((member) => (
@@ -310,8 +320,21 @@ export default function ProjectDetailPage({
                             ))}
                         </div>
                     </div>
-                </div>
-            )}
+                ) : (
+                    <Link
+                        href={`/dashboard/projects/${id}/team`}
+                        className="block bg-[#1A1D21] border border-dashed border-[#333] rounded-xl p-8 text-center hover:border-cyan-500/50 transition-colors"
+                    >
+                        <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm font-medium">
+                            Add team members to collaborate
+                        </p>
+                        <p className="text-cyan-500 text-xs mt-1">
+                            Click to manage team →
+                        </p>
+                    </Link>
+                )}
+            </div>
 
             {/* Configuration Summary */}
             {settings && (

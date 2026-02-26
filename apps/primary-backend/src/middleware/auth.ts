@@ -135,7 +135,8 @@ export async function optionalAuthMiddleware(c: Context, next: Next) {
         } as AuthContext)
       }
     } catch (error) {
-      // Silently fail for optional auth
+      // Silently fail for optional auth, but log for debugging
+      console.debug('Optional auth failed:', error)
     }
   }
 

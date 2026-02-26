@@ -156,6 +156,8 @@ model User {
   createdProjects    Project[]       @relation("ProjectCreator")
   papersAdded        Paper[]         @relation("PaperCreator")
   emailVerification  EmailVerificationCode?
+  protocolDrafts     ProtocolDraft[]
+  notifications      Notification[]
 
   @@map("users")
   @@schema("neorelis_default")
@@ -831,5 +833,53 @@ model UserCreation {
   active           Int    @default(1) @map("user_creation_active")
 
   @@map("user_creation")
+  @@schema("neorelis_default")
+}
+
+model ProtocolDraft {
+  id          String   @id @default(uuid()) @map("draft_id") @db.Uuid
+  creatorId   String   @map("creator_id") @db.Uuid
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  name        String   @default("Untitled Draft") @map("draft_name") @db.VarChar(200)
+  currentStep Int      @default(0) @map("current_step")
+  formData    Json     @map("form_data")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([creatorId])
+  @@map("protocol_drafts")
+  @@schema("neorelis_default")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  PROJECT_CREATED
+  DRAFT_SAVED
+  PROJECT_MEMBER_ADDED
+  PROJECT_MEMBER_REMOVED
+  PROJECT_ROLE_CHANGED
+  SCREENING_ASSIGNED
+  GENERAL
+
+  @@schema("neorelis_default")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @map("notification_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @map("notification_type")
+  title     String           @map("notification_title") @db.VarChar(200)
+  message   String           @map("notification_message") @db.VarChar(1000)
+  data      Json?            @map("notification_data")
+  read      Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
   @@schema("neorelis_default")
 }

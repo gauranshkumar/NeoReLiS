@@ -121,6 +121,13 @@ export async function archiveProject(projectId: string) {
   })
 }
 
+export async function deleteProjectPermanently(projectId: string) {
+  // Cascade delete: Prisma schema has onDelete: Cascade on child relations
+  return prisma.project.delete({
+    where: { id: projectId },
+  })
+}
+
 export async function findProjectMembers(projectId: string) {
   return prisma.projectMember.findMany({
     where: { projectId, active: 1 },

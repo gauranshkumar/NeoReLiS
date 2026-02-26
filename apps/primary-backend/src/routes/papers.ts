@@ -212,12 +212,17 @@ papers.delete('/:id', authMiddleware, async (c) => {
 papers.post('/import', authMiddleware, zValidator('json', importPapersSchema), async (c) => {
   const body = c.req.valid('json')
 
-  // TODO: Implement actual import logic with bibler service
-  return c.json({
-    message: `Importing papers from ${body.format}`,
-    imported: 0,
-    errors: [],
-  }, 202)
+  try {
+    // TODO: Implement actual import logic with bibler service
+    return c.json({
+      message: `Importing papers from ${body.format}`,
+      imported: 0,
+      errors: [],
+    }, 202)
+  } catch (error) {
+    console.error('Import papers error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to import papers' }, 500)
+  }
 })
 
 // GET /api/v1/papers/:id/export - Export paper as BibTeX/CSV
@@ -225,24 +230,34 @@ papers.get('/:id/export', authMiddleware, async (c) => {
   const id = c.req.param('id')
   const format = c.req.query('format') || 'bibtex'
 
-  // TODO: Implement actual export
-  return c.json({
-    format,
-    content: '',
-  })
+  try {
+    // TODO: Implement actual export
+    return c.json({
+      format,
+      content: '',
+    })
+  } catch (error) {
+    console.error('Export paper error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to export paper' }, 500)
+  }
 })
 
 // POST /api/v1/papers/export - Export multiple papers
 papers.post('/export', authMiddleware, async (c) => {
-  const body = await c.req.json()
-  const { paperIds, format } = body
+  try {
+    const body = await c.req.json()
+    const { paperIds, format } = body
 
-  // TODO: Implement actual export
-  return c.json({
-    format: format || 'bibtex',
-    content: '',
-    count: paperIds?.length || 0,
-  })
+    // TODO: Implement actual export
+    return c.json({
+      format: format || 'bibtex',
+      content: '',
+      count: paperIds?.length || 0,
+    })
+  } catch (error) {
+    console.error('Export papers error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to export papers' }, 500)
+  }
 })
 
 export default papers

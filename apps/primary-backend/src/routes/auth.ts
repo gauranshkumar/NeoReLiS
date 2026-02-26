@@ -263,14 +263,24 @@ auth.post(
 )
 
 auth.post('/logout', authMiddleware, async (c) => {
-  return c.json({ message: 'Logged out successfully' })
+  try {
+    return c.json({ message: 'Logged out successfully' })
+  } catch (error) {
+    console.error('Logout error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to logout' }, 500)
+  }
 })
 
 auth.get('/me', authMiddleware, async (c) => {
-  const authContext = c.get('user')
-  return c.json({
-    user: userView.userPublic(authContext.user),
-  })
+  try {
+    const authContext = c.get('user')
+    return c.json({
+      user: userView.userPublic(authContext.user),
+    })
+  } catch (error) {
+    console.error('Get current user error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to get current user' }, 500)
+  }
 })
 
 auth.post('/password-reset', zValidator('json', passwordResetSchema), async (c) => {
@@ -294,8 +304,13 @@ auth.post(
   '/password-reset/confirm',
   zValidator('json', passwordResetConfirmSchema),
   async (c) => {
-    // TODO: verify reset token and update password
-    return c.json({ message: 'Password reset successfully' })
+    try {
+      // TODO: verify reset token and update password
+      return c.json({ message: 'Password reset successfully' })
+    } catch (error) {
+      console.error('Password reset confirm error:', error)
+      return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to reset password' }, 500)
+    }
   }
 )
 

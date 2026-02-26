@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { reportingApi } from "@/lib/api";
+import { NotificationBell } from "@/components/dashboard/notification-bell";
 
 export function UnifiedNavbar() {
     const pathname = usePathname();
@@ -101,10 +102,7 @@ export function UnifiedNavbar() {
                 </div>
 
                 <div className="flex items-center gap-4 ml-6">
-                    <button className="relative text-gray-400 hover:text-white transition-colors">
-                        <Bell className="h-5 w-5" />
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-cyan-500"></span>
-                    </button>
+                    <NotificationBell />
                     <div className="h-6 w-px bg-[#333]"></div>
                     <button
                         onClick={() => router.push("/dashboard/projects")}

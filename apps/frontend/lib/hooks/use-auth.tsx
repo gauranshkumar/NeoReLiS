@@ -29,22 +29,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchCurrentUser = useCallback(async () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
 
-    api.setToken(token);
-    const response = await authApi.me();
+      api.setToken(token);
+      const response = await authApi.me();
 
-    if (response.data?.user?.isEmailVerified) {
-      setUser(response.data.user);
-    } else {
+      if (response.data?.user?.isEmailVerified) {
+        setUser(response.data.user);
+      } else {
+        localStorage.removeItem('auth_token');
+        api.setToken(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user:', error);
       localStorage.removeItem('auth_token');
       api.setToken(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
