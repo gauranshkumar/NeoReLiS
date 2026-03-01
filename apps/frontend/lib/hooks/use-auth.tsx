@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { authApi, api, User } from '@/lib/api';
 
 interface AuthContextType {
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const t = useTranslations('errors');
 
   const fetchCurrentUser = useCallback(async () => {
     try {
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    return { success: false, error: 'Login failed' };
+    return { success: false, error: t('loginFailed') };
   };
 
   const logout = async () => {
@@ -100,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    return { success: false, error: 'Registration failed' };
+    return { success: false, error: t('registrationFailed') };
   };
 
   const verifyEmail = async (email: string, code: string) => {
@@ -115,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    return { success: false, error: 'Email verification failed' };
+    return { success: false, error: t('emailVerificationFailed') };
   };
 
   const resendVerificationCode = async (email: string) => {

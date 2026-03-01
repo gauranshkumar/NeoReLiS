@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Search, BookOpen, Users, ChevronRight, Share2, Bell, Bookmark, MoreHorizontal, Loader2 } from "lucide-react";
 import { paperApi, Paper } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useTranslations } from "next-intl";
 
 export default function GlobalSearchPage() {
     return (
@@ -24,6 +25,7 @@ function GlobalSearchContent() {
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get("q") || "";
     const { isAuthenticated } = useAuth();
+    const t = useTranslations("search");
 
     const [query, setQuery] = useState(initialQuery);
     const [results, setResults] = useState<Paper[]>([]);
@@ -93,30 +95,30 @@ function GlobalSearchContent() {
                             setQuery(e.target.value);
                             setPage(1);
                         }}
-                        placeholder="Search papers by title, author, DOI..."
+                        placeholder={t("searchPlaceholder")}
                         className="flex-1 text-lg font-medium text-white bg-transparent border-none outline-none placeholder:text-gray-600"
                     />
                     <span className="ml-auto text-xs text-gray-500 bg-[#1A1D21] px-2 py-1 rounded border border-[#333]">
-                        CMD + K
+                        {t("cmdK")}
                     </span>
                 </div>
 
                 {/* Filters Bar */}
                 <div className="flex items-center gap-3 mb-6 pb-6 border-b border-[#262626]">
                     <button className="bg-cyan-500 rounded px-3 py-1.5 text-xs font-bold text-black flex items-center gap-2">
-                        All Time <ChevronRight className="w-3 h-3 rotate-90" />
+                        {t("allTime")} <ChevronRight className="w-3 h-3 rotate-90" />
                     </button>
                     <button className="bg-[#1A1D21] border border-[#333] rounded px-3 py-1.5 text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2">
-                        <BookOpen className="w-3 h-3" /> Journal <ChevronRight className="w-3 h-3 rotate-90" />
+                        <BookOpen className="w-3 h-3" /> {t("journal")} <ChevronRight className="w-3 h-3 rotate-90" />
                     </button>
                     <button className="bg-[#1A1D21] border border-[#333] rounded px-3 py-1.5 text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2">
-                        <Users className="w-3 h-3" /> Author <ChevronRight className="w-3 h-3 rotate-90" />
+                        <Users className="w-3 h-3" /> {t("author")} <ChevronRight className="w-3 h-3 rotate-90" />
                     </button>
                     <button className="bg-[#1A1D21] border border-[#333] rounded px-3 py-1.5 text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2">
-                        DOI
+                        {t("doi")}
                     </button>
                     <span className="ml-auto text-xs text-gray-500">
-                        {searched ? `${totalResults} result${totalResults !== 1 ? "s" : ""} found` : ""}
+                        {searched ? (totalResults !== 1 ? t("resultsFound", { count: totalResults }) : t("resultFound", { count: totalResults })) : ""}
                     </span>
                 </div>
 
@@ -130,33 +132,33 @@ function GlobalSearchContent() {
                         <div className="text-center py-16">
                             <Search className="w-12 h-12 text-gray-700 mx-auto mb-4" />
                             <p className="text-gray-500 text-sm">
-                                Start typing to search across your papers and projects.
+                                {t("startTyping")}
                             </p>
                         </div>
                     ) : results.length === 0 ? (
                         <div className="text-center py-16">
                             <p className="text-gray-400 text-sm mb-2">
-                                No results found for &quot;{query}&quot;
+                                {t("noResultsFor", { query })}
                             </p>
                             <p className="text-gray-600 text-xs">
-                                Try different keywords or broaden your search.
+                                {t("tryDifferentKeywords")}
                             </p>
                         </div>
                     ) : (
                         results.map((paper) => (
                             <SearchResult
                                 key={paper.id}
-                                journal={paper.source || "UNKNOWN"}
+                                journal={paper.source || t("unknown")}
                                 year={paper.year ? String(paper.year) : "—"}
                                 doi={paper.doi || "—"}
                                 title={paper.title}
-                                snippet={paper.abstract || "No abstract available."}
+                                snippet={paper.abstract || t("noAbstractAvailable")}
                                 authors={
                                     paper.authors && paper.authors.length > 0
                                         ? paper.authors
                                             .map((a) => `${a.firstName} ${a.lastName}`)
                                             .join(", ")
-                                        : "Unknown"
+                                        : t("unknown")
                                 }
                             />
                         ))
@@ -207,13 +209,13 @@ function GlobalSearchContent() {
             {/* Right Sidebar */}
             <div className="w-80 border-l border-[#262626] p-6 bg-[#0A0A0A]">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">
-                    REFINE RESULTS
+                    {t("refineResults")}
                 </h3>
 
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-white">Publication Date</span>
-                        <span className="text-cyan-500 text-xs font-bold">All Years</span>
+                        <span className="text-sm font-bold text-white">{t("publicationDate")}</span>
+                        <span className="text-cyan-500 text-xs font-bold">{t("allYears")}</span>
                     </div>
                     <div className="h-1 bg-[#333] rounded-full relative">
                         <div className="absolute left-0 right-0 h-full bg-cyan-500 rounded-full"></div>
@@ -221,20 +223,20 @@ function GlobalSearchContent() {
                 </div>
 
                 <div className="mb-8">
-                    <span className="text-sm font-bold text-white mb-4 block">Source Filters</span>
+                    <span className="text-sm font-bold text-white mb-4 block">{t("sourceFilters")}</span>
                     <div className="space-y-2 text-sm text-gray-400">
                         <p className="text-xs text-gray-600">
-                            Filters will appear based on available data in your projects.
+                            {t("filtersWillAppear")}
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-3 pt-6 border-t border-[#262626]">
                     <button className="w-full bg-white hover:bg-gray-200 text-black font-bold py-2.5 rounded flex items-center justify-center gap-2 transition-colors">
-                        <Bell className="w-4 h-4" /> Set Search Alert
+                        <Bell className="w-4 h-4" /> {t("setSearchAlert")}
                     </button>
                     <button className="w-full bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white font-bold py-2.5 rounded flex items-center justify-center gap-2 transition-colors">
-                        <Share2 className="w-4 h-4" /> Share Search
+                        <Share2 className="w-4 h-4" /> {t("shareSearch")}
                     </button>
                 </div>
             </div>

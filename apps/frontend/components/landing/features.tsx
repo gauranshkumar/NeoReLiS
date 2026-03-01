@@ -1,26 +1,28 @@
 import { Filter, Users, Database, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function Features() {
+    const t = useTranslations("landing.features");
     const features = [
         {
             icon: <Filter className="w-6 h-6 text-cyan-500" />,
-            title: "Automated Screening",
-            description: "Our proprietary Large Language Models filter thousands of papers in seconds based on your inclusion and exclusion criteria with near-human accuracy."
+            title: t("automatedScreening"),
+            description: t("automatedScreeningDesc")
         },
         {
             icon: <Users className="w-6 h-6 text-cyan-500" />,
-            title: "Real-time Sync",
-            description: "A multiplayer workspace for teams to collaborate on screening and synthesis. See progress as it happens."
+            title: t("realTimeSync"),
+            description: t("realTimeSyncDesc")
         },
         {
             icon: <Database className="w-6 h-6 text-cyan-500" />,
-            title: "Precision Extraction",
-            description: "Automated table generation directly from PDF data points. Export clean CSVs and JSON ready for analysis."
+            title: t("precisionExtraction"),
+            description: t("precisionExtractionDesc")
         },
         {
             icon: <ShieldCheck className="w-6 h-6 text-cyan-500" />,
-            title: "Full Audit Trail",
-            description: "Complete transparency for PRISMA reporting. Every AI decision is cited and reversible."
+            title: t("fullAuditTrail"),
+            description: t("fullAuditTrailDesc")
         }
     ];
 
@@ -28,9 +30,9 @@ export function Features() {
         <section className="bg-[#0A0A0A] py-24 px-6 md:px-12" id="features">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">The Core Trio of Precision</h2>
+                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">{t("title")}</h2>
                     <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-                        ReLiS automates the tedious parts of systematic reviews so you can focus on the breakthrough science.
+                        {t("subtitle")}
                     </p>
                 </div>
 

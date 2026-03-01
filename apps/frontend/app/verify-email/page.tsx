@@ -6,11 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { Loader2, MailCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { verifyEmail, resendVerificationCode } = useAuth();
+  const t = useTranslations("auth.verifyEmail");
+  const tErr = useTranslations("errors");
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -40,7 +43,7 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    setError(result.error || "Email verification failed");
+    setError(result.error || tErr("emailVerificationFailed"));
     setIsVerifying(false);
   };
 
@@ -51,9 +54,9 @@ export default function VerifyEmailPage() {
 
     const result = await resendVerificationCode(email.trim());
     if (result.success) {
-      setMessage("A new verification code has been sent. It expires in 30 minutes.");
+      setMessage(t("codeSentMessage"));
     } else {
-      setError(result.error || "Failed to resend verification code");
+      setError(result.error || tErr("failedToResendCode"));
     }
 
     setIsResending(false);
@@ -66,11 +69,11 @@ export default function VerifyEmailPage() {
 
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-900/30 bg-cyan-950/20 px-3 py-1 text-xs font-medium text-cyan-400 mb-4">
-            <MailCheck className="w-3 h-3" /> EMAIL VERIFICATION
+            <MailCheck className="w-3 h-3" /> {t("badge")}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Verify your email</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{t("title")}</h1>
           <p className="text-gray-400 text-sm mt-2">
-            Enter the 6-digit code sent to your email. The code is valid for 30 minutes.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -89,14 +92,14 @@ export default function VerifyEmailPage() {
         <form onSubmit={handleVerify} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300" htmlFor="email">
-              Email
+              {t("email")}
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@institution.edu"
+              placeholder={t("emailPlaceholder")}
               required
               className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
             />
@@ -104,7 +107,7 @@ export default function VerifyEmailPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300" htmlFor="code">
-              Verification code
+              {t("verificationCode")}
             </label>
             <input
               id="code"
@@ -128,10 +131,10 @@ export default function VerifyEmailPage() {
             {isVerifying ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Verifying...
+                {t("verifying")}
               </>
             ) : (
-              "Verify Email"
+              t("verifyEmail")
             )}
           </button>
         </form>
@@ -145,17 +148,17 @@ export default function VerifyEmailPage() {
           {isResending ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Resending...
+              {t("resending")}
             </>
           ) : (
-            "Resend code"
+            t("resendCode")
           )}
         </button>
 
         <p className="text-gray-500 text-sm text-center mt-6">
-          Back to{" "}
+          {t("backTo")}{" "}
           <Link href="/login" className="text-cyan-500 hover:text-cyan-400 font-medium">
-            Sign in
+            {t("signIn")}
           </Link>
         </p>
       </div>

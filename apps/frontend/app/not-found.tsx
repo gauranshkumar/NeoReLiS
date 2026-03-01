@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Microscope, ArrowLeft } from 'lucide-react';
 import { LandingFooter } from "@/components/landing/footer";
+import { getTranslations } from 'next-intl/server';
 
-export default function NotFound() {
+export default async function NotFound() {
+    const t = await getTranslations('notFound');
     return (
         <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans">
             <main className="flex-1 flex flex-col items-center justify-center px-6 pt-32 pb-12 relative overflow-hidden">
@@ -38,9 +40,9 @@ export default function NotFound() {
 
                 {/* Content */}
                 <div className="text-center max-w-2xl mx-auto space-y-6 mb-12">
-                    <h2 className="text-3xl md:text-5xl font-semibold text-gray-200">Observation Failed</h2>
+                    <h2 className="text-3xl md:text-5xl font-semibold text-gray-200">{t('title')}</h2>
                     <p className="text-gray-400 text-lg md:text-xl leading-relaxed">
-                        This research path leads nowhere. The data point you are looking for has been moved, archived, or never existed in this coordinate.
+                        {t('description')}
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
@@ -49,13 +51,13 @@ export default function NotFound() {
                             className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold transition-all transform hover:scale-105 shadow-xl shadow-cyan-500/20"
                         >
                             <ArrowLeft className="w-5 h-5" />
-                            Return to Dashboard
+                            {t('returnToDashboard')}
                         </Link>
                         <Link
                             href="/support"
                             className="text-gray-400 hover:text-white font-medium transition-colors"
                         >
-                            Report Data Error
+                            {t('reportDataError')}
                         </Link>
                     </div>
                 </div>
@@ -63,16 +65,16 @@ export default function NotFound() {
                 {/* Metadata Footer */}
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-24 text-center">
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Sequence ID</p>
-                        <p className="text-xs font-mono text-cyan-500/60 transition-colors hover:text-cyan-500">NULL_REF_0x7E2</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">{t('sequenceId')}</p>
+                        <p className="text-xs font-mono text-cyan-500/60 transition-colors hover:text-cyan-500">{t('sequenceIdValue')}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Status</p>
-                        <p className="text-xs font-mono text-red-500/60 uppercase transition-colors hover:text-red-500">Undefined_Variable</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">{t('status')}</p>
+                        <p className="text-xs font-mono text-red-500/60 uppercase transition-colors hover:text-red-500">{t('statusValue')}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Location</p>
-                        <p className="text-xs font-mono text-cyan-500/60 uppercase transition-colors hover:text-cyan-500">Hidden_Sector</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">{t('location')}</p>
+                        <p className="text-xs font-mono text-cyan-500/60 uppercase transition-colors hover:text-cyan-500">{t('locationValue')}</p>
                     </div>
                 </div>
             </main>

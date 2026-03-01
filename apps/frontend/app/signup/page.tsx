@@ -6,10 +6,13 @@ import Link from "next/link";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { Lock, Mail, User, Eye, EyeOff, Info, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function SignupPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const t = useTranslations("auth.signup");
+  const tErr = useTranslations("errors");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +42,7 @@ export default function SignupPage() {
     } else if (result.success) {
       router.push("/dashboard");
     } else {
-      setError(result.error || "Registration failed");
+      setError(result.error || tErr("registrationFailed"));
       setIsLoading(false);
     }
   };
@@ -50,10 +53,10 @@ export default function SignupPage() {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
-            <span className="text-cyan-500">systematic</span> <br /> review
+            <span className="text-cyan-500">{t("titleLine1")}</span> <br /> {t("titleLine2")}
           </h1>
           <p className="text-gray-400 text-sm max-w-xs mx-auto">
-            Join ReLiS to streamline your literature reviews with AI-powered precision.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -68,7 +71,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="fullname">
-                Full Name
+                {t("fullName")}
               </label>
               <div className="relative">
                 <input
@@ -76,7 +79,7 @@ export default function SignupPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Jane Doe"
+                  placeholder={t("fullNamePlaceholder")}
                   required
                   className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
@@ -85,7 +88,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="email">
-                Institutional Email
+                {t("institutionalEmail")}
               </label>
               <div className="relative">
                 <input
@@ -93,7 +96,7 @@ export default function SignupPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@university.edu"
+                  placeholder={t("emailPlaceholder")}
                   required
                   className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
@@ -102,7 +105,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="username">
-                Username
+                {t("username")}
               </label>
               <div className="relative">
                 <input
@@ -110,7 +113,7 @@ export default function SignupPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Auto-generated from email"
+                  placeholder={t("usernamePlaceholder")}
                   className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
               </div>
@@ -118,7 +121,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="password">
-                Password
+                {t("password")}
               </label>
               <div className="relative">
                 <input
@@ -156,10 +159,10 @@ export default function SignupPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating account...
+                  {t("creatingAccount")}
                 </>
               ) : (
-                "Create Free Account"
+                t("createFreeAccount")
               )}
             </button>
           </form>
@@ -169,30 +172,30 @@ export default function SignupPage() {
               <div className="w-full border-t border-[#333]"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#0F1115] px-2 text-gray-500">Or continue with</span>
+              <span className="bg-[#0F1115] px-2 text-gray-500">{t("orContinueWith")}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-3 text-sm font-medium transition-colors">
               <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">G</div>
-              Google
+              {t("google")}
             </button>
             <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-3 text-sm font-medium transition-colors">
               <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">ID</div>
-              ORCID
+              {t("orcid")}
             </button>
           </div>
         </div>
 
         <p className="text-gray-500 text-xs mt-8 text-center max-w-xs">
-          By creating an account, you agree to our <Link href="#" className="underline hover:text-gray-300">Terms of Service</Link> and <Link href="#" className="underline hover:text-gray-300">Privacy Policy</Link>.
+          {t("agreementPrefix")} <Link href="#" className="underline hover:text-gray-300">{t("termsOfService")}</Link> {t("and")} <Link href="#" className="underline hover:text-gray-300">{t("privacyPolicy")}</Link>.
         </p>
 
         <p className="text-gray-500 text-sm text-center mt-4">
-          Already have an account?{" "}
+          {t("alreadyHaveAccount")}{" "}
           <Link href="/login" className="text-cyan-500 hover:text-cyan-400 font-medium">
-            Sign in
+            {t("signIn")}
           </Link>
         </p>
       </div>

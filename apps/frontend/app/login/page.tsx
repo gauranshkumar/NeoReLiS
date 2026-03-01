@@ -6,10 +6,13 @@ import Link from "next/link";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const t = useTranslations("auth.login");
+  const tErr = useTranslations("errors");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +32,7 @@ export default function LoginPage() {
       const verificationEmail = result.email || email;
       router.push(`/verify-email?email=${encodeURIComponent(verificationEmail)}`);
     } else {
-      setError(result.error || "Login failed");
+      setError(result.error || tErr("loginFailed"));
       setIsLoading(false);
     }
   };
@@ -42,10 +45,10 @@ export default function LoginPage() {
 
         <div className="flex flex-col items-center mb-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-900/30 bg-cyan-950/20 px-3 py-1 text-xs font-medium text-cyan-400 mb-4">
-            <Lock className="w-3 h-3" /> ENCRYPTED SESSION
+            <Lock className="w-3 h-3" /> {t("encryptedSession")}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Sign in to ReLiS</h1>
-          <p className="text-gray-400 text-sm mt-2">Secure research environment for professionals</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{t("title")}</h1>
+          <p className="text-gray-400 text-sm mt-2">{t("subtitle")}</p>
         </div>
 
         {error && (
@@ -57,7 +60,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300" htmlFor="email">
-              Research Email
+              {t("researchEmail")}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -66,7 +69,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@institution.edu"
+                placeholder={t("emailPlaceholder")}
                 required
                 className="w-full bg-[#1A1D21] border border-[#333] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
               />
@@ -76,10 +79,10 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-300" htmlFor="password">
-                Password
+                {t("password")}
               </label>
               <Link href="#" className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors">
-                Forgot password?
+                {t("forgotPassword")}
               </Link>
             </div>
             <div className="relative">
@@ -111,11 +114,11 @@ export default function LoginPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Signing in...
+                {t("signingIn")}
               </>
             ) : (
               <>
-                Sign In
+                {t("signIn")}
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6.66669 12.6667L11.3334 8.00001L6.66669 3.33334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -129,7 +132,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-[#333]"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#0F1115] px-2 text-gray-500">Or continue with</span>
+            <span className="bg-[#0F1115] px-2 text-gray-500">{t("orContinueWith")}</span>
           </div>
         </div>
 
@@ -137,19 +140,19 @@ export default function LoginPage() {
           <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
             {/* Google Icon Proxy */}
             <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">G</div>
-            Google
+            {t("google")}
           </button>
           <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
             {/* ORCID Icon Proxy */}
             <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">ID</div>
-            ORCID
+            {t("orcid")}
           </button>
         </div>
 
         <p className="text-gray-500 text-sm text-center mt-6">
-          Don't have an account?{" "}
+          {t("dontHaveAccount")}{" "}
           <Link href="/signup" className="text-cyan-500 hover:text-cyan-400 font-medium">
-            Sign up
+            {t("signUp")}
           </Link>
         </p>
       </div>

@@ -18,11 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, Project } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { user, logout, isAuthenticated } = useAuth();
+    const t = useTranslations("sidebar");
     const [recentProjects, setRecentProjects] = useState<Project[]>([]);
     const [projectsLoading, setProjectsLoading] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -73,11 +75,11 @@ export function Sidebar() {
     }, [showProfileMenu]);
 
     const navItems = [
-        { name: "Overview", href: "/dashboard", icon: LayoutGrid },
-        { name: "Projects", href: "/dashboard/projects", icon: LayoutGrid },
-        { name: "Global Search", href: "/dashboard/search", icon: Search },
-        { name: "Synthesis", href: "/dashboard/synthesis", icon: Layers },
-        { name: "Library", href: "/dashboard/library", icon: Library },
+        { name: t("overview"), href: "/dashboard", icon: LayoutGrid },
+        { name: t("projects"), href: "/dashboard/projects", icon: LayoutGrid },
+        { name: t("globalSearch"), href: "/dashboard/search", icon: Search },
+        { name: t("synthesis"), href: "/dashboard/synthesis", icon: Layers },
+        { name: t("library"), href: "/dashboard/library", icon: Library },
     ];
 
     const statusColors: Record<string, string> = {
@@ -116,17 +118,17 @@ export function Sidebar() {
 
                 <div>
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        Workspace
+                        {t("workspace")}
                     </h3>
                     <nav className="space-y-1">
                         {projectsLoading ? (
                             <div className="flex items-center gap-3 px-3 py-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-                                <span className="text-xs text-gray-500">Loading...</span>
+                                <span className="text-xs text-gray-500">{t("loading")}</span>
                             </div>
                         ) : recentProjects.length === 0 ? (
                             <div className="px-3 py-2">
-                                <p className="text-xs text-gray-600">No projects yet</p>
+                                <p className="text-xs text-gray-600">{t("noProjectsYet")}</p>
                             </div>
                         ) : (
                             recentProjects.map((project) => (
@@ -162,7 +164,7 @@ export function Sidebar() {
                                     )}
                                 >
                                     <Settings className="w-4 h-4" />
-                                    <span className="text-sm font-medium">Settings</span>
+                                    <span className="text-sm font-medium">{t("settings")}</span>
                                 </button>
                                 <div className="h-px bg-[#262626]"></div>
                                 <button
@@ -170,7 +172,7 @@ export function Sidebar() {
                                     className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-300 hover:bg-[#0A0A0A] hover:text-red-400 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" />
-                                    <span className="text-sm font-medium">Logout</span>
+                                    <span className="text-sm font-medium">{t("logout")}</span>
                                 </button>
                             </div>
                         )}
@@ -203,7 +205,7 @@ export function Sidebar() {
                         className="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-[#1A1D21] hover:text-white transition-colors"
                     >
                         <User className="w-5 h-5" />
-                        <span className="text-sm">Sign In</span>
+                        <span className="text-sm">{t("signIn")}</span>
                     </Link>
                 )}
             </div>

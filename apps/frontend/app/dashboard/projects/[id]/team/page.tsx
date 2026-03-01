@@ -23,6 +23,7 @@ import {
   ProjectMember,
   UserSearchResult,
 } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 const ROLES = ["MANAGER", "REVIEWER", "VALIDATOR", "VIEWER"] as const;
 type Role = (typeof ROLES)[number];
@@ -73,6 +74,9 @@ export default function TeamManagementPage({
     currentMember?.role === "ADMIN" ||
     currentMember?.role === "MANAGER" ||
     project?.creator?.id === user?.id;
+
+  const t = useTranslations("projects.team");
+  const tErr = useTranslations("errors");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -160,7 +164,7 @@ export default function TeamManagementPage({
     if (res.error) {
       setError(res.error.message);
     } else {
-      showSuccess(`${userResult.name} added as ${selectedRole}`);
+      showSuccess(t("addedAs", { name: userResult.name, role: selectedRole }));
       setSearchQuery("");
       setShowDropdown(false);
       await fetchData();
@@ -173,7 +177,7 @@ export default function TeamManagementPage({
     if (res.error) {
       setError(res.error.message);
     } else {
-      showSuccess("Role updated");
+      showSuccess(t("roleUpdated"));
       setMembers((prev) =>
         prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
       );
@@ -187,7 +191,7 @@ export default function TeamManagementPage({
     if (res.error) {
       setError(res.error.message);
     } else {
-      showSuccess("Member removed");
+      showSuccess(t("memberRemoved"));
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
     }
     setRemovingMemberId(null);
@@ -208,10 +212,10 @@ export default function TeamManagementPage({
           href={`/dashboard/projects/${projectId}`}
           className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-8 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Project
+          <ArrowLeft className="w-4 h-4" /> {t("backToProject")}
         </Link>
         <div className="p-12 bg-[#1A1D21] border border-[#262626] rounded-xl text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-white mb-2">{tErr("projectNotFoundOrNoAccess")}</h2>
           <p className="text-gray-400 text-sm">{error}</p>
         </div>
       </div>
@@ -225,7 +229,7 @@ export default function TeamManagementPage({
         href={`/dashboard/projects/${projectId}`}
         className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-6 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Project
+        <ArrowLeft className="w-4 h-4" /> {t("backToProject")}
       </Link>
 
       {/* Header */}
@@ -233,11 +237,11 @@ export default function TeamManagementPage({
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Users className="w-6 h-6 text-cyan-500" />
-            <h1 className="text-2xl font-bold text-white">Team Members</h1>
+            <h1 className="text-2xl font-bold text-white">{t("teamMembers")}</h1>
           </div>
           <p className="text-gray-500 text-sm">
-            {project?.title} — {members.length} member
-            {members.length !== 1 ? "s" : ""}
+            {project?.title} — {members.length}{" "}
+            {members.length !== 1 ? t("members") : t("member")}
           </p>
         </div>
       </div>
@@ -264,7 +268,7 @@ export default function TeamManagementPage({
         <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-6 mb-6">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
-            Add Members
+            {t("addMembers")}
           </h2>
 
           <div className="flex gap-3">
@@ -289,7 +293,7 @@ export default function TeamManagementPage({
               <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by name, username, or email..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
@@ -305,8 +309,8 @@ export default function TeamManagementPage({
                   {searchResults.length === 0 ? (
                     <div className="px-4 py-8 text-center text-gray-500 text-sm">
                       {searchQuery.length < 2
-                        ? "Type at least 2 characters to search"
-                        : "No users found"}
+                        ? t("typeAtLeast2Chars")
+                        : t("noUsersFound")}
                     </div>
                   ) : (
                     searchResults.map((u) => (
@@ -334,7 +338,7 @@ export default function TeamManagementPage({
                           <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />
                         ) : (
                           <span className="text-xs text-cyan-500 font-medium shrink-0">
-                            + Add as {selectedRole}
+                            {t("addAs", { role: selectedRole })}
                           </span>
                         )}
                       </button>
@@ -351,16 +355,16 @@ export default function TeamManagementPage({
       <div className="bg-[#1A1D21] border border-[#262626] rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-[#262626] flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-            Current Members
+            {t("currentMembers")}
           </h2>
           <span className="text-xs text-gray-600">
-            {members.length} member{members.length !== 1 ? "s" : ""}
+            {members.length} {members.length !== 1 ? t("members") : t("member")}
           </span>
         </div>
 
         {members.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-500 text-sm">
-            No team members yet. Add someone above to get started.
+            {t("noTeamMembersYet")}
           </div>
         ) : (
           <div className="divide-y divide-[#262626]">
@@ -386,12 +390,12 @@ export default function TeamManagementPage({
                         </p>
                         {isCreator && (
                           <span className="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/30">
-                            CREATOR
+                            {t("creator")}
                           </span>
                         )}
                         {isSelf && (
                           <span className="text-[10px] font-bold text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/30">
-                            YOU
+                            {t("you")}
                           </span>
                         )}
                       </div>
@@ -436,7 +440,7 @@ export default function TeamManagementPage({
                         className={`text-xs font-medium px-3 py-1.5 rounded-full border ${
                           roleColors[member.role] || roleColors.VIEWER
                         } ${canManage && !isCreator ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
-                        title={canManage && !isCreator ? "Click to change role" : undefined}
+                        title={canManage && !isCreator ? t("clickToChangeRole") : undefined}
                       >
                         {member.role}
                       </button>
@@ -469,7 +473,7 @@ export default function TeamManagementPage({
       {!canManage && (
         <div className="mt-6 flex items-center gap-2 text-gray-600 text-xs">
           <Shield className="w-4 h-4" />
-          Only project managers and admins can add or remove members.
+          {t("onlyManagersCanManage")}
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { paperApi, Paper } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useTranslations } from "next-intl";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     INCLUDED: { label: "Included", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
@@ -30,6 +31,8 @@ export default function PaperDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
     const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const t = useTranslations("papers");
+    const tErr = useTranslations("errors");
     const [paper, setPaper] = useState<Paper | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -46,7 +49,7 @@ export default function PaperDetailPage() {
             if (res.data?.paper) {
                 setPaper(res.data.paper);
             } else {
-                setError("Paper not found.");
+                setError(tErr("paperNotFound"));
             }
             setLoading(false);
         };
@@ -65,9 +68,9 @@ export default function PaperDetailPage() {
         return (
             <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
                 <FileText className="w-12 h-12 text-gray-700" />
-                <p className="text-gray-400">{error || "Paper not found."}</p>
+                <p className="text-gray-400">{error || tErr("paperNotFound")}</p>
                 <Link href="/dashboard/library" className="text-sm text-cyan-500 hover:underline">
-                    ← Back to Library
+                    ← {t("backToLibrary")}
                 </Link>
             </div>
         );
@@ -75,6 +78,7 @@ export default function PaperDetailPage() {
 
     const status = paper.screeningStatus || paper.status || "PENDING";
     const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["PENDING"];
+    const statusLabel = status === "INCLUDED" ? t("included") : status === "EXCLUDED" ? t("excluded") : status === "PENDING" ? t("undecided") : statusCfg.label;
     const authors =
         paper.authors?.length > 0
             ? paper.authors.map((a) => `${a.firstName ? a.firstName + " " : ""}${a.lastName}`).join(", ")
@@ -116,7 +120,7 @@ export default function PaperDetailPage() {
                     {/* Status + source badges */}
                     <div className="flex items-center gap-3 mb-4">
                         <span className={`text-xs font-bold px-3 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.color}`}>
-                            {statusCfg.label}
+                            {statusLabel}
                         </span>
                         {paper.source && (
                             <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#1A1D21] border border-[#333] text-gray-400">
@@ -173,12 +177,12 @@ export default function PaperDetailPage() {
                         <section className="bg-[#0F1115] border border-[#1E1E1E] rounded-2xl p-7">
                             <div className="flex items-center gap-2 mb-4">
                                 <BookOpen className="w-4 h-4 text-cyan-500" />
-                                <h2 className="text-sm font-bold text-gray-300 uppercase tracking-widest">Abstract</h2>
+                                <h2 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t("abstract")}</h2>
                             </div>
                             {paper.abstract ? (
                                 <p className="text-gray-300 leading-relaxed text-[15px]">{paper.abstract}</p>
                             ) : (
-                                <p className="text-gray-600 italic">No abstract available.</p>
+                                <p className="text-gray-600 italic">{t("noAbstractAvailable")}</p>
                             )}
                         </section>
                     </div>
@@ -218,14 +222,14 @@ export default function PaperDetailPage() {
                         <div className="bg-[#0F1115] border border-[#1E1E1E] rounded-2xl p-5 space-y-4">
                             <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Details</h3>
 
-                            <MetaRow label="Status" value={statusCfg.label} valueClass={statusCfg.color} />
-                            {paper.year && <MetaRow label="Year" value={String(paper.year)} />}
-                            {paper.source && <MetaRow label="Source" value={paper.source} />}
+                            <MetaRow label={t("screeningStatus")} value={statusLabel} valueClass={statusCfg.color} />
+                            {paper.year && <MetaRow label={t("year")} value={String(paper.year)} />}
+                            {paper.source && <MetaRow label={t("source")} value={paper.source} />}
                             {paper.venue && <MetaRow label="Venue" value={`${paper.venue.name} (${paper.venue.type})`} />}
-                            {paper.bibtexKey && <MetaRow label="BibTeX Key" value={paper.bibtexKey} mono />}
+                            {paper.bibtexKey && <MetaRow label={t("bibtex")} value={paper.bibtexKey} mono />}
                             {paper.doi && (
                                 <div className="flex justify-between items-start gap-2 py-2 border-t border-[#1E1E1E]">
-                                    <span className="text-xs text-gray-600 shrink-0">DOI</span>
+                                    <span className="text-xs text-gray-600 shrink-0">{t("doi")}</span>
                                     <a
                                         href={`https://doi.org/${paper.doi}`}
                                         target="_blank"
@@ -241,7 +245,7 @@ export default function PaperDetailPage() {
                         {/* Authors card */}
                         {paper.authors?.length > 0 && (
                             <div className="bg-[#0F1115] border border-[#1E1E1E] rounded-2xl p-5">
-                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Authors</h3>
+                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{t("authors")}</h3>
                                 <div className="space-y-2">
                                     {paper.authors.map((a, i) => (
                                         <div key={i} className="flex items-center gap-2">

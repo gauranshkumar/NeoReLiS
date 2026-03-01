@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Search, Filter, ArrowUp, Grid, List, Plus, FileText, Bookmark, MessageSquare, Loader2 } from "lucide-react";
 import { paperApi, Paper, projectApi, Project } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useTranslations } from "next-intl";
 
 type ViewMode = "grid" | "list";
 type SortKey = "year" | "title" | "createdAt";
 
 export default function LibraryPage() {
+    const t = useTranslations("library");
     const { isAuthenticated } = useAuth();
     const [papers, setPapers] = useState<Paper[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
@@ -92,10 +94,9 @@ export default function LibraryPage() {
                         <span className="text-gray-600">›</span>
                         <span className="text-white font-medium">Library</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Research Library</h1>
+                    <h1 className="text-2xl font-bold text-white">{t("title")}</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        {total} paper{total !== 1 ? "s" : ""} stored across{" "}
-                        {projects.length} project{projects.length !== 1 ? "s" : ""}
+                        {t("papersImported", { total, count: projects.length })}
                     </p>
                 </div>
 
@@ -109,12 +110,12 @@ export default function LibraryPage() {
                                 setSearchQuery(e.target.value);
                                 setPage(1);
                             }}
-                            placeholder="Search papers, authors, or citations..."
+                            placeholder={t("searchPlaceholder")}
                             className="w-full bg-[#1A1D21] border border-[#333] rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500"
                         />
                     </div>
                     <button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors">
-                        <ArrowUp className="w-4 h-4" /> Bulk Import
+                        <ArrowUp className="w-4 h-4" /> {t("importPapers")}
                     </button>
                 </div>
             </div>
@@ -133,7 +134,7 @@ export default function LibraryPage() {
                     className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1D21] border border-[#333] rounded text-xs font-bold text-gray-400 hover:text-white"
                 >
                     <List className="w-3 h-3" /> Sort by{" "}
-                    {sortKey === "year" ? "Year" : sortKey === "title" ? "Title" : "Date Added"}
+                    {sortKey === "year" ? t("year") : sortKey === "title" ? "Title" : "Date Added"}
                 </button>
                 <div className="flex bg-[#1A1D21] rounded border border-[#333] p-0.5">
                     <button
@@ -160,9 +161,9 @@ export default function LibraryPage() {
                 ) : sortedPapers.length === 0 && !searchQuery ? (
                     <div className="text-center py-24">
                         <FileText className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-                        <p className="text-gray-400 mb-2">Your library is empty.</p>
+                        <p className="text-gray-400 mb-2">{t("noPapersYet")}</p>
                         <p className="text-gray-600 text-sm">
-                            Import papers into your projects to see them here.
+                            {t("noPapersDesc")}
                         </p>
                     </div>
                 ) : sortedPapers.length === 0 ? (
@@ -187,7 +188,7 @@ export default function LibraryPage() {
                                     ? paper.authors
                                         .map((a) => `${a.lastName}, ${a.firstName?.[0] || ""}.`)
                                         .join(", ")
-                                    : "Unknown";
+                                    : t("unknown");
                             const meta = `${authors} • ${paper.year || "—"} • ${paper.source || "—"}`;
 
                             if (viewMode === "list") {
@@ -235,8 +236,8 @@ export default function LibraryPage() {
                                 <div className="w-12 h-12 rounded-full bg-[#1A1D21] border border-[#333] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                     <Plus className="w-6 h-6 text-gray-500 group-hover:text-white" />
                                 </div>
-                                <span className="text-sm font-bold text-white mb-1">Drop PDF here</span>
-                                <span className="text-xs text-gray-500">or click to browse</span>
+                                <span className="text-sm font-bold text-white mb-1">{t("importPapersToGetStarted")}</span>
+                                <span className="text-xs text-gray-500">{t("chooseFile")}</span>
                             </div>
                         )}
                     </div>

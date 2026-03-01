@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, Project, ProjectSettings } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 type SettingsTab = "general" | "workflow" | "danger";
 
@@ -61,6 +62,9 @@ export default function ProjectSettingsPage({
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [archiving, setArchiving] = useState(false);
+
+  const t = useTranslations("projects.settings");
+  const tErr = useTranslations("errors");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -125,7 +129,7 @@ export default function ProjectSettingsPage({
       if (res.error) {
         setSaveError(res.error.message);
       } else {
-        setSaveMsg("Project details saved successfully.");
+        setSaveMsg(t("projectDetailsSaved"));
         if (res.data) setProject(res.data.project);
       }
     } finally {
@@ -151,7 +155,7 @@ export default function ProjectSettingsPage({
       if (res.error) {
         setSaveError(res.error.message);
       } else {
-        setSaveMsg("Workflow settings saved successfully.");
+        setSaveMsg(t("workflowSettingsSaved"));
         if (res.data) setSettings(res.data.settings);
       }
     } finally {
@@ -206,9 +210,9 @@ export default function ProjectSettingsPage({
           <ArrowLeft className="w-4 h-4" /> Back to Projects
         </Link>
         <div className="p-12 bg-[#1A1D21] border border-[#262626] rounded-xl text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Not Found</h2>
+          <h2 className="text-xl font-bold text-white mb-2">{tErr("notFound")}</h2>
           <p className="text-gray-400 text-sm">
-            {error || "Project not found or you don't have access."}
+            {error || tErr("projectNotFoundOrNoAccess")}
           </p>
         </div>
       </div>
@@ -216,9 +220,9 @@ export default function ProjectSettingsPage({
   }
 
   const tabs: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { key: "general", label: "General", icon: <Settings2 className="w-4 h-4" /> },
-    { key: "workflow", label: "Workflow", icon: <Sliders className="w-4 h-4" /> },
-    { key: "danger", label: "Danger Zone", icon: <Shield className="w-4 h-4" /> },
+    { key: "general", label: t("general"), icon: <Settings2 className="w-4 h-4" /> },
+    { key: "workflow", label: t("workflow"), icon: <Sliders className="w-4 h-4" /> },
+    { key: "danger", label: t("dangerZone"), icon: <Shield className="w-4 h-4" /> },
   ];
 
   const hasGeneralChanges =
@@ -245,12 +249,12 @@ export default function ProjectSettingsPage({
         href={`/dashboard/projects/${id}`}
         className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-6 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Project
+        <ArrowLeft className="w-4 h-4" /> {t("backToProject")}
       </Link>
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-1">Project Settings</h1>
+        <h1 className="text-2xl font-bold text-white mb-1">{t("projectSettings")}</h1>
         <p className="text-gray-500 text-sm">{project.title}</p>
       </div>
 
@@ -273,23 +277,23 @@ export default function ProjectSettingsPage({
         {/* Sidebar */}
         <nav className="w-48 shrink-0">
           <ul className="space-y-1">
-            {tabs.map((t) => (
-              <li key={t.key}>
+            {tabs.map((tab) => (
+              <li key={tab.key}>
                 <button
                   onClick={() => {
-                    setActiveTab(t.key);
+                    setActiveTab(tab.key);
                     clearMessages();
                   }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === t.key
+                    activeTab === tab.key
                       ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                      : t.key === "danger"
+                      : tab.key === "danger"
                         ? "text-red-400 hover:bg-red-500/10 border border-transparent"
                         : "text-gray-400 hover:bg-[#1A1D21] border border-transparent"
                   }`}
                 >
-                  {t.icon}
-                  {t.label}
+                  {tab.icon}
+                  {tab.label}
                 </button>
               </li>
             ))}
@@ -303,41 +307,41 @@ export default function ProjectSettingsPage({
             <div className="space-y-6">
               <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">
-                  General Information
+                  {t("generalInformation")}
                 </h2>
 
                 {/* Title */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Project Name
+                    {t("projectName")}
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
-                    placeholder="Project name"
+                    placeholder={t("projectNamePlaceholder")}
                   />
                 </div>
 
                 {/* Description */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description
+                    {t("description")}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
                     className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
-                    placeholder="Brief description of the project"
+                    placeholder={t("descriptionPlaceholder")}
                   />
                 </div>
 
                 {/* Status */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Status
+                    {t("status")}
                   </label>
                   <select
                     value={status}
@@ -346,16 +350,16 @@ export default function ProjectSettingsPage({
                     }
                     className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                   >
-                    <option value="DRAFT">Draft</option>
-                    <option value="PUBLISHED">Published (Active)</option>
-                    <option value="ARCHIVED">Archived</option>
+                    <option value="DRAFT">{t("statusDraft")}</option>
+                    <option value="PUBLISHED">{t("statusPublished")}</option>
+                    <option value="ARCHIVED">{t("statusArchived")}</option>
                   </select>
                 </div>
 
                 {/* Label (read-only) */}
                 <div className="mb-1">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Project Label
+                    {t("projectLabel")}
                   </label>
                   <input
                     type="text"
@@ -364,7 +368,7 @@ export default function ProjectSettingsPage({
                     className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-2.5 text-gray-500 text-sm cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    The project label cannot be changed after creation.
+                    {t("labelCannotChange")}
                   </p>
                 </div>
               </div>
@@ -381,7 +385,7 @@ export default function ProjectSettingsPage({
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  Save Changes
+                  {t("saveChanges")}
                 </button>
               </div>
             </div>
@@ -393,18 +397,18 @@ export default function ProjectSettingsPage({
               {/* Import & Source */}
               <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">
-                  Import & Sources
+                  {t("importAndSources")}
                 </h2>
                 <div className="space-y-4">
                   <Toggle
-                    label="Import Papers"
-                    description="Allow importing papers from CSV, BibTeX, or other formats"
+                    label={t("importPapers")}
+                    description={t("importPapersDesc")}
                     checked={importPapersOn}
                     onChange={setImportPapersOn}
                   />
                   <Toggle
-                    label="Source Papers"
-                    description="Track sources / databases for imported papers"
+                    label={t("sourcePapers")}
+                    description={t("sourcePapersDesc")}
                     checked={sourcePapersOn}
                     onChange={setSourcePapersOn}
                   />
@@ -414,12 +418,12 @@ export default function ProjectSettingsPage({
               {/* Screening */}
               <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">
-                  Screening
+                  {t("screening")}
                 </h2>
                 <div className="space-y-5">
                   <Toggle
-                    label="Enable Screening"
-                    description="Enable the screening workflow for this project"
+                    label={t("enableScreening")}
+                    description={t("enableScreeningDesc")}
                     checked={screeningOn}
                     onChange={setScreeningOn}
                   />
@@ -428,7 +432,7 @@ export default function ProjectSettingsPage({
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Reviewers per Paper
+                          {t("reviewersPerPaper")}
                         </label>
                         <input
                           type="number"
@@ -446,35 +450,35 @@ export default function ProjectSettingsPage({
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Conflict Type
+                          {t("conflictType")}
                         </label>
                         <select
                           value={screeningConflictType}
                           onChange={(e) => setScreeningConflictType(e.target.value)}
                           className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                         >
-                          <option value="INCLUDE_EXCLUDE">Include / Exclude</option>
-                          <option value="CRITERIA_BASED">Criteria Based</option>
+                          <option value="INCLUDE_EXCLUDE">{t("includeExclude")}</option>
+                          <option value="CRITERIA_BASED">{t("criteriaBased")}</option>
                         </select>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Conflict Resolution
+                          {t("conflictResolution")}
                         </label>
                         <select
                           value={screeningConflictRes}
                           onChange={(e) => setScreeningConflictRes(e.target.value)}
                           className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                         >
-                          <option value="UNANIMITY">Unanimity</option>
-                          <option value="MAJORITY">Majority</option>
+                          <option value="UNANIMITY">{t("unanimity")}</option>
+                          <option value="MAJORITY">{t("majority")}</option>
                         </select>
                       </div>
 
                       <Toggle
-                        label="Screening Validation"
-                        description="Require validation of screening decisions"
+                        label={t("screeningValidation")}
+                        description={t("screeningValidationDesc")}
                         checked={screeningValidationOn}
                         onChange={setScreeningValidationOn}
                       />
@@ -482,7 +486,7 @@ export default function ProjectSettingsPage({
                       {screeningValidationOn && (
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Validation Percentage
+                            {t("validationPercentage")}
                           </label>
                           <div className="flex items-center gap-3">
                             <input
@@ -510,11 +514,11 @@ export default function ProjectSettingsPage({
               {/* Classification / Extraction */}
               <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">
-                  Data Extraction
+                  {t("dataExtraction")}
                 </h2>
                 <Toggle
-                  label="Enable Data Extraction"
-                  description="Enable the data extraction / classification workflow"
+                  label={t("enableDataExtraction")}
+                  description={t("enableDataExtractionDesc")}
                   checked={classificationOn}
                   onChange={setClassificationOn}
                 />
@@ -532,7 +536,7 @@ export default function ProjectSettingsPage({
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  Save Workflow Settings
+                  {t("saveWorkflowSettings")}
                 </button>
               </div>
             </div>
@@ -547,11 +551,10 @@ export default function ProjectSettingsPage({
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-white font-semibold mb-1">
-                        Archive this project
+                        {t("archiveThisProject")}
                       </h3>
                       <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-                        Mark the project as archived. It will no longer appear in the
-                        active projects list but can be restored later.
+                        {t("archiveDescription")}
                       </p>
                     </div>
                     <button
@@ -564,7 +567,7 @@ export default function ProjectSettingsPage({
                       ) : (
                         <Archive className="w-4 h-4" />
                       )}
-                      Archive Project
+                      {t("archiveProject")}
                     </button>
                   </div>
                 </div>
@@ -575,12 +578,11 @@ export default function ProjectSettingsPage({
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-white font-semibold mb-1">
-                      Delete this project
+                      {t("deleteThisProject")}
                     </h3>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-                      Permanently delete this project and all its data, including
-                      papers, screening decisions, extraction data, and team
-                      memberships. <span className="text-red-400 font-medium">This action cannot be undone.</span>
+                      {t("deleteDescription")}{" "}
+                      <span className="text-red-400 font-medium">{t("cannotBeUndone")}</span>
                     </p>
                   </div>
                 </div>
@@ -591,22 +593,23 @@ export default function ProjectSettingsPage({
                     className="flex items-center gap-2 px-4 py-2 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg text-sm font-medium transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete Project
+                    {t("deleteProject")}
                   </button>
                 ) : (
                   <div className="mt-4 p-4 bg-red-500/5 border border-red-500/20 rounded-lg">
                     <div className="flex items-center gap-2 text-red-400 text-sm font-medium mb-3">
                       <AlertTriangle className="w-4 h-4" />
-                      Are you absolutely sure?
+                      {t("areYouAbsolutelySure")}
                     </div>
                     <p className="text-gray-400 text-sm mb-3">
-                      Type <span className="text-white font-mono bg-[#0A0A0A] px-1.5 py-0.5 rounded">{project.title}</span> to confirm:
+                      {t("typeToConfirm")}{" "}
+                      <span className="text-white font-mono bg-[#0A0A0A] px-1.5 py-0.5 rounded">{project.title}</span>
                     </p>
                     <input
                       type="text"
                       value={deleteInput}
                       onChange={(e) => setDeleteInput(e.target.value)}
-                      placeholder="Enter project name to confirm"
+                      placeholder={t("enterProjectNameToConfirm")}
                       className="w-full bg-[#0A0A0A] border border-red-500/30 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-red-500/50 transition-colors mb-3"
                     />
                     <div className="flex items-center gap-3">
@@ -620,7 +623,7 @@ export default function ProjectSettingsPage({
                         ) : (
                           <Trash2 className="w-4 h-4" />
                         )}
-                        I understand, delete this project
+                        {t("iUnderstandDelete")}
                       </button>
                       <button
                         onClick={() => {
@@ -629,7 +632,7 @@ export default function ProjectSettingsPage({
                         }}
                         className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
                       >
-                        Cancel
+                        {t("cancel")}
                       </button>
                     </div>
                   </div>

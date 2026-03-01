@@ -1,9 +1,12 @@
+import { useTranslations } from "next-intl";
+
 export function Stats() {
+    const t = useTranslations("landing.stats");
     const stats = [
-        { label: "PAPERS PROCESSED", value: "12M+" },
-        { label: "TIME SAVED", value: "85%" },
-        { label: "AI ACCURACY", value: "99.8%" },
-        { label: "INSTITUTIONS", value: "50+" },
+        { label: t("papersProcessed"), value: t("papersProcessedValue") },
+        { label: t("timeSaved"), value: t("timeSavedValue") },
+        { label: t("aiAccuracy"), value: t("aiAccuracyValue") },
+        { label: t("institutions"), value: t("institutionsValue") },
     ];
 
     return (

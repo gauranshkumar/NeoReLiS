@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { Share2, Settings, Download, ChevronDown, ChevronRight, Sliders, Activity, Loader2 } from "lucide-react";
 import { paperApi, projectApi, Paper, Project } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useTranslations } from "next-intl";
 
 export default function SynthesisPage() {
     const { isAuthenticated } = useAuth();
+    const t = useTranslations("synthesis");
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [papers, setPapers] = useState<Paper[]>([]);
@@ -56,11 +58,11 @@ export default function SynthesisPage() {
     const getStatusInfo = (paper: Paper) => {
         switch (paper.status) {
             case "included":
-                return { label: "SELECTED", color: "text-cyan-500", progressColor: "bg-cyan-500", progress: 100 };
+                return { label: t("selected"), color: "text-cyan-500", progressColor: "bg-cyan-500", progress: 100 };
             case "excluded":
-                return { label: "EXCLUDED", color: "text-red-500", progressColor: "bg-red-500", progress: 100 };
+                return { label: t("excluded"), color: "text-red-500", progressColor: "bg-red-500", progress: 100 };
             default:
-                return { label: "PENDING", color: "text-gray-500", progressColor: "bg-gray-700", progress: 0 };
+                return { label: t("pending"), color: "text-gray-500", progressColor: "bg-gray-700", progress: 0 };
         }
     };
 
@@ -92,8 +94,8 @@ export default function SynthesisPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {papers.length === 0 ? (
                         <div className="text-center py-8">
-                            <p className="text-gray-500 text-sm">No papers in this project.</p>
-                            <p className="text-gray-600 text-xs mt-1">Import papers to begin synthesis.</p>
+                            <p className="text-gray-500 text-sm">{t("noPapersInProject")}</p>
+                            <p className="text-gray-600 text-xs mt-1">{t("importPapersToBegin")}</p>
                         </div>
                     ) : (
                         papers.map((paper) => {
@@ -158,11 +160,11 @@ export default function SynthesisPage() {
                                 </option>
                             ))}
                             {projects.length === 0 && (
-                                <option value="" className="bg-[#1A1D21]">No projects</option>
+                                <option value="" className="bg-[#1A1D21]">{t("noProjects")}</option>
                             )}
                         </select>
                         <ChevronRight className="w-4 h-4" />
-                        <span className="text-white font-medium">Synthesis Workspace</span>
+                        <span className="text-white font-medium">{t("synthesisWorkspace")}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex bg-[#1A1D21] rounded p-1">
@@ -173,7 +175,7 @@ export default function SynthesisPage() {
                                         : "text-gray-400 hover:text-white"
                                     }`}
                             >
-                                Quantitative
+                                {t("quantitative")}
                             </button>
                             <button
                                 onClick={() => setAnalysisMode("qualitative")}
@@ -182,11 +184,11 @@ export default function SynthesisPage() {
                                         : "text-gray-400 hover:text-white"
                                     }`}
                             >
-                                Qualitative
+                                {t("qualitative")}
                             </button>
                         </div>
                         <button className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-colors">
-                            <Activity className="w-4 h-4" /> Generate Plot
+                            <Activity className="w-4 h-4" /> {t("generatePlot")}
                         </button>
                         <button className="p-2 text-gray-400 hover:text-white transition-colors">
                             <Share2 className="w-4 h-4" />
@@ -197,18 +199,18 @@ export default function SynthesisPage() {
                 {/* Statistics Bar */}
                 <div className="h-12 border-b border-[#262626] bg-[#0F1115] px-6 flex items-center gap-8 text-sm">
                     <div className="flex flex-col justify-center border-r border-[#262626] pr-8 h-full">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">CURRENT STATISTICS</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase">{t("currentStatistics")}</span>
                         <div className="flex gap-4">
                             <span className="text-gray-400 text-xs">
-                                Total N: <strong className="text-white">{papers.length}</strong>
+                                {t("totalN")}: <strong className="text-white">{papers.length}</strong>
                             </span>
                             <span className="text-gray-400 text-xs">
-                                Selected: <strong className="text-white">
+                                {t("selectedCount")}: <strong className="text-white">
                                     {papers.filter((p) => p.status === "included").length}
                                 </strong>
                             </span>
                             <span className="text-gray-400 text-xs">
-                                Pending: <strong className="text-cyan-400">
+                                {t("pendingCount")}: <strong className="text-cyan-400">
                                     {papers.filter((p) => !p.status || p.status === "pending").length}
                                 </strong>
                             </span>
@@ -216,10 +218,10 @@ export default function SynthesisPage() {
                     </div>
                     <div>
                         <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">
-                            MODEL TYPE
+                            {t("modelType")}
                         </span>
                         <button className="flex items-center gap-1 text-xs font-bold text-white hover:text-cyan-400">
-                            Random Effects <ChevronDown className="w-3 h-3" />
+                            {t("randomEffects")} <ChevronDown className="w-3 h-3" />
                         </button>
                     </div>
                 </div>
@@ -228,7 +230,7 @@ export default function SynthesisPage() {
                 <div className="flex-1 p-6 overflow-hidden flex flex-col">
                     {!selectedPaper ? (
                         <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-                            Select a paper from the left panel to view synthesis data.
+                            {t("selectPaper")}
                         </div>
                     ) : (
                         <div className="flex-1 bg-[#0A0A0A] border border-[#262626] rounded-xl p-6 relative">
@@ -238,10 +240,10 @@ export default function SynthesisPage() {
                                 </h2>
                                 <div className="flex gap-2">
                                     <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
-                                        <Download className="w-3 h-3" /> SVG
+                                        <Download className="w-3 h-3" /> {t("svg")}
                                     </button>
                                     <button className="flex items-center gap-1 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold px-2 py-1 rounded hover:text-white">
-                                        <Sliders className="w-3 h-3" /> Adjust
+                                        <Sliders className="w-3 h-3" /> {t("adjust")}
                                     </button>
                                 </div>
                             </div>
@@ -250,7 +252,7 @@ export default function SynthesisPage() {
                             <div className="space-y-4 border-t border-[#262626] pt-4">
                                 {selectedPaper.abstract ? (
                                     <div>
-                                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">Abstract</h3>
+                                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">{t("abstract")}</h3>
                                         <p className="text-sm text-gray-300 leading-relaxed">
                                             {selectedPaper.abstract}
                                         </p>

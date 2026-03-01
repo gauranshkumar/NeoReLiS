@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { User, Plus, Eye, Copy, Trash2, RotateCw, FileText, Loader2, Save, X } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { api } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 type SettingsTab = "profile" | "institutional" | "apikeys" | "notifications";
 
@@ -19,6 +20,7 @@ interface NotifPref {
 export default function SettingsPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+    const t = useTranslations("settings");
     const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
     // Profile form state — initialized from the auth user
@@ -32,22 +34,22 @@ export default function SettingsPage() {
     const [notifPrefs, setNotifPrefs] = useState<NotifPref[]>([
         {
             key: "citation",
-            title: "New Citation Found",
-            desc: "Get notified when someone cites your published research.",
+            title: t("emailNotifications"),
+            desc: t("emailNotificationsDesc"),
             icon: <FileText className="w-5 h-5 text-cyan-500" />,
             enabled: true,
         },
         {
             key: "collab",
-            title: "Collaboration Requests",
-            desc: "Alerts for pending invitations to join research teams.",
+            title: t("browserNotifications"),
+            desc: t("browserNotificationsDesc"),
             icon: <User className="w-5 h-5 text-blue-500" />,
             enabled: true,
         },
         {
             key: "system",
-            title: "System Updates",
-            desc: "Weekly digest of platform changes and new features.",
+            title: t("systemUpdates"),
+            desc: t("systemUpdatesDesc"),
             icon: <RotateCw className="w-5 h-5 text-gray-400" />,
             enabled: false,
         },
@@ -84,7 +86,7 @@ export default function SettingsPage() {
         if (res.error) {
             setSaveMsg(`Error: ${res.error.message}`);
         } else {
-            setSaveMsg("Settings saved successfully.");
+            setSaveMsg(t("savedSuccessfully"));
         }
         setSaving(false);
         setTimeout(() => setSaveMsg(""), 3000);
@@ -119,19 +121,19 @@ export default function SettingsPage() {
         : "U";
 
     const tabs: { key: SettingsTab; label: string }[] = [
-        { key: "profile", label: "Profile" },
-        { key: "institutional", label: "Institutional Access" },
-        { key: "apikeys", label: "API Keys" },
-        { key: "notifications", label: "Notifications" },
+        { key: "profile", label: t("profile") },
+        { key: "institutional", label: t("institutionalAccess") },
+        { key: "apikeys", label: t("apiKeysTab") },
+        { key: "notifications", label: t("notifications") },
     ];
 
     return (
         <div className="flex-1 p-8 max-w-5xl mx-auto space-y-12 pb-24">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">{t("title")}</h1>
                 <p className="text-gray-400 mb-6">
-                    Manage your researcher profile, security preferences, and integration keys.
+                    {t("subtitle")}
                 </p>
 
                 <div className="flex gap-8 border-b border-[#262626]">
@@ -168,7 +170,7 @@ export default function SettingsPage() {
             {/* Personal Information */}
             {activeTab === "profile" && (
                 <section>
-                    <h2 className="text-lg font-bold text-white mb-6">Personal Information</h2>
+                    <h2 className="text-lg font-bold text-white mb-6">{t("profileInformation")}</h2>
                     <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-8">
                         <div className="flex items-start gap-6 mb-8">
                             <div className="relative">
@@ -190,7 +192,7 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase block mb-2">
-                                    Full Name
+                                    {t("displayName")}
                                 </label>
                                 <input
                                     type="text"
@@ -201,7 +203,7 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase block mb-2">
-                                    Email Address
+                                    {t("email")}
                                 </label>
                                 <input
                                     type="email"
@@ -214,12 +216,12 @@ export default function SettingsPage() {
 
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase block mb-2">
-                                Biography
+                                {t("biography")}
                             </label>
                             <textarea
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
-                                placeholder="Tell us about your research focus..."
+                                placeholder={t("biographyPlaceholder")}
                                 className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 h-24 resize-none"
                             ></textarea>
                         </div>
@@ -230,12 +232,12 @@ export default function SettingsPage() {
             {/* Institutional Access */}
             {activeTab === "institutional" && (
                 <section>
-                    <h2 className="text-lg font-bold text-white mb-6">Institutional Access</h2>
+                    <h2 className="text-lg font-bold text-white mb-6">{t("institutionalAccess")}</h2>
                     <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-8 text-center">
                         <p className="text-gray-400 mb-4">
-                            Connect your institutional credentials to access licensed databases and journals.
+                            {t("institutionalAccessDesc")}
                         </p>
-                        <p className="text-gray-600 text-sm">This feature is coming soon.</p>
+                        <p className="text-gray-600 text-sm">{t("comingSoon")}</p>
                     </div>
                 </section>
             )}
@@ -245,26 +247,26 @@ export default function SettingsPage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h2 className="text-lg font-bold text-white">API Keys</h2>
+                            <h2 className="text-lg font-bold text-white">{t("apiKeysTitle")}</h2>
                             <p className="text-gray-400 text-sm">
-                                Use these keys to authenticate with the NeoReLiS REST API.
+                                {t("apiKeysDesc")}
                             </p>
                         </div>
                         <button className="bg-cyan-500 hover:bg-cyan-400 text-black text-sm font-bold px-4 py-2 rounded flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Generate New Key
+                            <Plus className="w-4 h-4" /> {t("generateNewKey")}
                         </button>
                     </div>
 
                     <div className="bg-[#0F1115] border border-[#262626] rounded-xl overflow-hidden">
                         <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#1A1D21] border-b border-[#262626] text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                            <div className="col-span-3">KEY NAME</div>
-                            <div className="col-span-5">API KEY</div>
-                            <div className="col-span-2">CREATED</div>
-                            <div className="col-span-2 text-right">ACTIONS</div>
+                            <div className="col-span-3">{t("keyName")}</div>
+                            <div className="col-span-5">{t("apiKey")}</div>
+                            <div className="col-span-2">{t("created")}</div>
+                            <div className="col-span-2 text-right">{t("actions")}</div>
                         </div>
                         {/* Empty state */}
                         <div className="px-6 py-12 text-center text-gray-500 text-sm">
-                            No API keys generated yet. Click &quot;Generate New Key&quot; to create one.
+                            {t("noApiKeys")}
                         </div>
                     </div>
                 </section>
@@ -309,7 +311,7 @@ export default function SettingsPage() {
                     onClick={handleDiscard}
                     className="px-6 py-2.5 rounded border border-[#333] text-gray-400 text-sm font-bold hover:text-white hover:bg-[#1A1D21] transition-colors"
                 >
-                    Discard Changes
+                    {t("discardChanges")}
                 </button>
                 <button
                     onClick={handleSave}
@@ -321,7 +323,7 @@ export default function SettingsPage() {
                     ) : (
                         <Save className="w-4 h-4" />
                     )}
-                    Save Changes
+                    {saving ? t("saving") : t("saveChanges")}
                 </button>
             </div>
         </div>

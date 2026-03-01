@@ -1,20 +1,22 @@
 import { CheckCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function Team() {
+    const t = useTranslations("landing.team");
     return (
         <section className="bg-[#050505] py-24 px-6 md:px-12 border-t border-[#262626]">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div>
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Research is a Team Sport.</h2>
+                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">{t("title")}</h2>
                     <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-                        Stop emailing spreadsheets. ReLiS provides a unified environment where conflict resolution, dual-screening, and quality appraisal happen in one seamless interface.
+                        {t("subtitle")}
                     </p>
 
                     <ul className="space-y-4">
                         {[
-                            "Simultaneous screening with blind mode",
-                            "Internal consensus tools and conflict logs",
-                            "Live commentary and paper tagging"
+                            t("feature1"),
+                            t("feature2"),
+                            t("feature3")
                         ].map((item, idx) => (
                             <li key={idx} className="flex items-center gap-3 text-gray-300">
                                 <CheckCircle className="w-5 h-5 text-cyan-500 shrink-0" />
@@ -46,7 +48,7 @@ export function Team() {
 
                         <div className="pt-4 border-t border-[#333]">
                             <div className="flex justify-between text-xs text-gray-400 mb-2">
-                                <span>Overall Progress</span>
+                                <span>{t("overallProgress")}</span>
                                 <span>72%</span>
                             </div>
                             <div className="h-2 bg-[#222] rounded-full overflow-hidden">

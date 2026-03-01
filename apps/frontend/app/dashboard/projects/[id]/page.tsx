@@ -17,6 +17,7 @@ import {
     Shield,
     ChevronRight,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, Project, ProjectMember, ProjectSettings } from "@/lib/api";
 
@@ -38,6 +39,8 @@ export default function ProjectDetailPage({
     const [settings, setSettings] = useState<ProjectSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
+    const t = useTranslations("projects.detail");
+    const tErr = useTranslations("errors");
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -86,12 +89,12 @@ export default function ProjectDetailPage({
                     href="/dashboard/projects"
                     className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-8 transition-colors"
                 >
-                    <ArrowLeft className="w-4 h-4" /> Back to Projects
+                    <ArrowLeft className="w-4 h-4" /> {t("backToProjects")}
                 </Link>
                 <div className="p-12 bg-[#1A1D21] border border-[#262626] rounded-xl text-center">
-                    <h2 className="text-xl font-bold text-white mb-2">Project Not Found</h2>
+                    <h2 className="text-xl font-bold text-white mb-2">{tErr("projectNotFound")}</h2>
                     <p className="text-gray-400 text-sm">
-                        {error || "The project you're looking for doesn't exist or you don't have access."}
+                        {error || tErr("projectNotFoundDesc")}
                     </p>
                 </div>
             </div>
@@ -111,17 +114,17 @@ export default function ProjectDetailPage({
 
     const workflowSteps = [
         {
-            title: "Import Papers",
-            description: "Upload CSV, BibTeX, or search databases",
+            title: t("importPapers"),
+            description: t("importPapersDesc"),
             icon: Import,
             href: `/dashboard/projects/${id}/papers`,
             enabled: settings?.importPapersOn ?? true,
             stat: project.paperCount ?? 0,
-            statLabel: "papers",
+            statLabel: t("papers"),
         },
         {
-            title: "Screening",
-            description: "Review and filter papers by criteria",
+            title: t("screening"),
+            description: t("screeningDesc"),
             icon: ClipboardCheck,
             href: `/dashboard/projects/${id}/screening`,
             enabled: settings?.screeningOn ?? false,
@@ -129,8 +132,8 @@ export default function ProjectDetailPage({
             statLabel: "",
         },
         {
-            title: "Data Extraction",
-            description: "Extract and classify data from papers",
+            title: t("dataExtraction"),
+            description: t("dataExtractionDesc"),
             icon: FileText,
             href: `/dashboard/projects/${id}/extraction`,
             enabled: settings?.classificationOn ?? false,
@@ -138,8 +141,8 @@ export default function ProjectDetailPage({
             statLabel: "",
         },
         {
-            title: "Reporting",
-            description: "Analyze results and generate charts",
+            title: t("reporting"),
+            description: t("reportingDesc"),
             icon: BarChart3,
             href: `/dashboard/projects/${id}/reporting`,
             enabled: true,
@@ -155,7 +158,7 @@ export default function ProjectDetailPage({
                 href="/dashboard/projects"
                 className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-6 transition-colors"
             >
-                <ArrowLeft className="w-4 h-4" /> Back to Projects
+                <ArrowLeft className="w-4 h-4" /> {t("backToProjects")}
             </Link>
 
             {/* Header */}
@@ -183,7 +186,7 @@ export default function ProjectDetailPage({
                         </span>
                         <span className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5" />
-                            Created{" "}
+                            {t("created")}{" "}
                             {new Date(project.createdAt).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
@@ -198,7 +201,7 @@ export default function ProjectDetailPage({
                         )}
                         {project.role && (
                             <span className="flex items-center gap-1.5 text-cyan-500">
-                                Your role: {project.role}
+                                {t("yourRole")} {project.role}
                             </span>
                         )}
                     </div>
@@ -207,31 +210,31 @@ export default function ProjectDetailPage({
                     href={`/dashboard/projects/${id}/settings`}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#333] bg-[#1A1D21] text-gray-300 hover:text-white hover:border-cyan-500/50 transition-colors text-sm"
                 >
-                    <Settings className="w-4 h-4" /> Settings
+                    <Settings className="w-4 h-4" /> {t("settings")}
                 </Link>
             </div>
 
             {/* Stats Row */}
             <div className="grid grid-cols-4 gap-4 mb-8">
                 <StatCard
-                    label="Papers"
+                    label={t("papers")}
                     value={project.paperCount ?? 0}
                     icon={<FileText className="w-4 h-4 text-cyan-500" />}
                 />
                 <Link href={`/dashboard/projects/${id}/team`}>
                     <StatCard
-                        label="Team Members"
+                        label={t("teamMembers")}
                         value={project.memberCount ?? 0}
                         icon={<Users className="w-4 h-4 text-cyan-500" />}
                     />
                 </Link>
                 <StatCard
-                    label="Screening"
+                    label={t("screening")}
                     value={settings?.screeningOn ? "Enabled" : "Disabled"}
                     icon={<ClipboardCheck className="w-4 h-4 text-cyan-500" />}
                 />
                 <StatCard
-                    label="Reviewers / Paper"
+                    label={t("reviewersPerPaper")}
                     value={settings?.screeningReviewerNum ?? "—"}
                     icon={<Users className="w-4 h-4 text-cyan-500" />}
                 />
@@ -240,7 +243,7 @@ export default function ProjectDetailPage({
             {/* Workflow Steps */}
             <div className="mb-8">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                    Review Workflow
+                    {t("reviewWorkflow")}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {workflowSteps.map((step, idx) => (
@@ -283,13 +286,13 @@ export default function ProjectDetailPage({
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                        Team
+                        {t("teamMembers")}
                     </h2>
                     <Link
                         href={`/dashboard/projects/${id}/team`}
                         className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
                     >
-                        Manage Team →
+                        {t("manageTeam")}
                     </Link>
                 </div>
                 {project.members && project.members.length > 0 ? (
@@ -327,10 +330,10 @@ export default function ProjectDetailPage({
                     >
                         <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
                         <p className="text-gray-400 text-sm font-medium">
-                            Add team members to collaborate
+                            {t("addTeamMembers")}
                         </p>
                         <p className="text-cyan-500 text-xs mt-1">
-                            Click to manage team →
+                            {t("clickToManageTeam")}
                         </p>
                     </Link>
                 )}
@@ -340,18 +343,18 @@ export default function ProjectDetailPage({
             {settings && (
                 <div>
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                        Configuration
+                        {t("configuration")}
                     </h2>
                     <div className="bg-[#1A1D21] border border-[#262626] rounded-xl p-5">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <ConfigItem label="Screening" value={settings.screeningOn ? "On" : "Off"} />
-                            <ConfigItem label="Conflict Type" value={settings.screeningConflictType} />
-                            <ConfigItem label="Conflict Resolution" value={settings.screeningConflictRes} />
-                            <ConfigItem label="Validation %" value={`${settings.validationDefaultPercent}%`} />
-                            <ConfigItem label="Classification" value={settings.classificationOn ? "On" : "Off"} />
-                            <ConfigItem label="Screening Validation" value={settings.screeningValidationOn ? "On" : "Off"} />
-                            <ConfigItem label="Import Papers" value={settings.importPapersOn ? "On" : "Off"} />
-                            <ConfigItem label="Source Papers" value={settings.sourcePapersOn ? "On" : "Off"} />
+                            <ConfigItem label={t("screening")} value={settings.screeningOn ? "On" : "Off"} />
+                            <ConfigItem label={t("conflictType")} value={settings.screeningConflictType} />
+                            <ConfigItem label={t("conflictResolution")} value={settings.screeningConflictRes} />
+                            <ConfigItem label={t("validationPercent")} value={`${settings.validationDefaultPercent}%`} />
+                            <ConfigItem label={t("classification")} value={settings.classificationOn ? "On" : "Off"} />
+                            <ConfigItem label={t("screeningValidation")} value={settings.screeningValidationOn ? "On" : "Off"} />
+                            <ConfigItem label={t("importPapersConfig")} value={settings.importPapersOn ? "On" : "Off"} />
+                            <ConfigItem label={t("sourcePapers")} value={settings.sourcePapersOn ? "On" : "Off"} />
                         </div>
                     </div>
                 </div>

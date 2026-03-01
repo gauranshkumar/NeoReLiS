@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2, ChevronRight, Save, FileText, Trash2, X } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, draftApi, ProtocolDraft } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 // ─── Types mirroring the backend protocol schema ────────────────────
 
@@ -108,12 +109,12 @@ interface ReviewProtocol {
 // ─── Steps ──────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 0, label: "General", description: "Project info" },
-  { id: 1, label: "Screening", description: "Review criteria" },
-  { id: 2, label: "Quality Assessment", description: "QA questions" },
-  { id: 3, label: "Data Extraction", description: "Classification fields" },
-  { id: 4, label: "Reporting", description: "Charts & graphs" },
-  { id: 5, label: "Review & Create", description: "Confirm settings" },
+  { id: 0, label: "general", description: "generalDesc" },
+  { id: 1, label: "screening", description: "screeningDesc" },
+  { id: 2, label: "qualityAssessment", description: "qaDesc" },
+  { id: 3, label: "dataExtraction", description: "dataExtractionDesc" },
+  { id: 4, label: "reporting", description: "reportingDesc" },
+  { id: 5, label: "reviewAndCreate", description: "reviewAndCreateDesc" },
 ];
 
 // ─── Default state ──────────────────────────────────────────────────
@@ -148,6 +149,7 @@ export default function NewProjectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const t = useTranslations("projects.new");
   const [step, setStep] = useState(0);
   const [protocol, setProtocol] = useState<ReviewProtocol>(defaultProtocol);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -383,13 +385,13 @@ export default function NewProjectPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#1A1D21] border border-[#262626] rounded-xl w-full max-w-lg p-6 mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white text-lg font-bold">Resume a Draft?</h2>
+              <h2 className="text-white text-lg font-bold">{t("resumeADraft")}</h2>
               <button onClick={handleStartFresh} className="text-gray-500 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <p className="text-gray-400 text-sm mb-5">
-              You have unsaved drafts from previous sessions. Pick one to continue, or start fresh.
+              {t("resumeDraftDescription")}
             </p>
             <div className="space-y-2 max-h-64 overflow-y-auto mb-5">
               {drafts.map((d) => (
@@ -433,7 +435,7 @@ export default function NewProjectPage() {
                 onClick={handleStartFresh}
                 className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-[#0A0A0A] text-gray-300 border border-[#333] hover:text-white transition-colors"
               >
-                Start Fresh
+                {t("startFresh")}
               </button>
             </div>
           </div>
@@ -449,15 +451,15 @@ export default function NewProjectPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-white text-2xl font-bold">New Review</h1>
+          <h1 className="text-white text-2xl font-bold">{t("newReview")}</h1>
           <p className="text-gray-500 text-sm">
-            Configure your systematic literature review protocol
+            {t("configureProtocol")}
           </p>
         </div>
         {/* Save status indicator */}
         {saveStatus === "saved" && (
           <span className="text-xs text-green-500 flex items-center gap-1 animate-in fade-in">
-            <Check className="w-3 h-3" /> Draft saved
+            <Check className="w-3 h-3" /> {t("draftSaved")}
           </span>
         )}
         {saveStatus === "error" && (
@@ -486,7 +488,7 @@ export default function NewProjectPage() {
                 {i + 1}
               </span>
             )}
-            {s.label}
+            {t(s.label)}
             {i < STEPS.length - 1 && (
               <ChevronRight className="w-3 h-3 text-gray-600 ml-1" />
             )}
@@ -578,7 +580,7 @@ export default function NewProjectPage() {
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              Save Draft
+              {t("saveDraft")}
             </span>
           </button>
 
@@ -599,11 +601,11 @@ export default function NewProjectPage() {
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Creating…
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t("creating")}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <Check className="w-4 h-4" /> Create Review
+                  <Check className="w-4 h-4" /> {t("createReview")}
                 </span>
               )}
             </button>
@@ -623,19 +625,20 @@ function StepGeneral({
   project: ProtocolProject;
   updateProject: (field: keyof ProtocolProject, value: string) => void;
 }) {
+  const t = useTranslations("projects.new");
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">Project Information</h2>
+        <h2 className="text-white text-lg font-bold mb-1">{t("projectInformation")}</h2>
         <p className="text-gray-500 text-sm">
-          Define the basic details of your systematic review.
+          {t("projectInfoDesc")}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Short Name / Label *
+            {t("shortNameLabel")}
           </label>
           <input
             type="text"
@@ -646,23 +649,23 @@ function StepGeneral({
                 e.target.value.replace(/[^a-zA-Z0-9_]/g, "")
               )
             }
-            placeholder="my_review"
+            placeholder={t("shortNamePlaceholder")}
             className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors"
           />
           <p className="text-gray-600 text-xs mt-1">
-            Letters, numbers, underscores only. Used as the project identifier.
+            {t("shortNameHint")}
           </p>
         </div>
 
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Full Title *
+            {t("fullTitle")}
           </label>
           <input
             type="text"
             value={project.name}
             onChange={(e) => updateProject("name", e.target.value)}
-            placeholder="A Systematic Review of…"
+            placeholder={t("fullTitlePlaceholder")}
             className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
@@ -676,7 +679,7 @@ function StepGeneral({
           value={project.description}
           onChange={(e) => updateProject("description", e.target.value)}
           rows={4}
-          placeholder="Describe the scope and goals of your review…"
+          placeholder={t("descriptionPlaceholder")}
           className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors resize-none"
         />
       </div>
@@ -697,6 +700,7 @@ function StepScreening({
   enabled: boolean;
   setEnabled: (v: boolean) => void;
 }) {
+  const t = useTranslations("projects.new");
   const addCriteria = () => {
     updateScreening("exclusion_criteria", [
       ...screening.exclusion_criteria,
@@ -719,14 +723,14 @@ function StepScreening({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white text-lg font-bold mb-1">Screening Configuration</h2>
+          <h2 className="text-white text-lg font-bold mb-1">{t("screeningConfiguration")}</h2>
           <p className="text-gray-500 text-sm">
-            Set up paper review rules and exclusion criteria.
+            {t("screeningConfigDesc")}
           </p>
         </div>
         <label className="flex items-center gap-3 cursor-pointer">
           <span className="text-sm text-gray-400">
-            {enabled ? "Enabled" : "Disabled"}
+            {t("enableScreening")}
           </span>
           <div
             onClick={() => setEnabled(!enabled)}
@@ -748,7 +752,7 @@ function StepScreening({
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Reviewers per Paper
+                {t("reviewersPerPaper")}
               </label>
               <input
                 type="number"
@@ -766,7 +770,7 @@ function StepScreening({
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Validation Percentage
+                {t("validationPercentage")}
               </label>
               <input
                 type="number"
@@ -787,7 +791,7 @@ function StepScreening({
           <div className="grid grid-cols-3 gap-6">
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Conflict Type
+                {t("conflictType")}
               </label>
               <select
                 value={screening.conflict_type}
@@ -796,13 +800,13 @@ function StepScreening({
                 }
                 className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500"
               >
-                <option value="Decision">Decision</option>
-                <option value="Criteria">Criteria</option>
+                <option value="Decision">{t("conflictTypeDecision")}</option>
+                <option value="Criteria">{t("conflictTypeCriteria")}</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Conflict Resolution
+                {t("conflictResolution")}
               </label>
               <select
                 value={screening.conflict_resolution}
@@ -811,8 +815,8 @@ function StepScreening({
                 }
                 className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500"
               >
-                <option value="Unanimity">Unanimity</option>
-                <option value="Majority">Majority</option>
+                <option value="Unanimity">{t("conflictResUnanimity")}</option>
+                <option value="Majority">{t("conflictResMajority")}</option>
               </select>
             </div>
             <div>
@@ -885,6 +889,7 @@ function StepQA({
   enabled: boolean;
   setEnabled: (v: boolean) => void;
 }) {
+  const t = useTranslations("projects.new");
   const current: ProtocolQA = qa || {
     question: [""],
     response: [
@@ -910,9 +915,9 @@ function StepQA({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white text-lg font-bold mb-1">Quality Assessment</h2>
+          <h2 className="text-white text-lg font-bold mb-1">{t("qaConfiguration")}</h2>
           <p className="text-gray-500 text-sm">
-            Define questions to assess the quality of included papers.
+            {t("qaConfigDesc")}
           </p>
         </div>
         <label className="flex items-center gap-3 cursor-pointer">
@@ -939,7 +944,7 @@ function StepQA({
           {/* Questions */}
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-              Questions
+              {t("questions")}
             </label>
             <div className="space-y-2">
               {current.question.map((q, i) => (
@@ -955,7 +960,7 @@ function StepQA({
                       updated[i] = e.target.value;
                       update({ question: updated });
                     }}
-                    placeholder="Enter your quality assessment question…"
+                    placeholder={t("questionPlaceholder")}
                     className="flex-1 bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500"
                   />
                   {current.question.length > 1 && (
@@ -979,14 +984,14 @@ function StepQA({
               }
               className="mt-3 text-xs text-cyan-500 hover:text-cyan-400 font-medium"
             >
-              + Add Question
+              + {t("addQuestion")}
             </button>
           </div>
 
           {/* Responses */}
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-              Response Options
+              {t("responseType")}
             </label>
             <div className="space-y-2">
               {current.response.map((r, i) => (
@@ -1076,6 +1081,7 @@ function StepExtraction({
   categories: ProtocolCategory[];
   setCategories: (cats: ProtocolCategory[]) => void;
 }) {
+  const t = useTranslations("projects.new");
   const addField = (type: "Simple" | "List" | "DynamicList") => {
     if (type === "Simple") {
       setCategories([
@@ -1127,17 +1133,16 @@ function StepExtraction({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">Data Extraction Fields</h2>
+        <h2 className="text-white text-lg font-bold mb-1">{t("dataExtractionConfig")}</h2>
         <p className="text-gray-500 text-sm">
-          Define the classification schema for your data extraction. These map
-          to the &quot;category&quot; block in the DSL.
+          {t("dataExtractionConfigDesc")}
         </p>
       </div>
 
       {categories.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-[#262626] rounded-xl">
           <p className="text-gray-500 mb-4">
-            No extraction fields yet. Add your first field to get started.
+            {t("noFieldsYet")}
           </p>
           <div className="flex gap-3 justify-center">
             <button
@@ -1192,7 +1197,7 @@ function StepExtraction({
               <div className="grid grid-cols-3 gap-4 mb-3">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                    Name (ID)
+                    {t("fieldName")}
                   </label>
                   <input
                     type="text"
@@ -1202,7 +1207,7 @@ function StepExtraction({
                         name: e.target.value.replace(/[^a-zA-Z0-9_]/g, ""),
                       })
                     }
-                    placeholder="field_name"
+                    placeholder={t("fieldNamePlaceholder")}
                     className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -1222,7 +1227,7 @@ function StepExtraction({
                   {cat.category_type === "Simple" && (
                     <div className="flex-1">
                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                        Type
+                        {t("fieldType")}
                       </label>
                       <select
                         value={cat.type}
@@ -1231,12 +1236,12 @@ function StepExtraction({
                         }
                         className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
                       >
-                        <option value="string">String</option>
-                        <option value="text">Text</option>
-                        <option value="int">Integer</option>
-                        <option value="real">Real</option>
-                        <option value="bool">Boolean</option>
-                        <option value="date">Date</option>
+                        <option value="string">{t("text")}</option>
+                        <option value="text">{t("text")}</option>
+                        <option value="int">{t("number")}</option>
+                        <option value="real">{t("number")}</option>
+                        <option value="bool">{t("boolean")}</option>
+                        <option value="date">{t("date")}</option>
                       </select>
                     </div>
                   )}
@@ -1249,7 +1254,7 @@ function StepExtraction({
                       }
                       className="accent-cyan-500"
                     />
-                    <span className="text-xs text-gray-400">Required</span>
+                    <span className="text-xs text-gray-400">{t("required")}</span>
                   </label>
                 </div>
               </div>
@@ -1393,6 +1398,7 @@ function StepReporting({
   setReports: (rpts: ProtocolReport[]) => void;
   categories: ProtocolCategory[];
 }) {
+  const t = useTranslations("projects.new");
   const categoryNames = categories.map((c) => c.name).filter(Boolean);
 
   const addReport = (type: "Simple" | "Compared") => {
@@ -1434,10 +1440,9 @@ function StepReporting({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">Reporting Configuration</h2>
+        <h2 className="text-white text-lg font-bold mb-1">{t("reportingConfiguration")}</h2>
         <p className="text-gray-500 text-sm">
-          Define charts and graphs for your synthesis reports. Each report
-          references an extraction field.
+          {t("reportingConfigDesc")}
         </p>
       </div>
 

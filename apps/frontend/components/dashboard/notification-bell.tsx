@@ -5,6 +5,7 @@ import { Bell, Check, CheckCheck, Trash2, Loader2, Users, FolderPlus, Save } fro
 import { notificationApi, Notification } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const POLL_INTERVAL = 30_000; // 30 seconds
 
@@ -35,6 +36,7 @@ function timeAgo(dateStr: string) {
 
 export function NotificationBell() {
   const { isAuthenticated } = useAuth();
+  const t = useTranslations("notifications");
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -142,14 +144,14 @@ export function NotificationBell() {
         <div className="absolute right-0 top-full mt-2 w-96 bg-[#1A1D21] border border-[#262626] rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#262626]">
-            <h3 className="text-sm font-semibold text-white">Notifications</h3>
+            <h3 className="text-sm font-semibold text-white">{t("title")}</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 className="flex items-center gap-1.5 text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
-                Mark all read
+                {t("markAllRead")}
               </button>
             )}
           </div>
@@ -163,7 +165,7 @@ export function NotificationBell() {
             ) : notifications.length === 0 ? (
               <div className="py-12 text-center">
                 <Bell className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No notifications yet</p>
+                <p className="text-sm text-gray-500">{t("noNotificationsYet")}</p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -202,7 +204,7 @@ export function NotificationBell() {
                       <button
                         onClick={() => handleMarkAsRead(n.id)}
                         className="p-1 text-gray-500 hover:text-cyan-500 transition-colors"
-                        title="Mark as read"
+                        title={t("markAsRead")}
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>

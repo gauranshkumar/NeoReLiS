@@ -22,10 +22,12 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const t = useTranslations("dashboard");
 
   // Real data states
   const [projects, setProjects] = useState<Project[]>([]);
@@ -101,39 +103,39 @@ export default function DashboardPage() {
           <MetricCard
             icon={<FileText className="w-5 h-5 text-cyan-500" />}
             value={papersScreened.toLocaleString()}
-            label="TOTAL PAPERS"
+            label={t("totalPapers")}
             badge={
               papersScreened > 0
-                ? { text: "ACTIVE", color: "bg-green-500/10 text-green-500" }
-                : { text: "—", color: "bg-[#222] text-gray-400 border border-[#333]" }
+                ? { text: t("badgeActive"), color: "bg-green-500/10 text-green-500" }
+                : { text: t("badgeNone"), color: "bg-[#222] text-gray-400 border border-[#333]" }
             }
           />
           <MetricCard
             icon={<Database className="w-5 h-5 text-cyan-500" />}
             value={dataExtracted.toLocaleString()}
-            label="DATA EXTRACTED"
+            label={t("dataExtracted")}
             badge={
               dataExtracted > 0
-                ? { text: "ACTIVE", color: "bg-green-500/10 text-green-500" }
-                : { text: "STABLE", color: "bg-[#222] text-gray-400 border border-[#333]" }
+                ? { text: t("badgeActive"), color: "bg-green-500/10 text-green-500" }
+                : { text: t("badgeStable"), color: "bg-[#222] text-gray-400 border border-[#333]" }
             }
           />
           <MetricCard
             icon={<Users className="w-5 h-5 text-cyan-500" />}
             value={String(totalCollaborators)}
-            label="PROJECTS"
-            badge={{ text: "ACTIVE", color: "bg-cyan-500/10 text-cyan-500" }}
+            label={t("projects")}
+            badge={{ text: t("badgeActive"), color: "bg-cyan-500/10 text-cyan-500" }}
           />
           <MetricCard
             icon={<TrendingUp className="w-5 h-5 text-cyan-500" />}
-            value={completionRate > 0 ? `${completionRate}%` : "—"}
-            label="COMPLETION RATE"
+            value={completionRate > 0 ? `${completionRate}%` : t("badgeNone")}
+            label={t("completionRate")}
             badge={
               completionRate >= 80
-                ? { text: "HIGH", color: "bg-green-500/10 text-green-500" }
+                ? { text: t("badgeHigh"), color: "bg-green-500/10 text-green-500" }
                 : completionRate >= 50
-                  ? { text: "MODERATE", color: "bg-yellow-500/10 text-yellow-500" }
-                  : { text: "—", color: "bg-[#222] text-gray-400 border border-[#333]" }
+                  ? { text: t("badgeModerate"), color: "bg-yellow-500/10 text-yellow-500" }
+                  : { text: t("badgeNone"), color: "bg-[#222] text-gray-400 border border-[#333]" }
             }
           />
         </div>
@@ -142,16 +144,16 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white">Active Reviews</h2>
+              <h2 className="text-xl font-bold text-white">{t("activeReviews")}</h2>
               <span className="bg-[#1A1D21] text-cyan-500 text-xs font-bold px-2 py-0.5 rounded border border-cyan-900/30">
-                {projects.length} TOTAL
+                {projects.length} {t("total")}
               </span>
             </div>
             <Link
               href="/projects"
               className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
             >
-              View all <span className="text-xs">›</span>
+              {t("viewAll")} <span className="text-xs">›</span>
             </Link>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -162,13 +164,13 @@ export default function DashboardPage() {
             ) : projects.length === 0 ? (
               <div className="col-span-2 bg-[#0F1115] border border-[#262626] rounded-xl p-12 text-center">
                 <p className="text-gray-400 mb-4">
-                  No projects yet. Start your first review!
+                  {t("noProjectsYet")}
                 </p>
                 <Link
                   href="/dashboard/projects"
                   className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-6 py-2.5 rounded-lg transition-colors text-sm"
                 >
-                  Create Project
+                  {t("createProject")}
                 </Link>
               </div>
             ) : (
@@ -176,7 +178,7 @@ export default function DashboardPage() {
                 <ReviewCard
                   key={project.id}
                   title={project.title}
-                  desc={project.description || "No description"}
+                  desc={project.description || t("noDescription")}
                   time={formatRelativeTime(project.createdAt)}
                   status={project.status}
                   projectId={project.id}
@@ -190,12 +192,12 @@ export default function DashboardPage() {
         {/* Recent Papers — fetched from backend */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">Recent Papers</h2>
+            <h2 className="text-xl font-bold text-white">{t("recentPapers")}</h2>
             <Link
               href="/dashboard/library"
               className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
             >
-              View library <span className="text-xs">›</span>
+              {t("viewLibrary")} <span className="text-xs">›</span>
             </Link>
           </div>
           <div className="space-y-4">
@@ -206,7 +208,7 @@ export default function DashboardPage() {
             ) : recentPapers.length === 0 ? (
               <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-8 text-center">
                 <p className="text-gray-400 text-sm">
-                  No papers imported yet. Import papers into your projects to see them here.
+                  {t("noPapersImported")}
                 </p>
               </div>
             ) : (
@@ -240,13 +242,13 @@ export default function DashboardPage() {
         <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              RECENT ACTIVITY
+              {t("recentActivity")}
             </h3>
             <MoreHorizontal className="w-4 h-4 text-gray-500 cursor-pointer hover:text-white" />
           </div>
           <div className="space-y-6">
             {projects.length === 0 ? (
-              <p className="text-sm text-gray-500">No activity yet.</p>
+              <p className="text-sm text-gray-500">{t("noActivityYet")}</p>
             ) : (
               projects.slice(0, 3).map((project) => (
                 <ActivityItem
@@ -266,14 +268,14 @@ export default function DashboardPage() {
                   }
                   bg="bg-blue-500"
                   name={project.creator?.name || user?.name || "You"}
-                  action={`created project "${project.title}"`}
+                  action={t("createdProject", { title: project.title })}
                   time={formatRelativeTime(project.createdAt)}
                 />
               ))
             )}
           </div>
           <button className="w-full mt-6 bg-[#1A1D21] border border-[#333] text-gray-400 text-xs font-bold py-2 rounded hover:bg-[#222] hover:text-white transition-colors">
-            VIEW AUDIT LOG
+            {t("viewAuditLog")}
           </button>
         </div>
 
@@ -282,15 +284,18 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 blur-2xl rounded-full pointer-events-none"></div>
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-cyan-400">AI Insights</h3>
+            <h3 className="text-sm font-bold text-cyan-400">{t("aiInsights")}</h3>
           </div>
           <p className="text-sm text-gray-300 leading-relaxed italic">
             {projects.length > 0
-              ? `You have ${projects.length} active project${projects.length > 1 ? "s" : ""} with ${papersScreened} total papers. ${completionRate > 0
-                ? `Your completion rate is ${completionRate}%.`
-                : "Start screening to track progress."
-              }`
-              : "Create your first project to get started with AI-powered insights."}
+              ? t("aiInsightsActive", {
+                  count: projects.length,
+                  papers: papersScreened,
+                  rateMsg: completionRate > 0
+                    ? t("aiRateMsg", { rate: completionRate })
+                    : t("aiStartScreening")
+                })
+              : t("aiInsightsEmpty")}
           </p>
         </div>
       </div>
@@ -363,14 +368,15 @@ function ReviewCard({
   projectId: string;
   creator?: { id: string; username: string; name: string };
 }) {
+  const t = useTranslations("dashboard");
   const progress =
     status === "ARCHIVED" ? 100 : status === "PUBLISHED" ? 50 : 10;
   const phase =
     status === "ARCHIVED"
-      ? "COMPLETED"
+      ? t("phaseCompleted")
       : status === "PUBLISHED"
-        ? "ACTIVE"
-        : "DRAFT";
+        ? t("phaseActive")
+        : t("phaseDraft");
 
   return (
     <Link href={`/dashboard/projects/${projectId}`}>
@@ -399,7 +405,7 @@ function ReviewCard({
 
         <div>
           <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2">
-            <span>PHASE: {phase}</span>
+            <span>{t("phase")} {phase}</span>
             <span className="text-cyan-500">{progress}%</span>
           </div>
           <div className="h-1 bg-[#222] rounded-full overflow-hidden mb-6">
@@ -411,7 +417,7 @@ function ReviewCard({
 
           <div className="flex items-center justify-end">
             <span className="bg-[#1A1D21] hover:bg-[#222] text-white text-xs font-bold px-4 py-2 rounded border border-[#333] transition-colors">
-              OPEN PROJECT
+              {t("openProject")}
             </span>
           </div>
         </div>
@@ -435,12 +441,13 @@ function PaperRow({
   source: string;
   doi?: string;
 }) {
+  const t = useTranslations("dashboard");
   return (
     <Link href={href} className="block">
       <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-0 overflow-hidden hover:border-cyan-500/50 transition-colors flex group cursor-pointer">
         <div className="w-16 bg-[#0A0A0A] border-r border-[#262626] flex flex-col items-center justify-center p-4">
           <span className="text-[10px] font-bold text-gray-500 uppercase mb-1">
-            YEAR
+            {t("yearLabel")}
           </span>
           <span className="text-lg font-bold text-white">{year}</span>
         </div>

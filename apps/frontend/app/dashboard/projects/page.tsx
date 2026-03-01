@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { Search, Plus, Filter, Loader2, FileEdit, Trash2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, reportingApi, draftApi, Project, ProjectStats, ProtocolDraft } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function ProjectsPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+    const t = useTranslations("projects");
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
@@ -92,15 +94,15 @@ export default function ProjectsPage() {
         <div className="max-w-[1400px] mx-auto">
             <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-white text-2xl font-bold mb-2">My Projects</h1>
-                    <h2 className="text-gray-500 text-sm">Manage, monitor, and execute your systematic literature reviews.</h2>
+                    <h1 className="text-white text-2xl font-bold mb-2">{t("myProjects")}</h1>
+                    <h2 className="text-gray-500 text-sm">{t("subtitle")}</h2>
                 </div>
                 <div className="flex gap-2">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-500" />
                         <input
                             type="text"
-                            placeholder="Search projects..."
+                            placeholder={t("searchProjects")}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-48 bg-[#1A1D21] border border-[#333] rounded-md py-1.5 pl-8 pr-4 text-xs text-white focus:outline-none focus:border-cyan-500"
@@ -128,7 +130,7 @@ export default function ProjectsPage() {
                         onClick={() => router.push("/dashboard/projects/new")}
                         className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded text-xs font-bold flex items-center gap-2 transition-colors"
                     >
-                        <Plus className="w-3 h-3" /> New Project
+                        <Plus className="w-3 h-3" /> {t("newProject")}
                     </button>
                 </div>
             </div>
@@ -144,7 +146,7 @@ export default function ProjectsPage() {
                 <div className="mb-8">
                     <h3 className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                         <FileEdit className="w-3.5 h-3.5" />
-                        Unfinished Drafts
+                        {t("unfinishedDrafts")}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {drafts.map((draft) => (
@@ -189,25 +191,25 @@ export default function ProjectsPage() {
                     <div className="w-16 h-16 rounded-full bg-[#1A1D21] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                         <Plus className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">New Review</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">{t("newReview")}</h3>
                     <p className="text-gray-500 text-center max-w-xs text-sm">
-                        Start a fresh protocol, import papers, and invite your team.
+                        {t("startFreshDescription")}
                     </p>
                 </div>
             </div>
 
             <div className="mt-16 border-t border-[#262626] pt-8 flex justify-between text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                 <div className="flex gap-8">
-                    <span>TOTAL REVIEWS: {projects.length}</span>
-                    <span>PAPERS ANALYZED: {stats?.papers?.total?.toLocaleString() ?? "0"}</span>
-                    <span>SCREENING COMPLETED: {stats?.screening?.completed?.toLocaleString() ?? "0"}</span>
+                    <span>{t("totalReviews")} {projects.length}</span>
+                    <span>{t("papersAnalyzed")} {stats?.papers?.total?.toLocaleString() ?? "0"}</span>
+                    <span>{t("screeningCompleted")} {stats?.screening?.completed?.toLocaleString() ?? "0"}</span>
                 </div>
                 <div className="flex gap-4 normal-case font-normal text-xs text-gray-500 cursor-pointer">
-                    <span className="hover:text-cyan-500">Documentation</span>
+                    <span className="hover:text-cyan-500">{t("documentation")}</span>
                     <span>•</span>
-                    <span className="hover:text-cyan-500">Protocol Wizard</span>
+                    <span className="hover:text-cyan-500">{t("protocolWizard")}</span>
                     <span>•</span>
-                    <span className="hover:text-cyan-500">API Access</span>
+                    <span className="hover:text-cyan-500">{t("apiAccess")}</span>
                 </div>
             </div>
         </div>
@@ -215,6 +217,7 @@ export default function ProjectsPage() {
 }
 
 function ProjectCard({ title, desc, progress, screened, members, label, labelColor, projectId }: any) {
+    const t = useTranslations("projects");
     return (
         <Link href={`/dashboard/projects/${projectId}`}>
             <div className="rounded-xl overflow-hidden bg-[#1A1D21] border border-[#262626] relative group h-[340px] flex flex-col justify-end cursor-pointer hover:border-cyan-500/50 transition-colors">
@@ -234,7 +237,7 @@ function ProjectCard({ title, desc, progress, screened, members, label, labelCol
                     <div>
                         <div className="mb-6">
                             <div className="flex justify-between text-[10px] font-bold uppercase mb-2 text-gray-500">
-                                <span>{progress === 100 ? "ARCHIVED" : "PROGRESS"}</span>
+                                <span>{progress === 100 ? "ARCHIVED" : t("progress")}</span>
                                 <span className="text-cyan-500">{progress}%</span>
                             </div>
                             <div className="h-1 bg-[#333] rounded-full overflow-hidden">
@@ -244,13 +247,13 @@ function ProjectCard({ title, desc, progress, screened, members, label, labelCol
 
                         <div className="flex justify-between items-end border-t border-[#262626] pt-4">
                             <div>
-                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1">SCREENED</div>
+                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1">{t("screened")}</div>
                                 <div className="text-sm font-bold text-white flex items-center gap-1">
                                     <span>{screened}</span>
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1 text-right">TEAM</div>
+                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1 text-right">{t("team")}</div>
                                 <div className="flex -space-x-2 justify-end">
                                     {[...Array(Math.min(members, 3))].map((_, i) => (
                                         <div key={i} className="w-6 h-6 rounded-full bg-[#262626] border border-[#1A1D21] flex items-center justify-center text-[8px] text-gray-400">?</div>
@@ -276,6 +279,7 @@ function DraftCard({
     onResume: () => void;
     onDelete: () => void;
 }) {
+    const t = useTranslations("projects");
     const formData = draft.formData as Record<string, unknown>;
     const protocol = formData?.protocol as Record<string, unknown> | undefined;
     const projectInfo = protocol?.project as Record<string, unknown> | undefined;
@@ -292,7 +296,7 @@ function DraftCard({
             {/* Tag */}
             <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
                 <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    UNFINISHED DRAFT
+                    {t("unfinishedDraft")}
                 </span>
                 <button
                     onClick={(e) => {
@@ -314,7 +318,7 @@ function DraftCard({
                         <p className="text-[11px] text-gray-500 font-mono">{shortName}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-2">
-                        Step {completedSteps + 1} of 6 — {STEP_LABELS[completedSteps] || "Review"}
+                        {t("stepXOfY", { current: completedSteps + 1, total: 6 })} — {STEP_LABELS[completedSteps] || "Review"}
                     </p>
                 </div>
 
@@ -335,7 +339,7 @@ function DraftCard({
                         onClick={onResume}
                         className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
                     >
-                        Resume <ArrowRight className="w-3.5 h-3.5" />
+                        {t("resume")} <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>

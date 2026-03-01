@@ -8,12 +8,15 @@ import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { reportingApi } from "@/lib/api";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 
 export function UnifiedNavbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const t = useTranslations("nav");
     
     const [searchQuery, setSearchQuery] = useState("");
     const [paperCount, setPaperCount] = useState<number | null>(null);
@@ -72,8 +75,8 @@ export function UnifiedNavbar() {
 
     const placeholderText =
         paperCount !== null && paperCount > 0
-            ? `Search across ${paperCount.toLocaleString()} papers, projects, or synthesis tools...`
-            : "Search papers, projects, or synthesis tools...";
+            ? t("searchPlaceholderWithCount", { count: paperCount.toLocaleString() })
+            : t("searchPlaceholder");
 
     // Dashboard Variant - Search bar with notifications and NEW REVIEW button
     if (isDashboardRoute) {
@@ -109,7 +112,7 @@ export function UnifiedNavbar() {
                         className="flex items-center gap-2 rounded-md bg-cyan-500 px-4 py-2 text-sm font-bold text-black hover:bg-cyan-400 transition-colors"
                     >
                         <Plus className="h-4 w-4" />
-                        NEW REVIEW
+                        {t("newReview")}
                     </button>
                 </div>
             </header>
@@ -125,14 +128,15 @@ export function UnifiedNavbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <LanguageSwitcher />
                     <span className="text-sm text-gray-400">
-                        {isLoginRoute ? "Need an account?" : "Already have an account?"}
+                        {isLoginRoute ? t("needAnAccount") : t("alreadyHaveAccount")}
                     </span>
                     <Link
                         href={isLoginRoute ? "/signup" : "/login"}
                         className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-cyan-400"
                     >
-                        {isLoginRoute ? "Create Account" : "Sign In"}
+                        {isLoginRoute ? t("createAccount") : t("signIn")}
                     </Link>
                 </div>
             </header>
@@ -148,13 +152,14 @@ export function UnifiedNavbar() {
                 </div>
 
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-                    <Link href="/#platform" className="hover:text-white transition-colors">Platform</Link>
-                    <Link href="/#methodology" className="hover:text-white transition-colors">Methodology</Link>
-                    <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
-                    <Link href="/#resources" className="hover:text-white transition-colors">Resources</Link>
+                    <Link href="/#platform" className="hover:text-white transition-colors">{t("platform")}</Link>
+                    <Link href="/#methodology" className="hover:text-white transition-colors">{t("methodology")}</Link>
+                    <Link href="/#pricing" className="hover:text-white transition-colors">{t("pricing")}</Link>
+                    <Link href="/#resources" className="hover:text-white transition-colors">{t("resources")}</Link>
                 </nav>
 
                 <div className="flex items-center gap-4">
+                    <LanguageSwitcher />
                     {/* User Menu */}
                     <div className="relative" ref={userMenuRef}>
                         <button
@@ -181,7 +186,7 @@ export function UnifiedNavbar() {
                                         onClick={() => setShowUserMenu(false)}
                                     >
                                         <User className="h-4 w-4" />
-                                        Dashboard
+                                        {t("dashboard")}
                                     </Link>
                                     <Link
                                         href="/dashboard/settings"
@@ -189,14 +194,14 @@ export function UnifiedNavbar() {
                                         onClick={() => setShowUserMenu(false)}
                                     >
                                         <Settings className="h-4 w-4" />
-                                        Settings
+                                        {t("settings")}
                                     </Link>
                                     <button
                                         onClick={handleLogout}
                                         className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-[#1A1D21] hover:text-white transition-colors"
                                     >
                                         <LogOut className="h-4 w-4" />
-                                        Log Out
+                                        {t("logOut")}
                                     </button>
                                 </div>
                             </div>
@@ -207,7 +212,7 @@ export function UnifiedNavbar() {
                         href="/dashboard"
                         className="rounded-md bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-cyan-400"
                     >
-                        Go to Dashboard
+                        {t("goToDashboard")}
                     </Link>
                 </div>
             </header>
@@ -222,24 +227,25 @@ export function UnifiedNavbar() {
             </div>
 
             <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-                <Link href="/#platform" className="hover:text-white transition-colors">Platform</Link>
-                <Link href="/#methodology" className="hover:text-white transition-colors">Methodology</Link>
-                <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
-                <Link href="/#resources" className="hover:text-white transition-colors">Resources</Link>
-            </nav>
+                <Link href="/#platform" className="hover:text-white transition-colors">{t("platform")}</Link>
+                    <Link href="/#methodology" className="hover:text-white transition-colors">{t("methodology")}</Link>
+                    <Link href="/#pricing" className="hover:text-white transition-colors">{t("pricing")}</Link>
+                    <Link href="/#resources" className="hover:text-white transition-colors">{t("resources")}</Link>
+                </nav>
 
             <div className="flex items-center gap-4">
+                <LanguageSwitcher />
                 <Link
                     href="/login"
                     className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
                 >
-                    Log In
+                    {t("logIn")}
                 </Link>
                 <Link
                     href="/signup"
                     className="rounded-md bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-cyan-400"
                 >
-                    Get Started
+                    {t("getStarted")}
                 </Link>
             </div>
         </header>
