@@ -12,18 +12,21 @@
     "@hono/node-server": "^1.12.0",
     "@hono/zod-validator": "^0.4.0",
     "@neorelis/db": "workspace:*",
+    "@retorquere/bibtex-parser": "^10.0.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.0",
     "hono": "^4.0.0",
     "hono-rate-limiter": "^0.4.0",
     "jsonwebtoken": "^9.0.0",
     "nodemailer": "^8.0.1",
+    "papaparse": "^5.5.3",
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@types/bcryptjs": "^2.4.6",
+    "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.0",
+    "@types/papaparse": "^5.5.2",
     "typescript": "^5.7.0"
   }
 }

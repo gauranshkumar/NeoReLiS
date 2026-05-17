@@ -461,6 +461,23 @@ export interface PaperListResponse {
   limit: number;
 }
 
+export interface ImportJob {
+  id: string;
+  projectId: string;
+  filename: string;
+  fileType: string;
+  status: 'UPLOADED' | 'PARSING' | 'VALIDATED' | 'PERSISTED' | 'COMPLETED';
+  totalRows: number;
+  processedRows: number;
+  successRows: number;
+  duplicateRows: number;
+  errorRows: number;
+  errors?: string | null;
+  createdBy: string;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
 export const paperApi = {
   list: async (params?: {
     projectId?: string;
@@ -513,11 +530,51 @@ export const paperApi = {
     return api.delete<{ message: string }>(`/api/v1/papers/${id}`);
   },
 
-  import: async (data: { format: 'bibtex' | 'endnote' | 'csv'; content: string; projectId: string }) => {
-    return api.post<{ message: string; imported: number; errors: string[] }>(
-      '/api/v1/papers/import',
-      data
-    );
+  import: async (data: {
+    format: 'bibtex' | 'endnote' | 'csv';
+    content: string;
+    projectId: string;
+    columnMapping?: {
+      title: number;
+      authors?: number;
+      year?: number;
+      doi?: number;
+      abstract?: number;
+      bibtexKey?: number;
+      url?: number;
+      keywords?: number;
+      venue?: number;
+    };
+    startRow?: number;
+    source?: string;
+    searchStrategy?: string;
+  }) => {
+    return api.post<{
+      message: string;
+      imported: number;
+      duplicates: number;
+      errors: { row?: number; entry?: string; message: string }[];
+      importJobId: string;
+    }>('/api/v1/papers/import', data);
+  },
+
+  previewCSV: async (content: string, maxRows?: number) => {
+    return api.post<{ headers: string[]; rows: string[][] }>('/api/v1/papers/import/preview-csv', {
+      content,
+      maxRows,
+    });
+  },
+
+  getCSVTemplate: async () => {
+    return api.get<{ template: string }>('/api/v1/papers/import/csv-template');
+  },
+
+  getImportJob: async (jobId: string) => {
+    return api.get<{ job: ImportJob }>(`/api/v1/papers/import/jobs/${jobId}`);
+  },
+
+  listImportJobs: async (projectId: string) => {
+    return api.get<{ jobs: ImportJob[] }>(`/api/v1/papers/import/jobs?projectId=${projectId}`);
   },
 
   exportSingle: async (id: string, format?: string) => {

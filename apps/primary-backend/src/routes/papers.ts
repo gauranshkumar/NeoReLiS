@@ -5,6 +5,8 @@ import { authMiddleware } from '../middleware/auth'
 import { requireProjectAccess } from '../middleware/project-access'
 import type { AuthContext } from '../middleware/auth'
 import * as paperService from '../services/paper.service'
+import * as importService from '../services/import.service'
+import { previewCSV, generateCSVTemplate } from '../services/parsers'
 import { prisma } from '@neorelis/db'
 
 const papers = new Hono()
@@ -30,11 +32,36 @@ const updatePaperSchema = z.object({
   url: z.string().url().optional(),
 })
 
+const columnMappingSchema = z.object({
+  title: z.number().int().min(0),
+  authors: z.number().int().min(0).optional(),
+  year: z.number().int().min(0).optional(),
+  doi: z.number().int().min(0).optional(),
+  abstract: z.number().int().min(0).optional(),
+  bibtexKey: z.number().int().min(0).optional(),
+  url: z.number().int().min(0).optional(),
+  keywords: z.number().int().min(0).optional(),
+  venue: z.number().int().min(0).optional(),
+})
+
 const importPapersSchema = z.object({
   format: z.enum(['bibtex', 'endnote', 'csv']),
   content: z.string().min(1),
   projectId: z.string().min(1),
+  columnMapping: columnMappingSchema.optional(),
+  startRow: z.number().int().min(0).optional(),
+  source: z.string().optional(),
+  searchStrategy: z.string().optional(),
 })
+
+const csvPreviewSchema = z.object({
+  content: z.string().min(1),
+  maxRows: z.number().int().min(1).max(50).optional(),
+})
+
+// ============================================
+// STATIC ROUTES FIRST (before dynamic /:id)
+// ============================================
 
 // GET /api/v1/papers - List papers for a project (or all user's projects if no projectId)
 papers.get('/', authMiddleware, async (c) => {
@@ -51,7 +78,6 @@ papers.get('/', authMiddleware, async (c) => {
     if (projectId) {
       effectiveProjectIds = [projectId]
     } else {
-      // No projectId — fetch papers across all user's projects
       const memberships = await prisma.projectMember.findMany({
         where: { userId: authContext.userId, active: 1 },
         select: { projectId: true },
@@ -124,6 +150,131 @@ papers.post('/', authMiddleware, zValidator('json', createPaperSchema), async (c
     return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to create paper' }, 500)
   }
 })
+
+// ============================================
+// IMPORT ROUTES (must be before /:id)
+// ============================================
+
+// POST /api/v1/papers/import - Import papers from BibTeX/EndNote/CSV
+papers.post('/import', authMiddleware, zValidator('json', importPapersSchema), async (c) => {
+  const body = c.req.valid('json')
+  const authContext = c.get('user') as AuthContext
+
+  if (body.format === 'csv' && !body.columnMapping) {
+    return c.json({
+      code: 'VALIDATION_ERROR',
+      message: 'Column mapping is required for CSV import',
+    }, 400)
+  }
+
+  try {
+    const result = await importService.importPapers({
+      format: body.format,
+      content: body.content,
+      projectId: body.projectId,
+      userId: authContext.userId,
+      columnMapping: body.columnMapping,
+      startRow: body.startRow,
+      source: body.source,
+      searchStrategy: body.searchStrategy,
+    })
+
+    return c.json({
+      message: `Import completed: ${result.imported} papers imported`,
+      imported: result.imported,
+      duplicates: result.duplicates,
+      errors: result.errors,
+      importJobId: result.importJobId,
+    })
+  } catch (error) {
+    console.error('Import papers error:', error)
+    return c.json({
+      code: 'INTERNAL_ERROR',
+      message: error instanceof Error ? error.message : 'Failed to import papers',
+    }, 500)
+  }
+})
+
+// POST /api/v1/papers/import/preview-csv - Preview CSV content for column mapping
+papers.post('/import/preview-csv', authMiddleware, zValidator('json', csvPreviewSchema), async (c) => {
+  const body = c.req.valid('json')
+
+  try {
+    const preview = previewCSV(body.content, body.maxRows || 10)
+    return c.json(preview)
+  } catch (error) {
+    console.error('CSV preview error:', error)
+    return c.json({
+      code: 'PARSE_ERROR',
+      message: error instanceof Error ? error.message : 'Failed to parse CSV',
+    }, 400)
+  }
+})
+
+// GET /api/v1/papers/import/csv-template - Get CSV template
+papers.get('/import/csv-template', authMiddleware, async (c) => {
+  const template = generateCSVTemplate()
+  return c.json({ template })
+})
+
+// GET /api/v1/papers/import/jobs/:jobId - Get import job status
+papers.get('/import/jobs/:jobId', authMiddleware, async (c) => {
+  const jobId = c.req.param('jobId')
+
+  try {
+    const job = await importService.getImportJob(jobId)
+    if (!job) {
+      return c.json({ code: 'NOT_FOUND', message: 'Import job not found' }, 404)
+    }
+    return c.json({ job })
+  } catch (error) {
+    console.error('Get import job error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to fetch import job' }, 500)
+  }
+})
+
+// GET /api/v1/papers/import/jobs - List import jobs for a project
+papers.get('/import/jobs', authMiddleware, async (c) => {
+  const projectId = c.req.query('projectId')
+
+  if (!projectId) {
+    return c.json({ code: 'VALIDATION_ERROR', message: 'projectId is required' }, 400)
+  }
+
+  try {
+    const jobs = await importService.listImportJobs(projectId)
+    return c.json({ jobs })
+  } catch (error) {
+    console.error('List import jobs error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to fetch import jobs' }, 500)
+  }
+})
+
+// ============================================
+// EXPORT ROUTES (before dynamic /:id)
+// ============================================
+
+// POST /api/v1/papers/export - Export multiple papers
+papers.post('/export', authMiddleware, async (c) => {
+  try {
+    const body = await c.req.json()
+    const { paperIds, format } = body
+
+    // TODO: Implement actual export
+    return c.json({
+      format: format || 'bibtex',
+      content: '',
+      count: paperIds?.length || 0,
+    })
+  } catch (error) {
+    console.error('Export papers error:', error)
+    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to export papers' }, 500)
+  }
+})
+
+// ============================================
+// DYNAMIC ROUTES LAST (/:id patterns)
+// ============================================
 
 // GET /api/v1/papers/:id - Get paper by ID (with venue + project context)
 papers.get('/:id', authMiddleware, async (c) => {
@@ -208,23 +359,6 @@ papers.delete('/:id', authMiddleware, async (c) => {
   }
 })
 
-// POST /api/v1/papers/import - Import papers from BibTeX/EndNote/CSV
-papers.post('/import', authMiddleware, zValidator('json', importPapersSchema), async (c) => {
-  const body = c.req.valid('json')
-
-  try {
-    // TODO: Implement actual import logic with bibler service
-    return c.json({
-      message: `Importing papers from ${body.format}`,
-      imported: 0,
-      errors: [],
-    }, 202)
-  } catch (error) {
-    console.error('Import papers error:', error)
-    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to import papers' }, 500)
-  }
-})
-
 // GET /api/v1/papers/:id/export - Export paper as BibTeX/CSV
 papers.get('/:id/export', authMiddleware, async (c) => {
   const id = c.req.param('id')
@@ -239,24 +373,6 @@ papers.get('/:id/export', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Export paper error:', error)
     return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to export paper' }, 500)
-  }
-})
-
-// POST /api/v1/papers/export - Export multiple papers
-papers.post('/export', authMiddleware, async (c) => {
-  try {
-    const body = await c.req.json()
-    const { paperIds, format } = body
-
-    // TODO: Implement actual export
-    return c.json({
-      format: format || 'bibtex',
-      content: '',
-      count: paperIds?.length || 0,
-    })
-  } catch (error) {
-    console.error('Export papers error:', error)
-    return c.json({ code: 'INTERNAL_ERROR', message: 'Failed to export papers' }, 500)
   }
 })
 
