@@ -106,6 +106,7 @@ export function UnifiedNavbar() {
 
                 <div className="flex items-center gap-4 ml-6">
                     <NotificationBell />
+                    <LanguageSwitcher />
                     <div className="h-6 w-px bg-[#333]"></div>
                     <button
                         onClick={() => router.push("/dashboard/projects")}

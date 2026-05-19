@@ -1,5 +1,4 @@
-import { prisma } from '@neorelis/db';
-import { ScreeningStatus, ClassificationStatus } from '@prisma/client';
+import { prisma, ScreeningStatus, ClassificationStatus } from '@neorelis/db';
 import {
   parseBibtexContent,
   parseCSVContent,

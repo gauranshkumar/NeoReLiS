@@ -16,6 +16,14 @@ export default prisma;
 
 // Export Prisma types for use in backend
 export { Prisma };
+export {
+  ProjectStatus,
+  ScreeningStatus,
+  ClassificationStatus,
+  ExtractionStatus,
+  ImportStatus,
+  ExportStatus,
+} from '@prisma/client';
 export type {
   User,
   Project,
@@ -33,4 +41,10 @@ export type {
   ImportJob,
   Export,
   ReportSnapshot,
+  ProjectStatus,
+  ScreeningStatus,
+  ClassificationStatus,
+  ExtractionStatus,
+  ImportStatus,
+  ExportStatus,
 } from '@prisma/client';

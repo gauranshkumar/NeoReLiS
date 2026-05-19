@@ -118,7 +118,7 @@ export function Sidebar() {
 
                 <div>
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        {t("workspace")}
+                        {t("recent_projects")}
                     </h3>
                     <nav className="space-y-1">
                         {projectsLoading ? (

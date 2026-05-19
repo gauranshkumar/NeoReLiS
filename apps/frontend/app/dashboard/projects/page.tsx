@@ -209,7 +209,7 @@ export default function ProjectsPage() {
                     <span>•</span>
                     <span className="hover:text-cyan-500">{t("protocolWizard")}</span>
                     <span>•</span>
-                    <span className="hover:text-cyan-500">{t("apiAccess")}</span>
+                    {/* <span className="hover:text-cyan-500">{t("apiAccess")}</span> */}
                 </div>
             </div>
         </div>
@@ -253,7 +253,7 @@ function ProjectCard({ title, desc, progress, screened, members, label, labelCol
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1 text-right">{t("team")}</div>
+                                <div className="text-[10px] font-bold uppercase text-gray-600 mb-1 text-right">{t("teams")}</div>
                                 <div className="flex -space-x-2 justify-end">
                                     {[...Array(Math.min(members, 3))].map((_, i) => (
                                         <div key={i} className="w-6 h-6 rounded-full bg-[#262626] border border-[#1A1D21] flex items-center justify-center text-[8px] text-gray-400">?</div>
