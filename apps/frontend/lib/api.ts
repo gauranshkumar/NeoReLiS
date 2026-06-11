@@ -318,6 +318,20 @@ export interface ProjectMember {
   joinedAt: string;
 }
 
+export interface ProjectInvitation {
+  id: string;
+  projectId: string;
+  email: string;
+  role: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'REVOKED';
+  expiresAt: string;
+  createdAt: string;
+  acceptedAt: string | null;
+  declinedAt: string | null;
+  invitedBy: { id: string; name: string; username: string };
+  acceptedBy: { id: string; name: string; username: string } | null;
+}
+
 export interface ProjectSettings {
   projectId: string;
   configType: string;
@@ -381,6 +395,33 @@ export const projectApi = {
     return api.delete<{ message: string }>(`/api/v1/projects/${projectId}/members/${memberId}`);
   },
 
+  // Invitations
+  getInvitations: async (projectId: string) => {
+    return api.get<{ invitations: ProjectInvitation[] }>(
+      `/api/v1/projects/${projectId}/invitations`,
+    );
+  },
+
+  inviteMember: async (projectId: string, data: { email: string; role: string }) => {
+    return api.post<{ invitation: ProjectInvitation }>(
+      `/api/v1/projects/${projectId}/invitations`,
+      data,
+    );
+  },
+
+  resendInvitation: async (projectId: string, invitationId: string) => {
+    return api.post<{ invitation: ProjectInvitation }>(
+      `/api/v1/projects/${projectId}/invitations/${invitationId}/resend`,
+      {},
+    );
+  },
+
+  revokeInvitation: async (projectId: string, invitationId: string) => {
+    return api.delete<{ ok: true }>(
+      `/api/v1/projects/${projectId}/invitations/${invitationId}`,
+    );
+  },
+
   // Settings
   getSettings: async (projectId: string) => {
     return api.get<{ settings: ProjectSettings }>(`/api/v1/projects/${projectId}/settings`);
@@ -396,6 +437,45 @@ export const projectApi = {
       '/api/v1/projects/create-from-protocol',
       protocol
     );
+  },
+};
+
+// ─── Project Invitations (tokenized) ──────────────────────────────────
+
+export interface InvitationPreview {
+  invitation: {
+    id: string;
+    email: string;
+    role: string;
+    status: string;
+    expiresAt: string;
+    project: { id: string; title: string; label: string };
+    invitedBy: { id: string; name: string; username: string };
+  };
+  loggedIn: boolean;
+  emailMatches: boolean;
+}
+
+export interface AcceptInvitationResponse {
+  member: ProjectMember;
+  project: { id: string; title: string; label: string };
+}
+
+export const invitationApi = {
+  preview: async (token: string) => {
+    return api.get<InvitationPreview>(
+      `/api/v1/invitations/accept?token=${encodeURIComponent(token)}`,
+    );
+  },
+
+  accept: async (token: string) => {
+    return api.post<AcceptInvitationResponse>('/api/v1/invitations/accept', {
+      token,
+    });
+  },
+
+  decline: async (token: string) => {
+    return api.post<{ ok: true }>('/api/v1/invitations/decline', { token });
   },
 };
 

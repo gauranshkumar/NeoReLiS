@@ -7,6 +7,8 @@ import { requestId } from "hono/request-id";
 // Import routes
 import authRoutes from "./routes/auth";
 import projectRoutes from "./routes/projects";
+import projectInvitationRoutes from "./routes/project-invitations";
+import invitationRoutes from "./routes/invitations";
 import paperRoutes from "./routes/papers";
 import screeningRoutes from "./routes/screening";
 import qualityAssessmentRoutes from "./routes/quality-assessment";
@@ -50,6 +52,7 @@ app.get("/api/v1", (c) =>
     endpoints: [
       "/api/v1/auth",
       "/api/v1/projects",
+      "/api/v1/invitations",
       "/api/v1/papers",
       "/api/v1/screening",
       "/api/v1/quality-assessment",
@@ -66,6 +69,8 @@ app.get("/api/v1", (c) =>
 // API routes
 app.route("/api/v1/auth", authRoutes);
 app.route("/api/v1/projects", projectRoutes);
+app.route("/api/v1/projects", projectInvitationRoutes);
+app.route("/api/v1/invitations", invitationRoutes);
 app.route("/api/v1/papers", paperRoutes);
 app.route("/api/v1/screening", screeningRoutes);
 app.route("/api/v1/quality-assessment", qualityAssessmentRoutes);

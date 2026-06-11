@@ -55,6 +55,34 @@ export function projectMember(member: {
   }
 }
 
+export function projectInvitation(inv: {
+  id: string
+  projectId: string
+  email: string
+  role: string
+  status: string
+  expiresAt: Date
+  createdAt?: Date
+  acceptedAt?: Date | null
+  declinedAt?: Date | null
+  invitedBy?: { id: string; name: string; username: string }
+  acceptedBy?: { id: string; name: string; username: string } | null
+}) {
+  return {
+    id: inv.id,
+    projectId: inv.projectId,
+    email: inv.email,
+    role: inv.role,
+    status: inv.status,
+    expiresAt: inv.expiresAt.toISOString(),
+    createdAt: inv.createdAt ? inv.createdAt.toISOString() : new Date().toISOString(),
+    acceptedAt: inv.acceptedAt ? inv.acceptedAt.toISOString() : null,
+    declinedAt: inv.declinedAt ? inv.declinedAt.toISOString() : null,
+    invitedBy: inv.invitedBy ?? null,
+    acceptedBy: inv.acceptedBy ?? null,
+  }
+}
+
 export function projectSettings(config: {
   projectId: string
   configType: string

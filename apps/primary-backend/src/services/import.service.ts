@@ -82,7 +82,8 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
 
   try {
     // Phase 2: Bulk duplicate detection
-    let { nonDuplicates, duplicateCount } = await filterDuplicates(projectId, parseResult.papers);
+    // let { nonDuplicates, duplicateCount } = await filterDuplicates(projectId, parseResult.papers);
+    let { nonDuplicates, duplicateCount } = await filterDuplicates(parseResult.papers);
 
     if (nonDuplicates.length === 0) {
       await prisma.importJob.update({
@@ -187,115 +188,149 @@ function parseContent(
  * Phase 2: Bulk duplicate detection
  * Fetches existing papers by DOI and title in bulk, then filters in-memory
  */
-async function filterDuplicates(
-  projectId: string,
-  papers: ParsedPaper[]
-): Promise<{ nonDuplicates: ParsedPaper[]; duplicateCount: number }> {
-  // Collect all DOIs and titles from incoming papers
-  const incomingDOIs = new Set<string>();
-  const incomingTitles = new Set<string>();
+// async function filterDuplicates(
+//   projectId: string,
+//   papers: ParsedPaper[]
+// ): Promise<{ nonDuplicates: ParsedPaper[]; duplicateCount: number }> {
+//   // Collect all DOIs and titles from incoming papers
+//   const incomingDOIs = new Set<string>();
+//   const incomingTitles = new Set<string>();
 
-  for (const paper of papers) {
-    if (paper.doi) incomingDOIs.add(paper.doi.toLowerCase());
-    if (paper.title) incomingTitles.add(paper.title.toLowerCase());
-  }
+//   for (const paper of papers) {
+//     if (paper.doi) incomingDOIs.add(paper.doi.toLowerCase());
+//     if (paper.title) incomingTitles.add(paper.title.toLowerCase());
+//   }
 
-  // Bulk fetch existing papers with matching DOIs
-  const existingByDOI = incomingDOIs.size > 0
-    ? await prisma.paper.findMany({
-        where: {
-          projectId,
-          active: 1,
-          doi: { in: Array.from(incomingDOIs), mode: 'insensitive' },
-        },
-        select: { doi: true },
-      })
-    : [];
+//   // Bulk fetch existing papers with matching DOIs
+//   const existingByDOI = incomingDOIs.size > 0
+//     ? await prisma.paper.findMany({
+//         where: {
+//           projectId,
+//           active: 1,
+//           doi: { in: Array.from(incomingDOIs), mode: 'insensitive' },
+//         },
+//         select: { doi: true },
+//       })
+//     : [];
 
-  const existingDOIs = new Set(existingByDOI.map(p => p.doi?.toLowerCase()).filter(Boolean));
+//   const existingDOIs = new Set(existingByDOI.map(p => p.doi?.toLowerCase()).filter(Boolean));
 
-  // Bulk fetch existing papers with matching titles (for author comparison)
-  const existingByTitle = incomingTitles.size > 0
-    ? await prisma.paper.findMany({
-        where: {
-          projectId,
-          active: 1,
-          title: { in: Array.from(incomingTitles), mode: 'insensitive' },
-        },
-        select: {
-          title: true,
-          doi: true,
-          authors: {
-            select: { author: { select: { lastName: true } } },
-          },
-        },
-      })
-    : [];
+//   // Bulk fetch existing papers with matching titles (for author comparison)
+//   const existingByTitle = incomingTitles.size > 0
+//     ? await prisma.paper.findMany({
+//         where: {
+//           projectId,
+//           active: 1,
+//           title: { in: Array.from(incomingTitles), mode: 'insensitive' },
+//         },
+//         select: {
+//           title: true,
+//           doi: true,
+//           authors: {
+//             select: { author: { select: { lastName: true } } },
+//           },
+//         },
+//       })
+//     : [];
 
-  // Build a map of title -> existing paper data for author comparison
-  const existingTitleMap = new Map<string, { doi: string | null; authorLastNames: Set<string> }[]>();
-  for (const ep of existingByTitle) {
-    const titleKey = ep.title.toLowerCase();
-    const authorLastNames = new Set(ep.authors.map(a => a.author.lastName.toLowerCase()));
-    if (!existingTitleMap.has(titleKey)) {
-      existingTitleMap.set(titleKey, []);
-    }
-    existingTitleMap.get(titleKey)!.push({ doi: ep.doi, authorLastNames });
-  }
+//   // Build a map of title -> existing paper data for author comparison
+//   const existingTitleMap = new Map<string, { doi: string | null; authorLastNames: Set<string> }[]>();
+//   for (const ep of existingByTitle) {
+//     const titleKey = ep.title.toLowerCase();
+//     const authorLastNames = new Set(ep.authors.map(a => a.author.lastName.toLowerCase()));
+//     if (!existingTitleMap.has(titleKey)) {
+//       existingTitleMap.set(titleKey, []);
+//     }
+//     existingTitleMap.get(titleKey)!.push({ doi: ep.doi, authorLastNames });
+//   }
 
-  // Filter against DB duplicates
-  const dbFiltered: ParsedPaper[] = [];
+//   // Filter against DB duplicates
+//   const dbFiltered: ParsedPaper[] = [];
+//   let duplicateCount = 0;
+
+//   for (const paper of papers) {
+//     // Check DOI match against DB
+//     if (paper.doi && existingDOIs.has(paper.doi.toLowerCase())) {
+//       duplicateCount++;
+//       continue;
+//     }
+
+//     // Check title + author match against DB
+//     const titleKey = paper.title.toLowerCase();
+//     const existingWithTitle = existingTitleMap.get(titleKey);
+
+//     if (existingWithTitle) {
+//       const newAuthorLastNames = new Set(paper.authors.map(a => a.lastName.toLowerCase()));
+//       let isDuplicate = false;
+
+//       for (const existing of existingWithTitle) {
+//         if (paper.doi && existing.doi && paper.doi.toLowerCase() !== existing.doi.toLowerCase()) {
+//           continue;
+//         }
+
+//         if (existing.authorLastNames.size === newAuthorLastNames.size) {
+//           let matchCount = 0;
+//           for (const name of newAuthorLastNames) {
+//             if (existing.authorLastNames.has(name)) matchCount++;
+//           }
+//           if (matchCount === newAuthorLastNames.size) {
+//             isDuplicate = true;
+//             break;
+//           }
+//         }
+//       }
+
+//       if (isDuplicate) {
+//         duplicateCount++;
+//         continue;
+//       }
+//     }
+
+//     dbFiltered.push(paper);
+//   }
+
+//   // Intra-file dedup: detect duplicates within the incoming file itself
+//   const seenDOIs = new Set<string>();
+//   const seenTitleAuthors = new Set<string>();
+//   const nonDuplicates: ParsedPaper[] = [];
+
+//   for (const paper of dbFiltered) {
+//     if (paper.doi) {
+//       const doiKey = paper.doi.toLowerCase();
+//       if (seenDOIs.has(doiKey)) {
+//         duplicateCount++;
+//         continue;
+//       }
+//       seenDOIs.add(doiKey);
+//     }
+
+//     const titleAuthorKey = buildTitleAuthorKey(paper);
+//     if (seenTitleAuthors.has(titleAuthorKey)) {
+//       duplicateCount++;
+//       continue;
+//     }
+//     seenTitleAuthors.add(titleAuthorKey);
+
+//     nonDuplicates.push(paper);
+//   }
+
+//   return { nonDuplicates, duplicateCount };
+// }
+function filterDuplicates(papers: ParsedPaper[]): {
+  nonDuplicates: ParsedPaper[];
+  duplicateCount: number;
+} {
+  const seenDOIs = new Set<string>();
+  const seenTitleAbstract = new Set<string>();
+  const seenTitleOnly = new Set<string>();
+
+  const nonDuplicates: ParsedPaper[] = [];
   let duplicateCount = 0;
 
   for (const paper of papers) {
-    // Check DOI match against DB
-    if (paper.doi && existingDOIs.has(paper.doi.toLowerCase())) {
-      duplicateCount++;
-      continue;
-    }
-
-    // Check title + author match against DB
-    const titleKey = paper.title.toLowerCase();
-    const existingWithTitle = existingTitleMap.get(titleKey);
-
-    if (existingWithTitle) {
-      const newAuthorLastNames = new Set(paper.authors.map(a => a.lastName.toLowerCase()));
-      let isDuplicate = false;
-
-      for (const existing of existingWithTitle) {
-        if (paper.doi && existing.doi && paper.doi.toLowerCase() !== existing.doi.toLowerCase()) {
-          continue;
-        }
-
-        if (existing.authorLastNames.size === newAuthorLastNames.size) {
-          let matchCount = 0;
-          for (const name of newAuthorLastNames) {
-            if (existing.authorLastNames.has(name)) matchCount++;
-          }
-          if (matchCount === newAuthorLastNames.size) {
-            isDuplicate = true;
-            break;
-          }
-        }
-      }
-
-      if (isDuplicate) {
-        duplicateCount++;
-        continue;
-      }
-    }
-
-    dbFiltered.push(paper);
-  }
-
-  // Intra-file dedup: detect duplicates within the incoming file itself
-  const seenDOIs = new Set<string>();
-  const seenTitleAuthors = new Set<string>();
-  const nonDuplicates: ParsedPaper[] = [];
-
-  for (const paper of dbFiltered) {
+    // --- DOI check (fastest, check first) ---
     if (paper.doi) {
-      const doiKey = paper.doi.toLowerCase();
+      const doiKey = paper.doi.trim().toLowerCase();
       if (seenDOIs.has(doiKey)) {
         duplicateCount++;
         continue;
@@ -303,12 +338,27 @@ async function filterDuplicates(
       seenDOIs.add(doiKey);
     }
 
-    const titleAuthorKey = buildTitleAuthorKey(paper);
-    if (seenTitleAuthors.has(titleAuthorKey)) {
-      duplicateCount++;
-      continue;
+    // --- Title + Abstract check ---
+    const titleKey = paper.title?.trim().toLowerCase() ?? "";
+
+    if (paper.abstract) {
+      // Both present: use title+abstract compound key
+      const abstractSnippet = paper.abstract.trim().toLowerCase().slice(0, 200);
+      const titleAbstractKey = `${titleKey}||${abstractSnippet}`;
+
+      if (seenTitleAbstract.has(titleAbstractKey)) {
+        duplicateCount++;
+        continue;
+      }
+      seenTitleAbstract.add(titleAbstractKey);
+    } else {
+      // Abstract missing: fall back to title-only dedup
+      if (titleKey && seenTitleOnly.has(titleKey)) {
+        duplicateCount++;
+        continue;
+      }
+      if (titleKey) seenTitleOnly.add(titleKey);
     }
-    seenTitleAuthors.add(titleAuthorKey);
 
     nonDuplicates.push(paper);
   }
@@ -591,7 +641,7 @@ async function batchInsertPapers(
     }
   }
 
-  // Insert papers in batches
+  // Insert papers in batches using createMany
   const paperAuthorLinks: { paperId: string; authorId: string; order: number }[] = [];
   let insertedCount = 0;
 
@@ -599,19 +649,36 @@ async function batchInsertPapers(
     const batch = papersToInsert.slice(i, i + BATCH_SIZE);
 
     try {
-      // Use transaction to insert batch
-      const created = await prisma.$transaction(
-        batch.map(p => prisma.paper.create({ data: p.data, select: { id: true } }))
-      );
+      // Use createMany to insert papers in batch
+      await prisma.paper.createMany({
+        data: batch.map(p => p.data),
+        skipDuplicates: true,
+      });
+
+      // Query papers back to get their IDs for author link creation
+      const created = await prisma.paper.findMany({
+        where: {
+          projectId,
+          operationCode,
+          bibtexKey: { in: batch.map(p => p.data.bibtexKey) },
+        },
+        select: { id: true, bibtexKey: true },
+      });
+
+      // Create a map for quick lookup
+      const paperIdMap = new Map<string, string>();
+      for (const p of created) {
+        if (p.bibtexKey) {
+          paperIdMap.set(p.bibtexKey, p.id);
+        }
+      }
+
+      insertedCount += created.length;
 
       // Build paper-author links
-      for (let j = 0; j < created.length; j++) {
-        const createdPaper = created[j];
-        const paperData = batch[j];
-        if (!createdPaper || !paperData) continue;
-
-        const paperId = createdPaper.id;
-        insertedCount++;
+      for (const paperData of batch) {
+        const paperId = paperIdMap.get(paperData.data.bibtexKey);
+        if (!paperId) continue;
 
         for (let order = 0; order < paperData.authors.length; order++) {
           const author = paperData.authors[order];

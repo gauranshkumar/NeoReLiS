@@ -150,14 +150,16 @@ model User {
   active          Int       @default(1) @map("user_active")
 
   // Relations
-  projectMemberships ProjectMember[]
-  sessions           Session[]
-  auditLogs          AuditLog[]
-  createdProjects    Project[]       @relation("ProjectCreator")
-  papersAdded        Paper[]         @relation("PaperCreator")
-  emailVerification  EmailVerificationCode?
-  protocolDrafts     ProtocolDraft[]
-  notifications      Notification[]
+  projectMemberships  ProjectMember[]
+  sessions            Session[]
+  auditLogs           AuditLog[]
+  createdProjects     Project[]         @relation("ProjectCreator")
+  papersAdded         Paper[]           @relation("PaperCreator")
+  emailVerification   EmailVerificationCode?
+  protocolDrafts      ProtocolDraft[]
+  notifications       Notification[]
+  invitationsSent     ProjectInvitation[] @relation("InvitationsSent")
+  invitationsAccepted ProjectInvitation[] @relation("InvitationsAccepted")
 
   @@map("users")
   @@schema("neorelis_default")
@@ -226,6 +228,7 @@ model Project {
   qaTemplates     QATemplate[]
   extractionForms ExtractionForm[]
   reportSnapshots ReportSnapshot[]
+  invitations     ProjectInvitation[]
 
   @@map("projects")
   @@schema("neorelis_default")
@@ -244,6 +247,30 @@ model ProjectMember {
 
   @@unique([userId, projectId])
   @@map("userproject")
+  @@schema("neorelis_default")
+}
+
+model ProjectInvitation {
+  id           String           @id @default(uuid()) @db.Uuid
+  projectId    String           @map("project_id") @db.Uuid
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  email        String           @map("email") @db.VarChar(100)
+  role         UserRole         @default(REVIEWER) @map("role")
+  invitedById  String           @map("invited_by") @db.Uuid
+  invitedBy    User             @relation("InvitationsSent", fields: [invitedById], references: [id])
+  tokenHash    String           @unique @map("token_hash") @db.VarChar(64)
+  status       InvitationStatus @default(PENDING)
+  expiresAt    DateTime         @map("expires_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  acceptedAt   DateTime?        @map("accepted_at")
+  declinedAt   DateTime?        @map("declined_at")
+  acceptedById String?          @map("accepted_by") @db.Uuid
+  acceptedBy   User?            @relation("InvitationsAccepted", fields: [acceptedById], references: [id])
+
+  @@index([email])
+  @@index([projectId, status])
+  @@index([expiresAt])
+  @@map("project_invitations")
   @@schema("neorelis_default")
 }
 
@@ -862,7 +889,20 @@ enum NotificationType {
   PROJECT_MEMBER_REMOVED
   PROJECT_ROLE_CHANGED
   SCREENING_ASSIGNED
+  PROJECT_INVITATION_RECEIVED
+  PROJECT_INVITATION_ACCEPTED
+  PROJECT_INVITATION_DECLINED
   GENERAL
+
+  @@schema("neorelis_default")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  REVOKED
 
   @@schema("neorelis_default")
 }

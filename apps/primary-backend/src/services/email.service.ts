@@ -78,3 +78,45 @@ export async function sendProjectMemberAddedEmail(params: {
     console.error("Failed to send member-added email:", error);
   }
 }
+
+export async function sendProjectInvitationEmail(params: {
+  to: string;
+  inviterName: string;
+  projectTitle: string;
+  role: string;
+  acceptUrl: string;
+  expiresInSeconds: number;
+}) {
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@neorelis.app";
+  const expiresInHours = Math.max(1, Math.round(params.expiresInSeconds / 3600));
+  const expiresInDays = Math.max(1, Math.round(params.expiresInSeconds / 86400));
+
+  try {
+    await getTransporter().sendMail({
+      from,
+      to: params.to,
+      subject: `${params.inviterName} invited you to "${params.projectTitle}" on NeoReLiS`,
+      text:
+        `${params.inviterName} has invited you to collaborate on the project "${params.projectTitle}" as a ${params.role}.\n\n` +
+        `Accept the invitation: ${params.acceptUrl}\n\n` +
+        `This link expires in about ${expiresInHours} hour${expiresInHours === 1 ? "" : "s"}.\n\n` +
+        `— NeoReLiS`,
+      html: `
+        <div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;margin:0 auto;">
+          <h2 style="color:#06b6d4;">You're invited to a project</h2>
+          <p>Hi,</p>
+          <p><strong>${params.inviterName}</strong> has invited you to collaborate on the project <strong>"${params.projectTitle}"</strong> as a <strong>${params.role}</strong>.</p>
+          <div style="margin:24px 0;">
+            <a href="${params.acceptUrl}" style="display:inline-block;padding:12px 24px;background:#06b6d4;color:#000;text-decoration:none;border-radius:8px;font-weight:600;">Accept Invitation</a>
+          </div>
+          <p style="color:#666;font-size:13px;">Or copy and paste this link into your browser:</p>
+          <p style="color:#999;font-size:12px;word-break:break-all;">${params.acceptUrl}</p>
+          <p style="color:#999;font-size:12px;">This invitation expires in about ${expiresInDays} day${expiresInDays === 1 ? "" : "s"}.</p>
+          <p style="color:#999;font-size:12px;">— NeoReLiS</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("Failed to send project invitation email:", error);
+  }
+}

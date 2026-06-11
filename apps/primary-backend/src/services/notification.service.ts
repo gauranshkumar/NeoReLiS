@@ -7,6 +7,9 @@ type NotificationType =
   | 'PROJECT_MEMBER_REMOVED'
   | 'PROJECT_ROLE_CHANGED'
   | 'SCREENING_ASSIGNED'
+  | 'PROJECT_INVITATION_RECEIVED'
+  | 'PROJECT_INVITATION_ACCEPTED'
+  | 'PROJECT_INVITATION_DECLINED'
   | 'GENERAL'
 
 export async function createNotification(params: {
