@@ -1,135 +1,190 @@
-# Turborepo starter
+# NeoReLiS
 
-This Turborepo starter is maintained by the Turborepo core team.
+NeoReLiS is a Turborepo monorepo that hosts the next-generation ReLiS platform — a tool for managing systematic literature reviews (import, screening, quality assessment, data extraction, and reporting).
 
-## Using this example
+The repo is split into two Next.js apps plus shared packages:
 
-Run the following command:
+- `apps/frontend` — Next.js 16 web client (React 19, Tailwind v4, `next-intl`).
+- `apps/primary-backend` — Bun + Hono API server exposing the REST surface consumed by the frontend.
+- `packages/db` — Prisma schema, generated client, and seed script (PostgreSQL).
+- `packages/ui` — Shared React component library.
+- `packages/eslint-config`, `packages/typescript-config` — Shared lint and TS configs.
+
+## Prerequisites
+
+| Tool      | Version                                | Notes                                          |
+| --------- | -------------------------------------- | ---------------------------------------------- |
+| Node.js   | `>=18`                                 | Engines field in root `package.json`.          |
+| Bun       | `1.3.8`                                | Declared as `packageManager`; used for install, scripts, and the backend runtime. Install from [bun.sh](https://bun.sh). |
+| PostgreSQL | `14+` (any recent release)            | Local instance or container reachable at the URL you set in `DATABASE_URL`. |
+| Turbo     | Optional — invoked via `bunx`/`npx`    | Not required globally.                         |
+
+## 1. Clone and install
 
 ```sh
-npx create-turbo@latest
+git clone <your-fork-or-origin-url> NeoReLiS
+cd NeoReLiS
+bun install
 ```
 
-## What's inside?
+`bun install` resolves all workspace packages (`apps/*` and `packages/*`) in one pass.
 
-This Turborepo includes the following packages/apps:
+## 2. Configure environment variables
 
-### Apps and Packages
+Three `.env` files are needed — one per app/package that talks to a service or the database.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```sh
+cp packages/db/.env.example        packages/db/.env
+cp apps/primary-backend/.env.example apps/primary-backend/.env
+cp apps/frontend/.env.example      apps/frontend/.env
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### `packages/db/.env`
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+Used by Prisma CLI and the generated client.
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```env
+# PostgreSQL connection string consumed by prisma
+DATABASE_URL=postgresql://postgres:password@localhost:5432/neorelis?schema=public
 ```
 
-### Develop
+### `apps/primary-backend/.env`
 
-To develop all apps and packages, run the following command:
+Used by the Hono API server.
 
-```
-cd my-turborepo
+```env
+PORT=9078
+NODE_ENV=development
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+JWT_SECRET=super-secret-jwt-key-for-development-only-change-in-production
+JWT_EXPIRY=7d
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+# Optional — only required if you exercise the invitation / email flows.
+SMTP_HOST=
+SMTP_USER=
+SMTP_PASS=
+SMTP_PORT=
+SMTP_SECURE=true
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+INVITATION_EXPIRY_SECONDS=86400
 ```
 
-### Remote Caching
+### `apps/frontend/.env`
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+Consumed at build time by Next.js (must be prefixed with `NEXT_PUBLIC_`).
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```env
+NEXT_PUBLIC_API_URL=http://localhost:9078
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+> Keep the `NEXT_PUBLIC_API_URL` port aligned with `PORT` in the backend `.env`.
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## 3. Start PostgreSQL
 
+Any local Postgres reachable at `DATABASE_URL` works. A quick Docker option:
+
+```sh
+docker run --name neorelis-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=neorelis \
+  -p 5432:5432 \
+  -d postgres:16
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+Adjust the user/password/host in `DATABASE_URL` to match.
+
+## 4. Set up the database
+
+From the repo root:
+
+```sh
+# Generate the Prisma client (writes to node_modules/@prisma/client)
+bun run db:generate
+
+# Apply the schema to your database
+bun run db:push
+
+# (Optional) Seed sample data
+bun run db:seed
 ```
 
-## Useful Links
+> If `db:push` is not proxied from the root, run it inside the package:
+> `bun --cwd packages/db run db:push`.
 
-Learn more about the power of Turborepo:
+## 5. Run the apps
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+### All workspaces (recommended for full-stack dev)
+
+```sh
+bun run dev
+```
+
+This invokes `turbo run dev`, which starts every workspace that defines a `dev` script in parallel with hot reload.
+
+### Run a single app
+
+```sh
+# Frontend only — http://localhost:3000
+bun run dev --filter=frontend
+
+# Backend only — http://localhost:9078
+bun run dev --filter=primary-backend
+```
+
+### Run individual scripts directly
+
+```sh
+# Frontend
+bun --cwd apps/frontend run dev
+
+# Backend (Bun runtime, hot reload)
+bun --cwd apps/primary-backend run dev
+```
+
+## 6. Verify the setup
+
+- Frontend: open <http://localhost:3000>.
+- Backend: `curl http://localhost:9078/health` (or whichever route your `server.ts` exposes). You should get a `200` response.
+- Database: `bun --cwd packages/db run db:studio` opens Prisma Studio at <http://localhost:5555>.
+
+## 7. Other useful scripts
+
+From the repo root:
+
+| Script                | What it does                                          |
+| --------------------- | ----------------------------------------------------- |
+| `bun run build`       | Builds every workspace via `turbo run build`.        |
+| `bun run lint`        | Runs ESLint across the monorepo.                      |
+| `bun run check-types` | Runs TypeScript type checks per workspace.            |
+| `bun run format`      | Formats `.ts`, `.tsx`, and `.md` files with Prettier. |
+
+For a single workspace, append `--filter=<name>` (e.g. `bun run build --filter=primary-backend`).
+
+## Project layout
+
+```text
+NeoReLiS/
+├── apps/
+│   ├── frontend/         # Next.js 16 web client
+│   └── primary-backend/  # Hono + Bun API
+├── packages/
+│   ├── db/               # Prisma schema + client + seed
+│   ├── ui/               # Shared React components
+│   ├── eslint-config/    # Shared ESLint configs
+│   └── typescript-config/# Shared tsconfig bases
+├── turbo.json
+└── package.json
+```
+
+## Troubleshooting
+
+- **`prisma generate` fails with a missing `DATABASE_URL`** — make sure `packages/db/.env` exists and contains a valid Postgres URL.
+- **Frontend cannot reach the backend** — confirm `NEXT_PUBLIC_API_URL` matches the backend `PORT`, and that no firewall/CORS rule is blocking the origin.
+- **Bun not found** — install Bun (`curl -fsSL https://bun.sh/install | bash`) and ensure `~/.bun/bin` is on your `PATH`.
+- **Port already in use** — change `PORT` in `apps/primary-backend/.env` and update `NEXT_PUBLIC_API_URL` in `apps/frontend/.env` to match.
+- **Stale Prisma client** — re-run `bun run db:generate` after editing `packages/db/prisma/schema.prisma`.
+
+## License
+
+See [`LICENSE`](./LICENSE).
