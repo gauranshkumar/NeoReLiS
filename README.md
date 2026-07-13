@@ -12,12 +12,12 @@ The repo is split into two Next.js apps plus shared packages:
 
 ## Prerequisites
 
-| Tool      | Version                                | Notes                                          |
-| --------- | -------------------------------------- | ---------------------------------------------- |
-| Node.js   | `>=18`                                 | Engines field in root `package.json`.          |
-| Bun       | `1.3.8`                                | Declared as `packageManager`; used for install, scripts, and the backend runtime. Install from [bun.sh](https://bun.sh). |
-| PostgreSQL | `14+` (any recent release)            | Local instance or container reachable at the URL you set in `DATABASE_URL`. |
-| Turbo     | Optional — invoked via `bunx`/`npx`    | Not required globally.                         |
+| Tool       | Version                             | Notes                                                                                                                    |
+| ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Node.js    | `>=18`                              | Engines field in root `package.json`.                                                                                    |
+| Bun        | `1.3.8`                             | Declared as `packageManager`; used for install, scripts, and the backend runtime. Install from [bun.sh](https://bun.sh). |
+| PostgreSQL | `14+` (any recent release)          | Local instance or container reachable at the URL you set in `DATABASE_URL`.                                              |
+| Turbo      | Optional — invoked via `bunx`/`npx` | Not required globally.                                                                                                   |
 
 ## 1. Clone and install
 
@@ -154,7 +154,7 @@ From the repo root:
 
 | Script                | What it does                                          |
 | --------------------- | ----------------------------------------------------- |
-| `bun run build`       | Builds every workspace via `turbo run build`.        |
+| `bun run build`       | Builds every workspace via `turbo run build`.         |
 | `bun run lint`        | Runs ESLint across the monorepo.                      |
 | `bun run check-types` | Runs TypeScript type checks per workspace.            |
 | `bun run format`      | Formats `.ts`, `.tsx`, and `.md` files with Prettier. |

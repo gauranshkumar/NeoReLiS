@@ -1,17 +1,17 @@
-import type { Context, Next } from 'hono'
-import { verifyToken, extractTokenFromHeader } from '../utils/jwt'
-import { prisma } from '@neorelis/db'
+import type { Context, Next } from "hono";
+import { verifyToken, extractTokenFromHeader } from "../utils/jwt";
+import { prisma } from "@neorelis/db";
 
 export interface AuthContext {
-  userId: string
-  username: string
-  email?: string | null
+  userId: string;
+  username: string;
+  email?: string | null;
   user: {
-    id: string
-    username: string
-    email: string | null
-    name: string
-  }
+    id: string;
+    username: string;
+    email: string | null;
+    name: string;
+  };
 }
 
 /**
@@ -19,21 +19,21 @@ export interface AuthContext {
  * Verifies JWT token and attaches user info to context
  */
 export async function authMiddleware(c: Context, next: Next) {
-  const authHeader = c.req.header('Authorization')
-  const token = extractTokenFromHeader(authHeader)
+  const authHeader = c.req.header("Authorization");
+  const token = extractTokenFromHeader(authHeader);
 
   if (!token) {
     return c.json(
       {
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required. Please provide a valid token.',
+        code: "UNAUTHORIZED",
+        message: "Authentication required. Please provide a valid token.",
       },
-      401
-    )
+      401,
+    );
   }
 
   try {
-    const payload = verifyToken(token)
+    const payload = verifyToken(token);
 
     // Fetch user from database to ensure they still exist and are active
     const user = await prisma.user.findUnique({
@@ -47,58 +47,59 @@ export async function authMiddleware(c: Context, next: Next) {
         active: true,
         state: true,
       },
-    })
+    });
 
     if (!user) {
       return c.json(
         {
-          code: 'UNAUTHORIZED',
-          message: 'User not found',
+          code: "UNAUTHORIZED",
+          message: "User not found",
         },
-        401
-      )
+        401,
+      );
     }
 
     if (user.active !== 1 || user.state !== 1) {
       return c.json(
         {
-          code: 'FORBIDDEN',
-          message: 'User account is inactive',
+          code: "FORBIDDEN",
+          message: "User account is inactive",
         },
-        403
-      )
+        403,
+      );
     }
 
     if (!user.isEmailVerified) {
       return c.json(
         {
-          code: 'EMAIL_NOT_VERIFIED',
-          message: 'Please verify your email before continuing',
+          code: "EMAIL_NOT_VERIFIED",
+          message: "Please verify your email before continuing",
           requiresEmailVerification: true,
           email: user.email,
         },
-        403
-      )
+        403,
+      );
     }
 
     // Attach user info to context
-    c.set('user', {
+    c.set("user", {
       userId: user.id,
       username: user.username,
       email: user.email,
       user,
-    } as AuthContext)
+    } as AuthContext);
 
-    await next()
+    await next();
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Token verification failed'
+    const message =
+      error instanceof Error ? error.message : "Token verification failed";
     return c.json(
       {
-        code: 'UNAUTHORIZED',
+        code: "UNAUTHORIZED",
         message,
       },
-      401
-    )
+      401,
+    );
   }
 }
 
@@ -107,12 +108,12 @@ export async function authMiddleware(c: Context, next: Next) {
  * Attaches user info if token is present, but doesn't require it
  */
 export async function optionalAuthMiddleware(c: Context, next: Next) {
-  const authHeader = c.req.header('Authorization')
-  const token = extractTokenFromHeader(authHeader)
+  const authHeader = c.req.header("Authorization");
+  const token = extractTokenFromHeader(authHeader);
 
   if (token) {
     try {
-      const payload = verifyToken(token)
+      const payload = verifyToken(token);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
         select: {
@@ -124,21 +125,26 @@ export async function optionalAuthMiddleware(c: Context, next: Next) {
           active: true,
           state: true,
         },
-      })
+      });
 
-      if (user && user.active === 1 && user.state === 1 && user.isEmailVerified) {
-        c.set('user', {
+      if (
+        user &&
+        user.active === 1 &&
+        user.state === 1 &&
+        user.isEmailVerified
+      ) {
+        c.set("user", {
           userId: user.id,
           username: user.username,
           email: user.email,
           user,
-        } as AuthContext)
+        } as AuthContext);
       }
     } catch (error) {
       // Silently fail for optional auth, but log for debugging
-      console.debug('Optional auth failed:', error)
+      console.debug("Optional auth failed:", error);
     }
   }
 
-  await next()
+  await next();
 }

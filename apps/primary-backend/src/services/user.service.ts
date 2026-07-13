@@ -1,37 +1,37 @@
-import { prisma } from '@neorelis/db'
-import { hashPassword, verifyPassword } from '../utils/password'
+import { prisma } from "@neorelis/db";
+import { hashPassword, verifyPassword } from "../utils/password";
 
-const DEFAULT_GROUP_NAME = 'default'
+const DEFAULT_GROUP_NAME = "default";
 
 export async function getOrCreateDefaultUserGroup() {
   let userGroup = await prisma.userGroup.findUnique({
     where: { name: DEFAULT_GROUP_NAME },
-  })
+  });
   if (!userGroup) {
     userGroup = await prisma.userGroup.create({
       data: {
         name: DEFAULT_GROUP_NAME,
-        description: 'Default user group',
+        description: "Default user group",
         active: 1,
       },
-    })
+    });
   }
-  return userGroup
+  return userGroup;
 }
 
-export async function findUserByEmailOrUsername(email?: string, username?: string) {
-  if (!email && !username) return null
+export async function findUserByEmailOrUsername(
+  email?: string,
+  username?: string,
+) {
+  if (!email && !username) return null;
   return prisma.user.findFirst({
     where: {
-      OR: [
-        ...(email ? [{ email }] : []),
-        ...(username ? [{ username }] : []),
-      ],
+      OR: [...(email ? [{ email }] : []), ...(username ? [{ username }] : [])],
     },
     include: {
       userGroup: { select: { id: true, name: true } },
     },
-  })
+  });
 }
 
 export async function findUserById(id: string) {
@@ -46,17 +46,17 @@ export async function findUserById(id: string) {
       active: true,
       state: true,
     },
-  })
+  });
 }
 
 export async function createUser(params: {
-  email: string
-  username: string
-  name: string
-  password: string
+  email: string;
+  username: string;
+  name: string;
+  password: string;
 }) {
-  const userGroup = await getOrCreateDefaultUserGroup()
-  const passwordHash = await hashPassword(params.password)
+  const userGroup = await getOrCreateDefaultUserGroup();
+  const passwordHash = await hashPassword(params.password);
 
   return prisma.user.create({
     data: {
@@ -76,20 +76,24 @@ export async function createUser(params: {
       isEmailVerified: true,
       createdAt: true,
     },
-  })
+  });
 }
 
-export async function validateCredentials(email?: string, username?: string, password?: string) {
-  const user = await findUserByEmailOrUsername(email, username)
-  if (!user?.passwordHash || !password) return null
-  const valid = await verifyPassword(password, user.passwordHash)
-  return valid ? user : null
+export async function validateCredentials(
+  email?: string,
+  username?: string,
+  password?: string,
+) {
+  const user = await findUserByEmailOrUsername(email, username);
+  if (!user?.passwordHash || !password) return null;
+  const valid = await verifyPassword(password, user.passwordHash);
+  return valid ? user : null;
 }
 
 export async function findUserByEmail(email: string) {
   return prisma.user.findFirst({
     where: { email },
-  })
+  });
 }
 
 export async function findUserByEmailWithGroup(email: string) {
@@ -98,7 +102,7 @@ export async function findUserByEmailWithGroup(email: string) {
     include: {
       userGroup: { select: { id: true, name: true } },
     },
-  })
+  });
 }
 
 export async function markUserEmailVerified(userId: string) {
@@ -110,7 +114,7 @@ export async function markUserEmailVerified(userId: string) {
     include: {
       userGroup: { select: { id: true, name: true } },
     },
-  })
+  });
 }
 
 /**
@@ -119,10 +123,10 @@ export async function markUserEmailVerified(userId: string) {
  */
 export async function searchUsers(
   query: string,
-  options?: { excludeIds?: string[]; limit?: number }
+  options?: { excludeIds?: string[]; limit?: number },
 ) {
-  const limit = options?.limit ?? 20
-  const term = `%${query}%`
+  const limit = options?.limit ?? 20;
+  const term = `%${query}%`;
 
   return prisma.user.findMany({
     where: {
@@ -132,9 +136,9 @@ export async function searchUsers(
         ? { id: { notIn: options.excludeIds } }
         : {}),
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { username: { contains: query, mode: 'insensitive' } },
-        { email: { contains: query, mode: 'insensitive' } },
+        { name: { contains: query, mode: "insensitive" } },
+        { username: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
       ],
     },
     select: {
@@ -144,6 +148,6 @@ export async function searchUsers(
       name: true,
     },
     take: limit,
-    orderBy: { name: 'asc' },
-  })
+    orderBy: { name: "asc" },
+  });
 }

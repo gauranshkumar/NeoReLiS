@@ -18,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "NeoReLiS",
-  description: "NeoReLiS is a platform for systematic reviews and meta-analyses.",
+  description:
+    "NeoReLiS is a platform for systematic reviews and meta-analyses.",
 };
 
 export default async function RootLayout({

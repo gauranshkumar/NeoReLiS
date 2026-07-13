@@ -34,13 +34,13 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/neorelis?schema=publi
 
 Run from this folder, or via Turbo from the repo root.
 
-| Command              | What it does                                                          |
-| -------------------- | --------------------------------------------------------------------- |
-| `bun run db:generate`| Generate the Prisma client into `node_modules/@prisma/client`.       |
-| `bun run db:push`    | Push the current schema to the database (no migration file).          |
-| `bun run db:migrate` | Create + apply a new migration from schema changes.                  |
-| `bun run db:studio`  | Open Prisma Studio at <http://localhost:5555>.                        |
-| `bun run db:seed`    | Reset and reseed the database using `prisma/seed.ts`.                 |
+| Command               | What it does                                                   |
+| --------------------- | -------------------------------------------------------------- |
+| `bun run db:generate` | Generate the Prisma client into `node_modules/@prisma/client`. |
+| `bun run db:push`     | Push the current schema to the database (no migration file).   |
+| `bun run db:migrate`  | Create + apply a new migration from schema changes.            |
+| `bun run db:studio`   | Open Prisma Studio at <http://localhost:5555>.                 |
+| `bun run db:seed`     | Reset and reseed the database using `prisma/seed.ts`.          |
 
 > The `prisma.seed` config in `package.json` makes `prisma db seed` invoke `bun prisma/seed.ts` automatically. If you change the seed entry point, update that field too.
 

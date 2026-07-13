@@ -38,7 +38,9 @@ export default function SignupPage() {
 
     if (result.success && result.requiresEmailVerification) {
       const verificationEmail = result.email || email;
-      router.push(`/verify-email?email=${encodeURIComponent(verificationEmail)}`);
+      router.push(
+        `/verify-email?email=${encodeURIComponent(verificationEmail)}`,
+      );
     } else if (result.success) {
       router.push("/dashboard");
     } else {
@@ -50,10 +52,10 @@ export default function SignupPage() {
   return (
     <AuthLayout mode="signup">
       <div className="flex flex-col items-center w-full max-w-md">
-
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
-            <span className="text-cyan-500">{t("titleLine1")}</span> <br /> {t("titleLine2")}
+            <span className="text-cyan-500">{t("titleLine1")}</span> <br />{" "}
+            {t("titleLine2")}
           </h1>
           <p className="text-gray-400 text-sm max-w-xs mx-auto">
             {t("subtitle")}
@@ -61,7 +63,6 @@ export default function SignupPage() {
         </div>
 
         <div className="w-full bg-[#0F1115] border border-[#262626] rounded-xl shadow-2xl p-8 relative overflow-hidden">
-
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
               {error}
@@ -70,7 +71,10 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="fullname">
+              <label
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                htmlFor="fullname"
+              >
                 {t("fullName")}
               </label>
               <div className="relative">
@@ -87,7 +91,10 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="email">
+              <label
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                htmlFor="email"
+              >
                 {t("institutionalEmail")}
               </label>
               <div className="relative">
@@ -104,7 +111,10 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="username">
+              <label
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                htmlFor="username"
+              >
                 {t("username")}
               </label>
               <div className="relative">
@@ -120,7 +130,10 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider" htmlFor="password">
+              <label
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                htmlFor="password"
+              >
                 {t("password")}
               </label>
               <div className="relative">
@@ -139,14 +152,24 @@ export default function SignupPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {/* Strength meter bar */}
               <div className="flex gap-1 h-1 mt-1">
-                <div className={`flex-1 rounded-full ${password.length >= 8 ? 'bg-green-500' : 'bg-gray-700'}`}></div>
-                <div className={`flex-1 rounded-full ${password.length >= 12 ? 'bg-green-500' : 'bg-gray-700'}`}></div>
-                <div className={`flex-1 rounded-full ${password.length >= 16 ? 'bg-green-500' : 'bg-gray-700'}`}></div>
+                <div
+                  className={`flex-1 rounded-full ${password.length >= 8 ? "bg-green-500" : "bg-gray-700"}`}
+                ></div>
+                <div
+                  className={`flex-1 rounded-full ${password.length >= 12 ? "bg-green-500" : "bg-gray-700"}`}
+                ></div>
+                <div
+                  className={`flex-1 rounded-full ${password.length >= 16 ? "bg-green-500" : "bg-gray-700"}`}
+                ></div>
                 <div className="flex-1 bg-gray-700 rounded-full"></div>
               </div>
             </div>
@@ -172,29 +195,46 @@ export default function SignupPage() {
               <div className="w-full border-t border-[#333]"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#0F1115] px-2 text-gray-500">{t("orContinueWith")}</span>
+              <span className="bg-[#0F1115] px-2 text-gray-500">
+                {t("orContinueWith")}
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-3 text-sm font-medium transition-colors">
-              <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">G</div>
+              <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">
+                G
+              </div>
               {t("google")}
             </button>
             <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-3 text-sm font-medium transition-colors">
-              <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">ID</div>
+              <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">
+                ID
+              </div>
               {t("orcid")}
             </button>
           </div>
         </div>
 
         <p className="text-gray-500 text-xs mt-8 text-center max-w-xs">
-          {t("agreementPrefix")} <Link href="#" className="underline hover:text-gray-300">{t("termsOfService")}</Link> {t("and")} <Link href="#" className="underline hover:text-gray-300">{t("privacyPolicy")}</Link>.
+          {t("agreementPrefix")}{" "}
+          <Link href="#" className="underline hover:text-gray-300">
+            {t("termsOfService")}
+          </Link>{" "}
+          {t("and")}{" "}
+          <Link href="#" className="underline hover:text-gray-300">
+            {t("privacyPolicy")}
+          </Link>
+          .
         </p>
 
         <p className="text-gray-500 text-sm text-center mt-4">
           {t("alreadyHaveAccount")}{" "}
-          <Link href="/login" className="text-cyan-500 hover:text-cyan-400 font-medium">
+          <Link
+            href="/login"
+            className="text-cyan-500 hover:text-cyan-400 font-medium"
+          >
             {t("signIn")}
           </Link>
         </p>

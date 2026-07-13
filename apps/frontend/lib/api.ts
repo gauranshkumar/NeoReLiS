@@ -1,9 +1,9 @@
 // In the browser, use relative URLs so requests go through Next.js rewrites proxy.
 // On the server (SSR), use the full backend URL.
 const API_BASE_URL =
-  typeof window !== 'undefined'
-    ? ''
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9078');
+  typeof window !== "undefined"
+    ? ""
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:9078";
 
 // ─── Generic API Client ──────────────────────────────────────────────
 
@@ -24,18 +24,18 @@ class ApiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth_token');
+    if (typeof window !== "undefined") {
+      this.token = localStorage.getItem("auth_token");
     }
   }
 
   setToken(token: string | null) {
     this.token = token;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       if (token) {
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem("auth_token", token);
       } else {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem("auth_token");
       }
     }
   }
@@ -46,17 +46,18 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     };
 
     if (this.token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+      (headers as Record<string, string>)["Authorization"] =
+        `Bearer ${this.token}`;
     }
 
     const controller = new AbortController();
@@ -75,7 +76,7 @@ class ApiClient {
       } catch {
         return {
           error: {
-            code: 'PARSE_ERROR',
+            code: "PARSE_ERROR",
             message: `Server returned non-JSON response (status ${response.status})`,
           },
         };
@@ -84,8 +85,8 @@ class ApiClient {
       if (!response.ok) {
         return {
           error: {
-            code: data.code as string || 'ERROR',
-            message: data.message as string || 'An error occurred',
+            code: (data.code as string) || "ERROR",
+            message: (data.message as string) || "An error occurred",
             details: data.details,
           },
         };
@@ -93,18 +94,18 @@ class ApiClient {
 
       return { data: data as T };
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (error instanceof DOMException && error.name === "AbortError") {
         return {
           error: {
-            code: 'TIMEOUT_ERROR',
-            message: 'Request timed out',
+            code: "TIMEOUT_ERROR",
+            message: "Request timed out",
           },
         };
       }
       return {
         error: {
-          code: 'NETWORK_ERROR',
-          message: error instanceof Error ? error.message : 'Network error',
+          code: "NETWORK_ERROR",
+          message: error instanceof Error ? error.message : "Network error",
         },
       };
     } finally {
@@ -113,26 +114,26 @@ class ApiClient {
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.request<T>(endpoint, { method: "GET" });
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   async put<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   async delete<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'DELETE',
+      method: "DELETE",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
@@ -183,11 +184,15 @@ export const authApi = {
     username: string;
     name: string;
   }) => {
-    return api.post<RegisterResponse>('/api/v1/auth/register', data);
+    return api.post<RegisterResponse>("/api/v1/auth/register", data);
   },
 
-  login: async (data: { email?: string; username?: string; password: string }) => {
-    const response = await api.post<AuthResponse>('/api/v1/auth/login', data);
+  login: async (data: {
+    email?: string;
+    username?: string;
+    password: string;
+  }) => {
+    const response = await api.post<AuthResponse>("/api/v1/auth/login", data);
     if (response.data?.token) {
       api.setToken(response.data.token);
     }
@@ -195,28 +200,36 @@ export const authApi = {
   },
 
   logout: async () => {
-    const response = await api.post<{ message: string }>('/api/v1/auth/logout');
+    const response = await api.post<{ message: string }>("/api/v1/auth/logout");
     api.setToken(null);
     return response;
   },
 
   me: async () => {
-    return api.get<{ user: User }>('/api/v1/auth/me');
+    return api.get<{ user: User }>("/api/v1/auth/me");
   },
 
   requestPasswordReset: async (email: string) => {
-    return api.post<{ message: string }>('/api/v1/auth/password-reset', { email });
-  },
-
-  confirmPasswordReset: async (token: string, newPassword: string) => {
-    return api.post<{ message: string }>('/api/v1/auth/password-reset/confirm', {
-      token,
-      newPassword,
+    return api.post<{ message: string }>("/api/v1/auth/password-reset", {
+      email,
     });
   },
 
+  confirmPasswordReset: async (token: string, newPassword: string) => {
+    return api.post<{ message: string }>(
+      "/api/v1/auth/password-reset/confirm",
+      {
+        token,
+        newPassword,
+      },
+    );
+  },
+
   verifyEmail: async (data: { email: string; code: string }) => {
-    const response = await api.post<AuthResponse>('/api/v1/auth/verify-email', data);
+    const response = await api.post<AuthResponse>(
+      "/api/v1/auth/verify-email",
+      data,
+    );
     if (response.data?.token) {
       api.setToken(response.data.token);
     }
@@ -225,8 +238,8 @@ export const authApi = {
 
   resendVerificationCode: async (email: string) => {
     return api.post<{ message: string; codeExpiresInMinutes?: number }>(
-      '/api/v1/auth/resend-verification-code',
-      { email }
+      "/api/v1/auth/resend-verification-code",
+      { email },
     );
   },
 };
@@ -244,9 +257,11 @@ export const userApi = {
   search: async (query: string, excludeIds?: string[]) => {
     const params = new URLSearchParams({ q: query });
     if (excludeIds?.length) {
-      params.set('excludeIds', excludeIds.join(','));
+      params.set("excludeIds", excludeIds.join(","));
     }
-    return api.get<{ users: UserSearchResult[] }>(`/api/v1/users/search?${params.toString()}`);
+    return api.get<{ users: UserSearchResult[] }>(
+      `/api/v1/users/search?${params.toString()}`,
+    );
   },
 };
 
@@ -266,16 +281,18 @@ export interface Notification {
 export const notificationApi = {
   list: async (options?: { unreadOnly?: boolean; limit?: number }) => {
     const params = new URLSearchParams();
-    if (options?.unreadOnly) params.set('unreadOnly', 'true');
-    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.unreadOnly) params.set("unreadOnly", "true");
+    if (options?.limit) params.set("limit", String(options.limit));
     const qs = params.toString();
     return api.get<{ notifications: Notification[]; unreadCount: number }>(
-      `/api/v1/notifications${qs ? `?${qs}` : ''}`
+      `/api/v1/notifications${qs ? `?${qs}` : ""}`,
     );
   },
 
   unreadCount: async () => {
-    return api.get<{ unreadCount: number }>('/api/v1/notifications/unread-count');
+    return api.get<{ unreadCount: number }>(
+      "/api/v1/notifications/unread-count",
+    );
   },
 
   markAsRead: async (id: string) => {
@@ -283,7 +300,7 @@ export const notificationApi = {
   },
 
   markAllAsRead: async () => {
-    return api.put<{ message: string }>('/api/v1/notifications/read-all');
+    return api.put<{ message: string }>("/api/v1/notifications/read-all");
   },
 
   delete: async (id: string) => {
@@ -298,7 +315,7 @@ export interface Project {
   label: string;
   title: string;
   description?: string | null;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   createdAt: string;
   updatedAt?: string;
   role?: string;
@@ -323,7 +340,7 @@ export interface ProjectInvitation {
   projectId: string;
   email: string;
   role: string;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'REVOKED';
+  status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "REVOKED";
   expiresAt: string;
   createdAt: string;
   acceptedAt: string | null;
@@ -352,18 +369,25 @@ export interface ProjectSettings {
 
 export const projectApi = {
   list: async () => {
-    return api.get<{ projects: Project[] }>('/api/v1/projects');
+    return api.get<{ projects: Project[] }>("/api/v1/projects");
   },
 
   get: async (id: string) => {
     return api.get<{ project: Project }>(`/api/v1/projects/${id}`);
   },
 
-  create: async (data: { label: string; title: string; description?: string }) => {
-    return api.post<{ project: Project }>('/api/v1/projects', data);
+  create: async (data: {
+    label: string;
+    title: string;
+    description?: string;
+  }) => {
+    return api.post<{ project: Project }>("/api/v1/projects", data);
   },
 
-  update: async (id: string, data: { title?: string; description?: string; status?: string }) => {
+  update: async (
+    id: string,
+    data: { title?: string; description?: string; status?: string },
+  ) => {
     return api.put<{ project: Project }>(`/api/v1/projects/${id}`, data);
   },
 
@@ -372,27 +396,43 @@ export const projectApi = {
   },
 
   permanentDelete: async (id: string) => {
-    return api.delete<{ message: string }>(`/api/v1/projects/${id}?permanent=true`);
+    return api.delete<{ message: string }>(
+      `/api/v1/projects/${id}?permanent=true`,
+    );
   },
 
   // Members
   getMembers: async (projectId: string) => {
-    return api.get<{ members: ProjectMember[] }>(`/api/v1/projects/${projectId}/members`);
+    return api.get<{ members: ProjectMember[] }>(
+      `/api/v1/projects/${projectId}/members`,
+    );
   },
 
-  addMember: async (projectId: string, data: { userId: string; role: string }) => {
-    return api.post<{ member: ProjectMember }>(`/api/v1/projects/${projectId}/members`, data);
+  addMember: async (
+    projectId: string,
+    data: { userId: string; role: string },
+  ) => {
+    return api.post<{ member: ProjectMember }>(
+      `/api/v1/projects/${projectId}/members`,
+      data,
+    );
   },
 
-  updateMemberRole: async (projectId: string, memberId: string, role: string) => {
+  updateMemberRole: async (
+    projectId: string,
+    memberId: string,
+    role: string,
+  ) => {
     return api.put<{ member: ProjectMember }>(
       `/api/v1/projects/${projectId}/members/${memberId}`,
-      { role }
+      { role },
     );
   },
 
   removeMember: async (projectId: string, memberId: string) => {
-    return api.delete<{ message: string }>(`/api/v1/projects/${projectId}/members/${memberId}`);
+    return api.delete<{ message: string }>(
+      `/api/v1/projects/${projectId}/members/${memberId}`,
+    );
   },
 
   // Invitations
@@ -402,7 +442,10 @@ export const projectApi = {
     );
   },
 
-  inviteMember: async (projectId: string, data: { email: string; role: string }) => {
+  inviteMember: async (
+    projectId: string,
+    data: { email: string; role: string },
+  ) => {
     return api.post<{ invitation: ProjectInvitation }>(
       `/api/v1/projects/${projectId}/invitations`,
       data,
@@ -424,18 +467,26 @@ export const projectApi = {
 
   // Settings
   getSettings: async (projectId: string) => {
-    return api.get<{ settings: ProjectSettings }>(`/api/v1/projects/${projectId}/settings`);
+    return api.get<{ settings: ProjectSettings }>(
+      `/api/v1/projects/${projectId}/settings`,
+    );
   },
 
-  updateSettings: async (projectId: string, settings: Partial<ProjectSettings>) => {
-    return api.put<{ settings: ProjectSettings }>(`/api/v1/projects/${projectId}/settings`, settings);
+  updateSettings: async (
+    projectId: string,
+    settings: Partial<ProjectSettings>,
+  ) => {
+    return api.put<{ settings: ProjectSettings }>(
+      `/api/v1/projects/${projectId}/settings`,
+      settings,
+    );
   },
 
   /** Create a full project from a ReviewProtocol JSON (wizard / CLI) */
   createFromProtocol: async (protocol: Record<string, unknown>) => {
     return api.post<{ project: Project & { protocolApplied: boolean } }>(
-      '/api/v1/projects/create-from-protocol',
-      protocol
+      "/api/v1/projects/create-from-protocol",
+      protocol,
     );
   },
 };
@@ -469,13 +520,13 @@ export const invitationApi = {
   },
 
   accept: async (token: string) => {
-    return api.post<AcceptInvitationResponse>('/api/v1/invitations/accept', {
+    return api.post<AcceptInvitationResponse>("/api/v1/invitations/accept", {
       token,
     });
   },
 
   decline: async (token: string) => {
-    return api.post<{ ok: true }>('/api/v1/invitations/decline', { token });
+    return api.post<{ ok: true }>("/api/v1/invitations/decline", { token });
   },
 };
 
@@ -492,19 +543,33 @@ export interface ProtocolDraft {
 
 export const draftApi = {
   list: async () => {
-    return api.get<{ drafts: ProtocolDraft[] }>('/api/v1/projects/drafts');
+    return api.get<{ drafts: ProtocolDraft[] }>("/api/v1/projects/drafts");
   },
 
   get: async (draftId: string) => {
-    return api.get<{ draft: ProtocolDraft }>(`/api/v1/projects/drafts/${draftId}`);
+    return api.get<{ draft: ProtocolDraft }>(
+      `/api/v1/projects/drafts/${draftId}`,
+    );
   },
 
-  save: async (draftId: string, data: { name: string; currentStep: number; formData: Record<string, unknown> }) => {
-    return api.put<{ draft: ProtocolDraft }>(`/api/v1/projects/drafts/${draftId}`, data);
+  save: async (
+    draftId: string,
+    data: {
+      name: string;
+      currentStep: number;
+      formData: Record<string, unknown>;
+    },
+  ) => {
+    return api.put<{ draft: ProtocolDraft }>(
+      `/api/v1/projects/drafts/${draftId}`,
+      data,
+    );
   },
 
   delete: async (draftId: string) => {
-    return api.delete<{ message: string }>(`/api/v1/projects/drafts/${draftId}`);
+    return api.delete<{ message: string }>(
+      `/api/v1/projects/drafts/${draftId}`,
+    );
   },
 };
 
@@ -524,8 +589,8 @@ export interface Paper {
   url?: string | null;
   source: string;
   projectId: string;
-  status?: string;           // screeningStatus from list endpoint
-  screeningStatus?: string;  // from detail endpoint
+  status?: string; // screeningStatus from list endpoint
+  screeningStatus?: string; // from detail endpoint
   bibtexKey?: string | null;
   authors: PaperAuthor[];
   createdAt: string;
@@ -546,7 +611,7 @@ export interface ImportJob {
   projectId: string;
   filename: string;
   fileType: string;
-  status: 'UPLOADED' | 'PARSING' | 'VALIDATED' | 'PERSISTED' | 'COMPLETED';
+  status: "UPLOADED" | "PARSING" | "VALIDATED" | "PERSISTED" | "COMPLETED";
   totalRows: number;
   processedRows: number;
   successRows: number;
@@ -567,11 +632,11 @@ export const paperApi = {
     status?: string;
   }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.page) query.set('page', String(params.page));
-    if (params?.limit) query.set('limit', String(params.limit));
-    if (params?.search) query.set('search', params.search);
-    if (params?.status) query.set('status', params.status);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.search) query.set("search", params.search);
+    if (params?.status) query.set("status", params.status);
     return api.get<PaperListResponse>(`/api/v1/papers?${query.toString()}`);
   },
 
@@ -589,7 +654,7 @@ export const paperApi = {
     source?: string;
     projectId: string;
   }) => {
-    return api.post<{ paper: Paper }>('/api/v1/papers', data);
+    return api.post<{ paper: Paper }>("/api/v1/papers", data);
   },
 
   update: async (
@@ -601,7 +666,7 @@ export const paperApi = {
       year?: number;
       doi?: string;
       url?: string;
-    }
+    },
   ) => {
     return api.put<{ paper: Paper }>(`/api/v1/papers/${id}`, data);
   },
@@ -611,7 +676,7 @@ export const paperApi = {
   },
 
   import: async (data: {
-    format: 'bibtex' | 'endnote' | 'csv';
+    format: "bibtex" | "endnote" | "csv";
     content: string;
     projectId: string;
     columnMapping?: {
@@ -635,18 +700,21 @@ export const paperApi = {
       duplicates: number;
       errors: { row?: number; entry?: string; message: string }[];
       importJobId: string;
-    }>('/api/v1/papers/import', data);
+    }>("/api/v1/papers/import", data);
   },
 
   previewCSV: async (content: string, maxRows?: number) => {
-    return api.post<{ headers: string[]; rows: string[][] }>('/api/v1/papers/import/preview-csv', {
-      content,
-      maxRows,
-    });
+    return api.post<{ headers: string[]; rows: string[][] }>(
+      "/api/v1/papers/import/preview-csv",
+      {
+        content,
+        maxRows,
+      },
+    );
   },
 
   getCSVTemplate: async () => {
-    return api.get<{ template: string }>('/api/v1/papers/import/csv-template');
+    return api.get<{ template: string }>("/api/v1/papers/import/csv-template");
   },
 
   getImportJob: async (jobId: string) => {
@@ -654,19 +722,26 @@ export const paperApi = {
   },
 
   listImportJobs: async (projectId: string) => {
-    return api.get<{ jobs: ImportJob[] }>(`/api/v1/papers/import/jobs?projectId=${projectId}`);
+    return api.get<{ jobs: ImportJob[] }>(
+      `/api/v1/papers/import/jobs?projectId=${projectId}`,
+    );
   },
 
   exportSingle: async (id: string, format?: string) => {
-    const query = format ? `?format=${format}` : '';
-    return api.get<{ format: string; content: string }>(`/api/v1/papers/${id}/export${query}`);
+    const query = format ? `?format=${format}` : "";
+    return api.get<{ format: string; content: string }>(
+      `/api/v1/papers/${id}/export${query}`,
+    );
   },
 
   exportMultiple: async (paperIds: string[], format?: string) => {
-    return api.post<{ format: string; content: string; count: number }>('/api/v1/papers/export', {
-      paperIds,
-      format,
-    });
+    return api.post<{ format: string; content: string; count: number }>(
+      "/api/v1/papers/export",
+      {
+        paperIds,
+        format,
+      },
+    );
   },
 };
 
@@ -696,7 +771,7 @@ export interface ScreeningAssignment {
 export interface ScreeningDecision {
   id: string;
   assignmentId: string;
-  decision: 'include' | 'exclude' | 'conflict';
+  decision: "include" | "exclude" | "conflict";
   notes?: string;
   createdAt: string;
 }
@@ -728,8 +803,10 @@ export interface ScreeningStats {
 export const screeningApi = {
   // Phases
   listPhases: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
-    return api.get<{ phases: ScreeningPhase[] }>(`/api/v1/screening/phases${query}`);
+    const query = projectId ? `?projectId=${projectId}` : "";
+    return api.get<{ phases: ScreeningPhase[] }>(
+      `/api/v1/screening/phases${query}`,
+    );
   },
 
   getPhase: async (id: string) => {
@@ -742,14 +819,20 @@ export const screeningApi = {
     description?: string;
     order: number;
   }) => {
-    return api.post<{ phase: ScreeningPhase }>('/api/v1/screening/phases', data);
+    return api.post<{ phase: ScreeningPhase }>(
+      "/api/v1/screening/phases",
+      data,
+    );
   },
 
   updatePhase: async (
     id: string,
-    data: { name?: string; description?: string; order?: number }
+    data: { name?: string; description?: string; order?: number },
   ) => {
-    return api.put<{ phase: ScreeningPhase }>(`/api/v1/screening/phases/${id}`, data);
+    return api.put<{ phase: ScreeningPhase }>(
+      `/api/v1/screening/phases/${id}`,
+      data,
+    );
   },
 
   deletePhase: async (id: string) => {
@@ -763,17 +846,19 @@ export const screeningApi = {
     reviewerId?: string;
   }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.phaseId) query.set('phaseId', params.phaseId);
-    if (params?.reviewerId) query.set('reviewerId', params.reviewerId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.phaseId) query.set("phaseId", params.phaseId);
+    if (params?.reviewerId) query.set("reviewerId", params.reviewerId);
     const qs = query.toString();
     return api.get<{ assignments: ScreeningAssignment[] }>(
-      `/api/v1/screening/assignments${qs ? `?${qs}` : ''}`
+      `/api/v1/screening/assignments${qs ? `?${qs}` : ""}`,
     );
   },
 
   getAssignment: async (id: string) => {
-    return api.get<{ assignment: ScreeningAssignment }>(`/api/v1/screening/assignments/${id}`);
+    return api.get<{ assignment: ScreeningAssignment }>(
+      `/api/v1/screening/assignments/${id}`,
+    );
   },
 
   createAssignment: async (data: {
@@ -782,7 +867,10 @@ export const screeningApi = {
     paperId: string;
     reviewerId: string;
   }) => {
-    return api.post<{ assignment: ScreeningAssignment }>('/api/v1/screening/assignments', data);
+    return api.post<{ assignment: ScreeningAssignment }>(
+      "/api/v1/screening/assignments",
+      data,
+    );
   },
 
   bulkCreateAssignments: async (data: {
@@ -791,43 +879,54 @@ export const screeningApi = {
     paperIds: string[];
     reviewerIds: string[];
   }) => {
-    return api.post<{ message: string; count: number }>('/api/v1/screening/assignments/bulk', data);
+    return api.post<{ message: string; count: number }>(
+      "/api/v1/screening/assignments/bulk",
+      data,
+    );
   },
 
   // Decisions
   submitDecision: async (data: {
     assignmentId: string;
-    decision: 'include' | 'exclude' | 'conflict';
+    decision: "include" | "exclude" | "conflict";
     notes?: string;
   }) => {
-    return api.post<{ decision: ScreeningDecision }>('/api/v1/screening/decisions', data);
+    return api.post<{ decision: ScreeningDecision }>(
+      "/api/v1/screening/decisions",
+      data,
+    );
   },
 
   // Conflicts
   listConflicts: async (params?: { projectId?: string; phaseId?: string }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.phaseId) query.set('phaseId', params.phaseId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.phaseId) query.set("phaseId", params.phaseId);
     const qs = query.toString();
     return api.get<{ conflicts: ScreeningConflict[] }>(
-      `/api/v1/screening/conflicts${qs ? `?${qs}` : ''}`
+      `/api/v1/screening/conflicts${qs ? `?${qs}` : ""}`,
     );
   },
 
-  resolveConflict: async (id: string, data: { resolution: string; resolvedBy: string }) => {
+  resolveConflict: async (
+    id: string,
+    data: { resolution: string; resolvedBy: string },
+  ) => {
     return api.post<{ conflict: ScreeningConflict }>(
       `/api/v1/screening/conflicts/${id}/resolve`,
-      data
+      data,
     );
   },
 
   // Stats
   getStats: async (params?: { projectId?: string; phaseId?: string }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.phaseId) query.set('phaseId', params.phaseId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.phaseId) query.set("phaseId", params.phaseId);
     const qs = query.toString();
-    return api.get<ScreeningStats>(`/api/v1/screening/stats${qs ? `?${qs}` : ''}`);
+    return api.get<ScreeningStats>(
+      `/api/v1/screening/stats${qs ? `?${qs}` : ""}`,
+    );
   },
 };
 
@@ -835,7 +934,7 @@ export const screeningApi = {
 
 export interface QACriterion {
   name: string;
-  type: 'scale' | 'yes_no' | 'text';
+  type: "scale" | "yes_no" | "text";
   weight?: number;
 }
 
@@ -882,14 +981,16 @@ export interface QAStats {
 export const qualityAssessmentApi = {
   // QA Configurations
   list: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<{ qualityAssessments: QualityAssessment[] }>(
-      `/api/v1/quality-assessment${query}`
+      `/api/v1/quality-assessment${query}`,
     );
   },
 
   get: async (id: string) => {
-    return api.get<{ qualityAssessment: QualityAssessment }>(`/api/v1/quality-assessment/${id}`);
+    return api.get<{ qualityAssessment: QualityAssessment }>(
+      `/api/v1/quality-assessment/${id}`,
+    );
   },
 
   create: async (data: {
@@ -898,16 +999,19 @@ export const qualityAssessmentApi = {
     description?: string;
     criteria: QACriterion[];
   }) => {
-    return api.post<{ qualityAssessment: QualityAssessment }>('/api/v1/quality-assessment', data);
+    return api.post<{ qualityAssessment: QualityAssessment }>(
+      "/api/v1/quality-assessment",
+      data,
+    );
   },
 
   update: async (
     id: string,
-    data: { name?: string; description?: string; criteria?: QACriterion[] }
+    data: { name?: string; description?: string; criteria?: QACriterion[] },
   ) => {
     return api.put<{ qualityAssessment: QualityAssessment }>(
       `/api/v1/quality-assessment/${id}`,
-      data
+      data,
     );
   },
 
@@ -917,33 +1021,40 @@ export const qualityAssessmentApi = {
 
   // Assignments
   listAssignments: async (qaId: string, reviewerId?: string) => {
-    const query = reviewerId ? `?reviewerId=${reviewerId}` : '';
+    const query = reviewerId ? `?reviewerId=${reviewerId}` : "";
     return api.get<{ assignments: QAAssignment[] }>(
-      `/api/v1/quality-assessment/${qaId}/assignments${query}`
+      `/api/v1/quality-assessment/${qaId}/assignments${query}`,
     );
   },
 
   getAssignment: async (id: string) => {
-    return api.get<{ assignment: QAAssignment }>(`/api/v1/quality-assessment/assignments/${id}`);
+    return api.get<{ assignment: QAAssignment }>(
+      `/api/v1/quality-assessment/assignments/${id}`,
+    );
   },
 
   createAssignment: async (
     qaId: string,
-    data: { projectId: string; qaId: string; paperId: string; reviewerId: string }
+    data: {
+      projectId: string;
+      qaId: string;
+      paperId: string;
+      reviewerId: string;
+    },
   ) => {
     return api.post<{ assignment: QAAssignment }>(
       `/api/v1/quality-assessment/${qaId}/assignments`,
-      data
+      data,
     );
   },
 
   bulkCreateAssignments: async (
     qaId: string,
-    data: { projectId: string; paperIds: string[]; reviewerIds: string[] }
+    data: { projectId: string; paperIds: string[]; reviewerIds: string[] },
   ) => {
     return api.post<{ message: string; count: number }>(
       `/api/v1/quality-assessment/${qaId}/assignments/bulk`,
-      data
+      data,
     );
   },
 
@@ -953,12 +1064,17 @@ export const qualityAssessmentApi = {
     scores: Record<string, number | boolean | string>;
     notes?: string;
   }) => {
-    return api.post<{ score: QAScore }>('/api/v1/quality-assessment/scores', data);
+    return api.post<{ score: QAScore }>(
+      "/api/v1/quality-assessment/scores",
+      data,
+    );
   },
 
   getScores: async (qaId: string, paperId?: string) => {
-    const query = paperId ? `?paperId=${paperId}` : '';
-    return api.get<{ scores: QAScore[] }>(`/api/v1/quality-assessment/${qaId}/scores${query}`);
+    const query = paperId ? `?paperId=${paperId}` : "";
+    return api.get<{ scores: QAScore[] }>(
+      `/api/v1/quality-assessment/${qaId}/scores${query}`,
+    );
   },
 
   // Stats
@@ -971,7 +1087,7 @@ export const qualityAssessmentApi = {
 
 export interface ExtractionField {
   name: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'boolean';
+  type: "text" | "number" | "date" | "select" | "multiselect" | "boolean";
   required: boolean;
   options?: string[];
   validation?: Record<string, unknown>;
@@ -1024,12 +1140,16 @@ export interface ExtractionStats {
 export const dataExtractionApi = {
   // Forms
   listForms: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
-    return api.get<{ forms: ExtractionForm[] }>(`/api/v1/data-extraction/forms${query}`);
+    const query = projectId ? `?projectId=${projectId}` : "";
+    return api.get<{ forms: ExtractionForm[] }>(
+      `/api/v1/data-extraction/forms${query}`,
+    );
   },
 
   getForm: async (id: string) => {
-    return api.get<{ form: ExtractionForm }>(`/api/v1/data-extraction/forms/${id}`);
+    return api.get<{ form: ExtractionForm }>(
+      `/api/v1/data-extraction/forms/${id}`,
+    );
   },
 
   createForm: async (data: {
@@ -1039,7 +1159,10 @@ export const dataExtractionApi = {
     version?: string;
     fields: ExtractionField[];
   }) => {
-    return api.post<{ form: ExtractionForm }>('/api/v1/data-extraction/forms', data);
+    return api.post<{ form: ExtractionForm }>(
+      "/api/v1/data-extraction/forms",
+      data,
+    );
   },
 
   updateForm: async (
@@ -1049,17 +1172,24 @@ export const dataExtractionApi = {
       description?: string;
       version?: string;
       fields?: ExtractionField[];
-    }
+    },
   ) => {
-    return api.put<{ form: ExtractionForm }>(`/api/v1/data-extraction/forms/${id}`, data);
+    return api.put<{ form: ExtractionForm }>(
+      `/api/v1/data-extraction/forms/${id}`,
+      data,
+    );
   },
 
   deleteForm: async (id: string) => {
-    return api.delete<{ message: string }>(`/api/v1/data-extraction/forms/${id}`);
+    return api.delete<{ message: string }>(
+      `/api/v1/data-extraction/forms/${id}`,
+    );
   },
 
   publishForm: async (id: string) => {
-    return api.post<{ form: ExtractionForm }>(`/api/v1/data-extraction/forms/${id}/publish`);
+    return api.post<{ form: ExtractionForm }>(
+      `/api/v1/data-extraction/forms/${id}/publish`,
+    );
   },
 
   // Assignments
@@ -1069,18 +1199,18 @@ export const dataExtractionApi = {
     reviewerId?: string;
   }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.formId) query.set('formId', params.formId);
-    if (params?.reviewerId) query.set('reviewerId', params.reviewerId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.formId) query.set("formId", params.formId);
+    if (params?.reviewerId) query.set("reviewerId", params.reviewerId);
     const qs = query.toString();
     return api.get<{ assignments: ExtractionAssignment[] }>(
-      `/api/v1/data-extraction/assignments${qs ? `?${qs}` : ''}`
+      `/api/v1/data-extraction/assignments${qs ? `?${qs}` : ""}`,
     );
   },
 
   getAssignment: async (id: string) => {
     return api.get<{ assignment: ExtractionAssignment }>(
-      `/api/v1/data-extraction/assignments/${id}`
+      `/api/v1/data-extraction/assignments/${id}`,
     );
   },
 
@@ -1091,8 +1221,8 @@ export const dataExtractionApi = {
     reviewerId: string;
   }) => {
     return api.post<{ assignment: ExtractionAssignment }>(
-      '/api/v1/data-extraction/assignments',
-      data
+      "/api/v1/data-extraction/assignments",
+      data,
     );
   },
 
@@ -1103,8 +1233,8 @@ export const dataExtractionApi = {
     reviewerIds: string[];
   }) => {
     return api.post<{ message: string; count: number }>(
-      '/api/v1/data-extraction/assignments/bulk',
-      data
+      "/api/v1/data-extraction/assignments/bulk",
+      data,
     );
   },
 
@@ -1112,24 +1242,29 @@ export const dataExtractionApi = {
   submitData: async (data: {
     assignmentId: string;
     data: Record<string, unknown>;
-    status?: 'draft' | 'submitted' | 'revised';
+    status?: "draft" | "submitted" | "revised";
   }) => {
-    return api.post<{ extraction: ExtractionData }>('/api/v1/data-extraction/data', data);
+    return api.post<{ extraction: ExtractionData }>(
+      "/api/v1/data-extraction/data",
+      data,
+    );
   },
 
   getData: async (assignmentId: string) => {
     return api.get<{ extraction: ExtractionData }>(
-      `/api/v1/data-extraction/data/${assignmentId}`
+      `/api/v1/data-extraction/data/${assignmentId}`,
     );
   },
 
   // Stats
   getStats: async (params?: { projectId?: string; formId?: string }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.formId) query.set('formId', params.formId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.formId) query.set("formId", params.formId);
     const qs = query.toString();
-    return api.get<ExtractionStats>(`/api/v1/data-extraction/stats${qs ? `?${qs}` : ''}`);
+    return api.get<ExtractionStats>(
+      `/api/v1/data-extraction/stats${qs ? `?${qs}` : ""}`,
+    );
   },
 };
 
@@ -1228,71 +1363,88 @@ export interface ProjectStats {
 export const reportingApi = {
   // Reports
   listReports: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<{ reports: Report[] }>(`/api/v1/reporting/reports${query}`);
   },
 
   getReport: async (id: string, format?: string) => {
-    const query = format ? `?format=${format}` : '';
-    return api.get<{ report: Report }>(`/api/v1/reporting/reports/${id}${query}`);
+    const query = format ? `?format=${format}` : "";
+    return api.get<{ report: Report }>(
+      `/api/v1/reporting/reports/${id}${query}`,
+    );
   },
 
   downloadReport: async (id: string, format?: string) => {
-    const query = format ? `?format=${format}` : '';
+    const query = format ? `?format=${format}` : "";
     return api.get<{ message: string; format: string; url: string }>(
-      `/api/v1/reporting/reports/${id}/download${query}`
+      `/api/v1/reporting/reports/${id}/download${query}`,
     );
   },
 
   generateReport: async (data: {
     projectId: string;
-    type: 'screening' | 'quality_assessment' | 'data_extraction' | 'summary' | 'prisma';
-    format?: 'json' | 'csv' | 'pdf' | 'html';
+    type:
+      | "screening"
+      | "quality_assessment"
+      | "data_extraction"
+      | "summary"
+      | "prisma";
+    format?: "json" | "csv" | "pdf" | "html";
     filters?: Record<string, unknown>;
   }) => {
-    return api.post<{ report: Report }>('/api/v1/reporting/generate', data);
+    return api.post<{ report: Report }>("/api/v1/reporting/generate", data);
   },
 
   // Module-specific reports
-  getScreeningReport: async (params?: { projectId?: string; phaseId?: string }) => {
+  getScreeningReport: async (params?: {
+    projectId?: string;
+    phaseId?: string;
+  }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.phaseId) query.set('phaseId', params.phaseId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.phaseId) query.set("phaseId", params.phaseId);
     const qs = query.toString();
-    return api.get<ScreeningReport>(`/api/v1/reporting/screening${qs ? `?${qs}` : ''}`);
+    return api.get<ScreeningReport>(
+      `/api/v1/reporting/screening${qs ? `?${qs}` : ""}`,
+    );
   },
 
   getQAReport: async (params?: { projectId?: string; qaId?: string }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.qaId) query.set('qaId', params.qaId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.qaId) query.set("qaId", params.qaId);
     const qs = query.toString();
-    return api.get<QAReport>(`/api/v1/reporting/quality-assessment${qs ? `?${qs}` : ''}`);
+    return api.get<QAReport>(
+      `/api/v1/reporting/quality-assessment${qs ? `?${qs}` : ""}`,
+    );
   },
 
-  getExtractionReport: async (params?: { projectId?: string; formId?: string }) => {
+  getExtractionReport: async (params?: {
+    projectId?: string;
+    formId?: string;
+  }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.formId) query.set('formId', params.formId);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.formId) query.set("formId", params.formId);
     const qs = query.toString();
     return api.get<ExtractionReport>(
-      `/api/v1/reporting/data-extraction${qs ? `?${qs}` : ''}`
+      `/api/v1/reporting/data-extraction${qs ? `?${qs}` : ""}`,
     );
   },
 
   getPrismaFlow: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<PrismaFlowData>(`/api/v1/reporting/prisma${query}`);
   },
 
   // Export
   exportData: async (data: {
     projectId: string;
-    entity: 'papers' | 'screening' | 'quality_assessment' | 'data_extraction';
-    format?: 'csv' | 'bibtex' | 'json' | 'excel';
+    entity: "papers" | "screening" | "quality_assessment" | "data_extraction";
+    format?: "csv" | "bibtex" | "json" | "excel";
     filters?: Record<string, unknown>;
   }) => {
-    return api.post<{ export: ExportRecord }>('/api/v1/reporting/export', data);
+    return api.post<{ export: ExportRecord }>("/api/v1/reporting/export", data);
   },
 
   getExportStatus: async (id: string) => {
@@ -1300,12 +1452,14 @@ export const reportingApi = {
   },
 
   downloadExport: async (id: string) => {
-    return api.get<{ message: string; url: string }>(`/api/v1/reporting/exports/${id}/download`);
+    return api.get<{ message: string; url: string }>(
+      `/api/v1/reporting/exports/${id}/download`,
+    );
   },
 
   // Overall stats
   getProjectStats: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<ProjectStats>(`/api/v1/reporting/stats${query}`);
   },
 };
@@ -1325,17 +1479,17 @@ export interface Element {
 export const elementApi = {
   list: async (
     entityType: string,
-    params?: { projectId?: string; page?: number; limit?: number }
+    params?: { projectId?: string; page?: number; limit?: number },
   ) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.page) query.set('page', String(params.page));
-    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
     const qs = query.toString();
     return api.get<{
       elements: Element[];
       pagination: PaginationMeta;
-    }>(`/api/v1/element/${entityType}${qs ? `?${qs}` : ''}`);
+    }>(`/api/v1/element/${entityType}${qs ? `?${qs}` : ""}`);
   },
 
   get: async (entityType: string, id: string) => {
@@ -1343,45 +1497,59 @@ export const elementApi = {
   },
 
   getDetail: async (entityType: string, id: string) => {
-    return api.get<{ element: Element }>(`/api/v1/element/${entityType}/${id}/detail`);
+    return api.get<{ element: Element }>(
+      `/api/v1/element/${entityType}/${id}/detail`,
+    );
   },
 
-  create: async (entityType: string, data: { projectId: string; data: Record<string, unknown> }) => {
+  create: async (
+    entityType: string,
+    data: { projectId: string; data: Record<string, unknown> },
+  ) => {
     return api.post<{ element: Element }>(`/api/v1/element/${entityType}`, {
       ...data,
       entityType,
     });
   },
 
-  update: async (entityType: string, id: string, data: Record<string, unknown>) => {
-    return api.put<{ element: Element }>(`/api/v1/element/${entityType}/${id}`, { data });
+  update: async (
+    entityType: string,
+    id: string,
+    data: Record<string, unknown>,
+  ) => {
+    return api.put<{ element: Element }>(
+      `/api/v1/element/${entityType}/${id}`,
+      { data },
+    );
   },
 
   delete: async (entityType: string, id: string) => {
-    return api.delete<{ message: string }>(`/api/v1/element/${entityType}/${id}`);
+    return api.delete<{ message: string }>(
+      `/api/v1/element/${entityType}/${id}`,
+    );
   },
 
   getCount: async (entityType: string, projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<{ entityType: string; projectId: string; count: number }>(
-      `/api/v1/element/${entityType}/count${query}`
+      `/api/v1/element/${entityType}/count${query}`,
     );
   },
 
   bulkCreate: async (
     entityType: string,
-    data: { projectId: string; elements: Record<string, unknown>[] }
+    data: { projectId: string; elements: Record<string, unknown>[] },
   ) => {
     return api.post<{ message: string; count: number; entityType: string }>(
       `/api/v1/element/${entityType}/bulk`,
-      data
+      data,
     );
   },
 
   bulkDelete: async (entityType: string, ids: string[]) => {
     return api.delete<{ message: string; count: number; entityType: string }>(
       `/api/v1/element/${entityType}/bulk`,
-      { ids }
+      { ids },
     );
   },
 };
@@ -1440,13 +1608,16 @@ export interface ProjectConfig {
 
 export const managerApi = {
   // Operations
-  listOperations: async (params?: { projectId?: string; entityType?: string }) => {
+  listOperations: async (params?: {
+    projectId?: string;
+    entityType?: string;
+  }) => {
     const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.entityType) query.set('entityType', params.entityType);
+    if (params?.projectId) query.set("projectId", params.projectId);
+    if (params?.entityType) query.set("entityType", params.entityType);
     const qs = query.toString();
     return api.get<{ operations: ManagerOperation[] }>(
-      `/api/v1/manager/operations${qs ? `?${qs}` : ''}`
+      `/api/v1/manager/operations${qs ? `?${qs}` : ""}`,
     );
   },
 
@@ -1466,27 +1637,29 @@ export const managerApi = {
         result: Record<string, unknown>;
         executedAt: string;
       };
-    }>('/api/v1/manager/operations', data);
+    }>("/api/v1/manager/operations", data);
   },
 
   // Entities
   listEntities: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
-    return api.get<{ entities: EntityConfig[] }>(`/api/v1/manager/entities${query}`);
+    const query = projectId ? `?projectId=${projectId}` : "";
+    return api.get<{ entities: EntityConfig[] }>(
+      `/api/v1/manager/entities${query}`,
+    );
   },
 
   getEntityConfig: async (entityType: string, projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<EntityDetailConfig>(
-      `/api/v1/manager/entities/${entityType}/config${query}`
+      `/api/v1/manager/entities/${entityType}/config${query}`,
     );
   },
 
   // Stored Procedures
   listStoredProcedures: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<{ procedures: StoredProcedure[] }>(
-      `/api/v1/manager/stored-procedures${query}`
+      `/api/v1/manager/stored-procedures${query}`,
     );
   },
 
@@ -1494,25 +1667,30 @@ export const managerApi = {
     projectId?: string;
     entityType?: string;
   }) => {
-    return api.post<{ message: string; projectId: string; entityType: string; regenerated: number }>(
-      '/api/v1/manager/stored-procedures/regenerate',
-      data
-    );
+    return api.post<{
+      message: string;
+      projectId: string;
+      entityType: string;
+      regenerated: number;
+    }>("/api/v1/manager/stored-procedures/regenerate", data);
   },
 
   // Config
   getConfig: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<ProjectConfig>(`/api/v1/manager/config${query}`);
   },
 
-  updateConfig: async (data: { projectId: string; config: Record<string, unknown> }) => {
-    return api.put<ProjectConfig>('/api/v1/manager/config', data);
+  updateConfig: async (data: {
+    projectId: string;
+    config: Record<string, unknown>;
+  }) => {
+    return api.put<ProjectConfig>("/api/v1/manager/config", data);
   },
 
   // Health
   checkHealth: async (projectId?: string) => {
-    const query = projectId ? `?projectId=${projectId}` : '';
+    const query = projectId ? `?projectId=${projectId}` : "";
     return api.get<{
       status: string;
       projectId: string;

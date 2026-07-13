@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, Check, CheckCheck, Trash2, Loader2, Users, FolderPlus, Save } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  Trash2,
+  Loader2,
+  Users,
+  FolderPlus,
+  Save,
+} from "lucide-react";
 import { notificationApi, Notification } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -18,9 +27,7 @@ const typeIcons: Record<string, React.ReactNode> = {
 };
 
 function timeAgo(dateStr: string) {
-  const seconds = Math.floor(
-    (Date.now() - new Date(dateStr).getTime()) / 1000
-  );
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -99,7 +106,7 @@ export function NotificationBell() {
   const handleMarkAsRead = async (id: string) => {
     await notificationApi.markAsRead(id);
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
@@ -127,7 +134,7 @@ export function NotificationBell() {
           "relative flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
           open
             ? "bg-[#1A1D21] text-cyan-500"
-            : "text-gray-400 hover:text-white hover:bg-[#1A1D21]"
+            : "text-gray-400 hover:text-white hover:bg-[#1A1D21]",
         )}
         aria-label="Notifications"
       >
@@ -165,7 +172,9 @@ export function NotificationBell() {
             ) : notifications.length === 0 ? (
               <div className="py-12 text-center">
                 <Bell className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">{t("noNotificationsYet")}</p>
+                <p className="text-sm text-gray-500">
+                  {t("noNotificationsYet")}
+                </p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -173,7 +182,7 @@ export function NotificationBell() {
                   key={n.id}
                   className={cn(
                     "group flex gap-3 px-4 py-3 border-b border-[#1f1f1f] transition-colors hover:bg-[#262626]/50",
-                    !n.read && "bg-cyan-500/5"
+                    !n.read && "bg-cyan-500/5",
                   )}
                 >
                   {/* Icon */}
@@ -188,7 +197,7 @@ export function NotificationBell() {
                     <p
                       className={cn(
                         "text-sm leading-snug",
-                        n.read ? "text-gray-400" : "text-white"
+                        n.read ? "text-gray-400" : "text-white",
                       )}
                     >
                       {n.message}

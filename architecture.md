@@ -1,6 +1,7 @@
 # ReLiS Architecture (Legacy CodeIgniter Implementation)
 
 ## 1. Document scope
+
 This document explains the architecture of the current ReLiS codebase in this repository.
 
 - Repository root: `/Users/shishuranjan/Learn/relis`
@@ -15,6 +16,7 @@ This document explains the architecture of the current ReLiS codebase in this re
 This is an architecture reference for understanding and maintenance, not a rewrite plan.
 
 ## 2. High-level architecture
+
 At runtime, ReLiS is a server-rendered web app with a dynamic, configuration-driven domain model.
 
 - UI: server-rendered PHP views + JS/CSS assets from `cside/`
@@ -35,9 +37,11 @@ The application is not a strict layered architecture. It behaves as:
 5. DB operations are mostly executed via generated stored procedures.
 
 ## 3. Runtime topology (Docker)
+
 Defined in `deployment/docker-compose.yml`.
 
 ### 3.1 Services
+
 - `db` (`mariadb:11.4`)
   - seeds `relis_db` from `deployment/db/initial_db.sql`
 - `relis-application` (PHP/Apache)
@@ -52,6 +56,7 @@ Defined in `deployment/docker-compose.yml`.
   - alias `relisbibler` in Docker network
 
 ### 3.2 Key environment assumptions
+
 - `index.php` uses `ENV` env variable (`dev`, `testing`, `prod`) to control error mode.
 - Config defaults in `relis_app/config/config.php` are container-oriented:
   - `base_url = http://localhost:8083/`
@@ -61,18 +66,22 @@ Defined in `deployment/docker-compose.yml`.
   - `biblerproxy_url = http://relisbibler:8000/`
 
 ## 4. Framework bootstrap and request lifecycle
+
 ### 4.1 Front controller bootstrap
+
 - Entry point: `index.php`
 - Loads CodeIgniter core from `relis_sys/`
 - Resolves app path to `relis_app/`
 - Bootstraps CI kernel via `relis_sys/core/CodeIgniter.php`
 
 ### 4.2 Routing
+
 - `relis_app/config/routes.php`
   - default controller: `home`
 - URL suffix configured as `.html` in `relis_app/config/config.php`
 
 ### 4.3 Autoloaded components
+
 `relis_app/config/autoload.php` autoloads critical building blocks globally.
 
 - Libraries: `database`, `session`, `table`, `bm_lib`, `user_lib`, `manager_lib`, `entity_config_lib`, `manage_stored_procedure_lib`, `paper/biblerproxy_lib`, etc.
@@ -80,15 +89,18 @@ Defined in `deployment/docker-compose.yml`.
 - Models: `DBConnection_mdl`, `Manage_mdl`, `User_dataAccess`, `Paper_dataAccess`, `Project_dataAccess`, `Screening_dataAccess`, etc.
 
 ### 4.4 Authentication gate
+
 - Main gate is in `relis_app/libraries/user/User_lib.php` constructor.
 - `free_controllers` list in config allows unauthenticated access to selected controllers:
   - `auth`, `api`, `apiquery`, `user`, `unit_test`
 - For other controllers, `user_lib` checks `session.user_id` and redirects to `user` if missing.
 
 ### 4.5 Session model
+
 Session is central to context switching and authorization.
 
 Important keys:
+
 - `user_id`, `user_username`, `active_language`
 - `project_db`, `project_id`, `project_title`, `project_public`
 - `working_perspective` (`class`, `screen`, `qa`)
@@ -97,15 +109,18 @@ Important keys:
 The current project DB is resolved through helper function `project_db()` in `relis_app/helpers/bm_helper.php`.
 
 ## 5. Core module map (controllers)
+
 Controllers live in `relis_app/controllers/`.
 
 ### 5.1 Public/auth and entry controllers
+
 - `User.php`
   - landing pages, login, demo user bootstrap, account validation and help pages
 - `Home.php`
   - dashboard, completion stats, shortcuts into module workflows
 
 ### 5.2 Project lifecycle and installation
+
 - `Project.php`
   - list/select/publish projects, create project from uploaded/generated config
 - `Install.php`
@@ -113,6 +128,7 @@ Controllers live in `relis_app/controllers/`.
   - orchestration of schema/regeneration flows
 
 ### 5.3 Domain workflow controllers
+
 - `Paper.php`
   - import/manual add/update/export of papers
 - `Screening.php`
@@ -125,16 +141,19 @@ Controllers live in `relis_app/controllers/`.
   - report generation and data export views/outputs
 
 ### 5.4 Generic CRUD/meta controllers
+
 - `Element.php`, `Manager.php`, `Manage.php`, `Op.php`, `Config.php`
   - generic entity operations powered by table/entity configuration metadata
 
 ### 5.5 API controllers
+
 - `Api.php`
   - protocol/report style JSON outputs (parts marked as not used)
 - `Apiquery.php`
   - SQL execution endpoint for query access (`run` method)
 
 ### 5.6 Other controllers
+
 - `Admin.php`
   - admin-level actions
 - `relis/Manager.php`
@@ -143,6 +162,7 @@ Controllers live in `relis_app/controllers/`.
   - custom in-app test orchestrator endpoint
 
 ## 6. Data access layer
+
 Models are in `relis_app/models/`.
 
 - `DBConnection_mdl.php`
@@ -163,12 +183,15 @@ Models are in `relis_app/models/`.
 Key characteristic: controllers often call models that call stored procedures, not ORM entities.
 
 ## 7. Dynamic configuration engine (core architectural differentiator)
+
 This is the most important architecture concept in ReLiS.
 
 ### 7.1 What it does
+
 Project behavior (entities, forms, operations, generated SQL procedures) is not fully hardcoded. It is partially generated and loaded from project configuration artifacts.
 
 ### 7.2 Primary components
+
 - `relis_app/libraries/Entity_config_lib.php`
   - resolves table/entity config for built-in and generated entities
 - `relis_app/libraries/Entity_configuration_lib.php`
@@ -179,6 +202,7 @@ Project behavior (entities, forms, operations, generated SQL procedures) is not 
   - operation registry and procedure generation hooks
 
 ### 7.3 Configuration sources
+
 - Built-in/common configs from:
   - `relis_app/libraries/entity_config/relis/*.php`
 - Generated project-specific config from:
@@ -186,29 +210,36 @@ Project behavior (entities, forms, operations, generated SQL procedures) is not 
   - plus editor-generated files fetched via tomcat API path
 
 ### 7.4 Runtime effect
+
 The same controller/action patterns can operate on different entity definitions and schemas depending on the active project config loaded from session project DB.
 
 ## 8. Database architecture
+
 Two-tier data architecture:
 
 ### 8.1 Platform DB (`relis_db`)
+
 Initialized from `deployment/db/initial_db.sql`.
 
 Holds global metadata and identity data:
+
 - users/user groups and memberships
 - projects catalog
 - admin and platform config
 - logs/help/info content
 
 Representative tables:
+
 - `users`, `usergroup`, `userproject`, `projects`
 - `config_admin`, `admin_config`, `config`
 - `info`, `log`, `str_management`
 
 ### 8.2 Project DB (per review project)
+
 Base schema template: `relis_app/libraries/table_config/project/init_sql/project_initial_query.sql`.
 
 Representative objects:
+
 - Tables:
   - `paper`, `assigned`, `classification`, `inclusion`, `exclusion`, `config`, `installation_info`, `ref_tables`
 - Views:
@@ -217,15 +248,18 @@ Representative objects:
   - list/get/count/detail/add/update/remove patterns and module-specific procedures
 
 ### 8.3 DB connection strategy
+
 - `relis_app/config/database.php` defines at least:
   - `default` -> platform DB `relis_db`
   - sample project DB group `demo_relis`
 - Current project DB key comes from session (`project_db`), then loaded by `load->database(project_db(), TRUE)`.
 
 ## 9. Query model and stored procedure dependence
+
 ReLiS relies heavily on SQL procedures as its executable data contract.
 
 Patterns:
+
 - `get_list_<entity>`
 - `get_detail_<entity>`
 - `remove_<entity>`
@@ -234,25 +268,30 @@ Patterns:
 - `count_<entity>`
 
 Procedure generation points:
+
 - installer/reconfiguration flow (`Install.php`, helper functions)
 - management utilities (`Manage_stored_procedure_lib.php`, `operations_helper.php`)
 
 Implication: application correctness depends on both PHP config metadata and generated DB procedure state.
 
 ## 10. End-to-end workflow architecture
+
 ### 10.1 Authentication and landing
+
 1. User hits `user/login`.
 2. `User_dataAccess->check_user_credentials` calls stored procedure with MD5-hashed password.
 3. Session is populated with identity + runtime flags.
 4. Redirect to `home`.
 
 ### 10.2 Project selection
+
 1. `Project/projects_list` resets context to `project_db=default`.
 2. User selects project.
 3. Session stores active `project_db`, `project_id`, title, perspective.
 4. Subsequent model calls switch to that DB.
 
 ### 10.3 Project creation / reconfiguration
+
 1. Configuration source from uploaded PHP config or editor-generated file.
 2. Install flow parses config and cleans previous installation if override.
 3. Creates reference and generated tables.
@@ -260,19 +299,23 @@ Implication: application correctness depends on both PHP config metadata and gen
 5. Updates project metadata and module flags (screening/qa/class settings).
 
 ### 10.4 Paper ingestion
+
 - Paper import supports BibTeX/EndNote/CSV/manual pathways.
 - BibTeX parsing delegated through `Biblerproxy_lib` HTTP calls to `bibler` service.
 
 ### 10.5 Screening and QA
+
 - Assignment workflows generate assignment rows and operation logs.
 - Screening/QA completion and conflicts computed from assignment/decision tables + config flags.
 - Validation modes are enabled/disabled by project config values.
 
 ### 10.6 Reporting/export
+
 - Reporting module reads from project DB and emits CSV/BibTeX and derived metrics.
 - Additional Python/R export template artifacts exist under `cside/`.
 
 ## 11. Library package map (`relis_app/libraries`)
+
 Subdirectories indicate module-oriented internal architecture.
 
 - `paper/`: paper/bibtex-specific libraries (`Biblerproxy_lib.php`)
@@ -286,6 +329,7 @@ Subdirectories indicate module-oriented internal architecture.
 - `debug/`, `logs/`, `entity_lib/`: support utilities
 
 ## 12. Helper architecture
+
 Key helpers in `relis_app/helpers/`:
 
 - `bm_helper.php`
@@ -300,6 +344,7 @@ Key helpers in `relis_app/helpers/`:
 Architectural note: helpers contain significant business and authorization logic, not only utility code.
 
 ## 13. Views and frontend
+
 - Views in `relis_app/views/` are server-rendered templates.
 - Shared layout wrappers:
   - `relis_app/views/shared/body.php`
@@ -309,7 +354,9 @@ Architectural note: helpers contain significant business and authorization logic
 - Static frontend assets and vendor libraries are under `cside/`.
 
 ## 14. Testing and CI architecture
+
 ### 14.1 In-app test orchestrator
+
 - Controller: `relis_app/controllers/test/Unit_test.php`
 - Loads many helper-based test suites from `relis_app/helpers/tests/`
 - Endpoint:
@@ -317,6 +364,7 @@ Architectural note: helpers contain significant business and authorization logic
   - `/test/unit_test/relis_unit_test/last_result`
 
 ### 14.2 GitHub Actions
+
 Workflow: `.github/workflows/relisUnitTest.yml`
 
 - Builds compose stack from `deployment/`
@@ -324,6 +372,7 @@ Workflow: `.github/workflows/relisUnitTest.yml`
 - Interprets result token (`successful` / `failed`)
 
 ## 15. Security-relevant architecture notes
+
 Current architecture includes legacy risks:
 
 - CSRF protection disabled (`config['csrf_protection'] = FALSE`).
@@ -335,6 +384,7 @@ Current architecture includes legacy risks:
 These are architecture traits, not isolated bugs.
 
 ## 16. Configuration reference (core)
+
 From `relis_app/config/config.php`:
 
 - URL and routing behavior:
@@ -354,6 +404,7 @@ From `relis_app/config/config.php`:
   - `project_db_prefix='relis_dev_correct_'`
 
 ## 17. Component inventory snapshot
+
 Current file-level inventory in `relis_app/`:
 
 - Controllers: 17 top-level PHP controllers (+ nested `controllers/relis/`, `controllers/test/`)
@@ -365,6 +416,7 @@ Current file-level inventory in `relis_app/`:
 This reflects a broad, feature-rich but tightly coupled monolith.
 
 ## 18. Typical failure modes (architectural)
+
 1. Project DB selected in session but missing in `database.php` group map.
 2. Generated config and DB stored procedures out of sync.
 3. Upgrade/reinstall path partially applies schema/procedure changes.
@@ -372,12 +424,14 @@ This reflects a broad, feature-rich but tightly coupled monolith.
 5. Permission issues on mounted writable folders (`workspace`, sessions, exports).
 
 ## 19. Architectural strengths
+
 - Supports multi-project review workflows in one deployment.
 - Highly configurable domain behavior for screening/QA/classification.
 - Rich feature breadth (import, assignment, validation, reporting, export).
 - Containerized local setup for reproducible development/testing.
 
 ## 20. Architectural constraints and tradeoffs
+
 - High coupling between controllers/helpers/models and global state.
 - Heavy dependence on dynamic SQL/stored-procedure generation.
 - Mixed concerns (presentation + business + SQL + integration logic) in same layers.
@@ -385,6 +439,7 @@ This reflects a broad, feature-rich but tightly coupled monolith.
 - Behavior is difficult to reason about without both PHP config and DB generated artifacts.
 
 ## 21. File map for deeper reading
+
 - Entrypoint/bootstrap:
   - `index.php`
   - `relis_app/config/{routes.php,autoload.php,config.php,database.php}`
@@ -403,8 +458,8 @@ This reflects a broad, feature-rich but tightly coupled monolith.
   - `relis_app/controllers/test/Unit_test.php`
   - `.github/workflows/relisUnitTest.yml`
 
-
 ## 22. End-to-end sequence (request-to-db)
+
 Below is the dominant execution sequence for authenticated CRUD/list flows:
 
 1. Browser requests route (for example `element/entity_list/<operation>.html`).
@@ -419,6 +474,7 @@ Below is the dominant execution sequence for authenticated CRUD/list flows:
 10. Browser receives server-rendered HTML; JS assets enhance interactions.
 
 ## 23. Component dependency map
+
 ASCII map of the dominant dependency direction:
 
 ```text
@@ -440,7 +496,7 @@ Controller
 ```
 
 Critical coupling nodes:
+
 - Session context (`project_db`, `user_id`, `working_perspective`)
 - Dynamic entity configuration files
 - Generated stored procedures in project databases
-

@@ -1,5 +1,11 @@
-import Papa, { type ParseResult as PapaParseResult } from 'papaparse';
-import type { ParsedPaper, ParsedAuthor, ParseResult, ParseError, CSVColumnMapping } from './types';
+import Papa, { type ParseResult as PapaParseResult } from "papaparse";
+import type {
+  ParsedPaper,
+  ParsedAuthor,
+  ParseResult,
+  ParseError,
+  CSVColumnMapping,
+} from "./types";
 
 /**
  * Parse CSV content with configurable column mapping
@@ -8,7 +14,7 @@ import type { ParsedPaper, ParsedAuthor, ParseResult, ParseError, CSVColumnMappi
 export function parseCSVContent(
   content: string,
   mapping: CSVColumnMapping,
-  startRow: number = 1
+  startRow: number = 1,
 ): ParseResult {
   const papers: ParsedPaper[] = [];
   const errors: ParseError[] = [];
@@ -42,13 +48,13 @@ export function parseCSVContent(
       } else {
         errors.push({
           row: i + 1,
-          message: 'Missing required title field',
+          message: "Missing required title field",
         });
       }
     } catch (err) {
       errors.push({
         row: i + 1,
-        message: err instanceof Error ? err.message : 'Failed to parse row',
+        message: err instanceof Error ? err.message : "Failed to parse row",
       });
     }
   }
@@ -65,7 +71,7 @@ export function parseCSVContent(
  */
 export function previewCSV(
   content: string,
-  maxRows: number = 10
+  maxRows: number = 10,
 ): { headers: string[]; rows: string[][] } {
   const parseResult: PapaParseResult<string[]> = Papa.parse(content, {
     header: false,
@@ -88,20 +94,24 @@ export function previewCSV(
  */
 export function generateCSVTemplate(): string {
   const headers = [
-    'title',
-    'authors',
-    'year',
-    'doi',
-    'abstract',
-    'bibtex_key',
-    'url',
-    'keywords',
-    'venue',
+    "title",
+    "authors",
+    "year",
+    "doi",
+    "abstract",
+    "bibtex_key",
+    "url",
+    "keywords",
+    "venue",
   ];
-  return headers.join(',');
+  return headers.join(",");
 }
 
-function convertCSVRow(row: string[], mapping: CSVColumnMapping, rowNum: number): ParsedPaper | null {
+function convertCSVRow(
+  row: string[],
+  mapping: CSVColumnMapping,
+  rowNum: number,
+): ParsedPaper | null {
   const getValue = (colIndex: number | undefined): string | undefined => {
     if (colIndex === undefined || colIndex < 0 || colIndex >= row.length) {
       return undefined;
@@ -125,12 +135,22 @@ function convertCSVRow(row: string[], mapping: CSVColumnMapping, rowNum: number)
     bibtexKey: getValue(mapping.bibtexKey),
     title: cleanCSVValue(title),
     authors,
-    abstract: getValue(mapping.abstract) ? cleanCSVValue(getValue(mapping.abstract)!) : undefined,
+    abstract: getValue(mapping.abstract)
+      ? cleanCSVValue(getValue(mapping.abstract)!)
+      : undefined,
     year: year && !isNaN(year) ? year : undefined,
-    doi: getValue(mapping.doi) ? cleanCSVValue(getValue(mapping.doi)!) : undefined,
-    url: getValue(mapping.url) ? cleanCSVValue(getValue(mapping.url)!) : undefined,
-    venue: getValue(mapping.venue) ? cleanCSVValue(getValue(mapping.venue)!) : undefined,
-    keywords: getValue(mapping.keywords) ? cleanCSVValue(getValue(mapping.keywords)!) : undefined,
+    doi: getValue(mapping.doi)
+      ? cleanCSVValue(getValue(mapping.doi)!)
+      : undefined,
+    url: getValue(mapping.url)
+      ? cleanCSVValue(getValue(mapping.url)!)
+      : undefined,
+    venue: getValue(mapping.venue)
+      ? cleanCSVValue(getValue(mapping.venue)!)
+      : undefined,
+    keywords: getValue(mapping.keywords)
+      ? cleanCSVValue(getValue(mapping.keywords)!)
+      : undefined,
     preview: generateCSVPreview(title, authors, year),
   };
 }
@@ -146,14 +166,17 @@ function parseCSVAuthors(authorsStr: string): ParsedAuthor[] {
   let order = 1;
 
   // Detect separator
-  let separator = ',';
-  if (authorsStr.includes(' and ')) {
-    separator = ' and ';
-  } else if (authorsStr.includes(';')) {
-    separator = ';';
+  let separator = ",";
+  if (authorsStr.includes(" and ")) {
+    separator = " and ";
+  } else if (authorsStr.includes(";")) {
+    separator = ";";
   }
 
-  const parts = authorsStr.split(separator).map((s) => s.trim()).filter(Boolean);
+  const parts = authorsStr
+    .split(separator)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   for (const part of parts) {
     const author = parseAuthorName(part);
@@ -169,36 +192,40 @@ function parseCSVAuthors(authorsStr: string): ParsedAuthor[] {
  * Parse a single author name
  * Handles: "John Doe", "Doe, John", "J. Doe"
  */
-function parseAuthorName(name: string): { firstName: string; lastName: string } | null {
+function parseAuthorName(
+  name: string,
+): { firstName: string; lastName: string } | null {
   const cleaned = name.trim();
   if (!cleaned) return null;
 
-  if (cleaned.includes(',')) {
+  if (cleaned.includes(",")) {
     // "Doe, John" format
-    const [lastName, firstName] = cleaned.split(',', 2).map((s) => s.trim());
-    return { firstName: firstName || '', lastName: lastName || '' };
+    const [lastName, firstName] = cleaned.split(",", 2).map((s) => s.trim());
+    return { firstName: firstName || "", lastName: lastName || "" };
   }
 
   // "John Doe" format - last word is last name
   const parts = cleaned.split(/\s+/);
   if (parts.length === 1) {
-    return { firstName: '', lastName: parts[0] || '' };
+    return { firstName: "", lastName: parts[0] || "" };
   }
 
-  const lastName = parts.pop() ?? '';
-  const firstName = parts.join(' ');
+  const lastName = parts.pop() ?? "";
+  const firstName = parts.join(" ");
   return { firstName, lastName };
 }
 
 function generateCSVPreview(
   title: string,
   authors: ParsedAuthor[],
-  year: number | undefined
+  year: number | undefined,
 ): string {
   const parts: string[] = [];
 
   if (authors.length > 0) {
-    const authorStr = authors.map((a) => `${a.lastName}, ${a.firstName}`).join('; ');
+    const authorStr = authors
+      .map((a) => `${a.lastName}, ${a.firstName}`)
+      .join("; ");
     parts.push(authorStr);
   }
 
@@ -208,9 +235,9 @@ function generateCSVPreview(
 
   parts.push(title);
 
-  return parts.join('. ');
+  return parts.join(". ");
 }
 
 function cleanCSVValue(value: string): string {
-  return value.replace(/\\n/g, '\n').replace(/\\r/g, '\r').trim();
+  return value.replace(/\\n/g, "\n").replace(/\\r/g, "\r").trim();
 }

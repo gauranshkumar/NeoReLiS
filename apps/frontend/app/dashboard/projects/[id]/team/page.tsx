@@ -239,7 +239,7 @@ export default function TeamManagementPage({
     } else {
       showSuccess(t("roleUpdated"));
       setMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+        prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)),
       );
     }
     setEditingMemberId(null);
@@ -324,7 +324,9 @@ export default function TeamManagementPage({
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Users className="w-6 h-6 text-cyan-500" />
-            <h1 className="text-2xl font-bold text-white">{t("teamMembers")}</h1>
+            <h1 className="text-2xl font-bold text-white">
+              {t("teamMembers")}
+            </h1>
           </div>
           <p className="text-gray-500 text-sm">
             {project?.title} — {members.length}{" "}
@@ -451,7 +453,9 @@ export default function TeamManagementPage({
                   placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                  onFocus={() =>
+                    searchResults.length > 0 && setShowDropdown(true)
+                  }
                   className="w-full h-11 pl-10 pr-4 rounded-lg bg-[#0A0A0A] border border-[#333] text-white placeholder-gray-600 text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 {isSearching && (
@@ -545,7 +549,8 @@ export default function TeamManagementPage({
                           name: inv.invitedBy.name,
                           when: formatRelative(inv.createdAt),
                         })}{" "}
-                        · {t("expiresIn", {
+                        ·{" "}
+                        {t("expiresIn", {
                           when: formatRelative(inv.expiresAt),
                         })}
                       </p>
@@ -691,7 +696,9 @@ export default function TeamManagementPage({
                             : "cursor-default"
                         }`}
                         title={
-                          canManage && !isCreator ? t("clickToChangeRole") : undefined
+                          canManage && !isCreator
+                            ? t("clickToChangeRole")
+                            : undefined
                         }
                       >
                         {member.role}
@@ -737,8 +744,8 @@ export default function TeamManagementPage({
                 inv.status === "ACCEPTED"
                   ? CheckCircle2
                   : inv.status === "DECLINED"
-                  ? XCircle
-                  : Ban;
+                    ? XCircle
+                    : Ban;
               return (
                 <div
                   key={inv.id}
@@ -750,8 +757,8 @@ export default function TeamManagementPage({
                         inv.status === "ACCEPTED"
                           ? "text-green-400"
                           : inv.status === "DECLINED"
-                          ? "text-red-400"
-                          : "text-gray-500"
+                            ? "text-red-400"
+                            : "text-gray-500"
                       }`}
                     />
                     <span className="text-white truncate">{inv.email}</span>

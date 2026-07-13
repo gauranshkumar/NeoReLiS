@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -7,10 +7,13 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
 
@@ -23,7 +26,7 @@ export {
   ExtractionStatus,
   ImportStatus,
   ExportStatus,
-} from '@prisma/client';
+} from "@prisma/client";
 export type {
   User,
   Project,
@@ -47,4 +50,4 @@ export type {
   ExtractionStatus,
   ImportStatus,
   ExportStatus,
-} from '@prisma/client';
+} from "@prisma/client";

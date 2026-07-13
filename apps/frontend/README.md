@@ -78,12 +78,12 @@ NEXT_PUBLIC_API_URL=http://localhost:9078
 
 Run from this folder, or use Turbo filters from the repo root (`bun run dev --filter=frontend`, etc.).
 
-| Command              | What it does                                             |
-| -------------------- | -------------------------------------------------------- |
-| `bun run dev`        | Start the Next.js dev server with Turbopack on `:3000`.  |
-| `bun run build`      | Production build (`.next/`).                             |
-| `bun run start`      | Serve the production build (requires `build` first).     |
-| `bun run lint`       | Run ESLint (`eslint .`).                                 |
+| Command         | What it does                                            |
+| --------------- | ------------------------------------------------------- |
+| `bun run dev`   | Start the Next.js dev server with Turbopack on `:3000`. |
+| `bun run build` | Production build (`.next/`).                            |
+| `bun run start` | Serve the production build (requires `build` first).    |
+| `bun run lint`  | Run ESLint (`eslint .`).                                |
 
 ## Adding a new page
 

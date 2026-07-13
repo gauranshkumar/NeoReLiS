@@ -30,7 +30,9 @@ export default function LoginPage() {
       router.push("/dashboard");
     } else if (result.requiresEmailVerification) {
       const verificationEmail = result.email || email;
-      router.push(`/verify-email?email=${encodeURIComponent(verificationEmail)}`);
+      router.push(
+        `/verify-email?email=${encodeURIComponent(verificationEmail)}`,
+      );
     } else {
       setError(result.error || tErr("loginFailed"));
       setIsLoading(false);
@@ -47,7 +49,9 @@ export default function LoginPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-900/30 bg-cyan-950/20 px-3 py-1 text-xs font-medium text-cyan-400 mb-4">
             <Lock className="w-3 h-3" /> {t("encryptedSession")}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {t("title")}
+          </h1>
           <p className="text-gray-400 text-sm mt-2">{t("subtitle")}</p>
         </div>
 
@@ -59,7 +63,10 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300" htmlFor="email">
+            <label
+              className="text-sm font-medium text-gray-300"
+              htmlFor="email"
+            >
               {t("researchEmail")}
             </label>
             <div className="relative">
@@ -78,10 +85,16 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-300" htmlFor="password">
+              <label
+                className="text-sm font-medium text-gray-300"
+                htmlFor="password"
+              >
                 {t("password")}
               </label>
-              <Link href="#" className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors">
+              <Link
+                href="#"
+                className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
+              >
                 {t("forgotPassword")}
               </Link>
             </div>
@@ -101,7 +114,11 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -119,8 +136,20 @@ export default function LoginPage() {
             ) : (
               <>
                 {t("signIn")}
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6.66669 12.6667L11.3334 8.00001L6.66669 3.33334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6.66669 12.6667L11.3334 8.00001L6.66669 3.33334"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </>
             )}
@@ -132,26 +161,35 @@ export default function LoginPage() {
             <div className="w-full border-t border-[#333]"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#0F1115] px-2 text-gray-500">{t("orContinueWith")}</span>
+            <span className="bg-[#0F1115] px-2 text-gray-500">
+              {t("orContinueWith")}
+            </span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
             {/* Google Icon Proxy */}
-            <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">G</div>
+            <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] text-black font-bold">
+              G
+            </div>
             {t("google")}
           </button>
           <button className="flex items-center justify-center gap-2 bg-[#1A1D21] border border-[#333] hover:bg-[#222] text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
             {/* ORCID Icon Proxy */}
-            <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">ID</div>
+            <div className="w-4 h-4 bg-lime-500 rounded-full flex items-center justify-center text-[8px] text-black font-bold">
+              ID
+            </div>
             {t("orcid")}
           </button>
         </div>
 
         <p className="text-gray-500 text-sm text-center mt-6">
           {t("dontHaveAccount")}{" "}
-          <Link href="/signup" className="text-cyan-500 hover:text-cyan-400 font-medium">
+          <Link
+            href="/signup"
+            className="text-cyan-500 hover:text-cyan-400 font-medium"
+          >
             {t("signUp")}
           </Link>
         </p>

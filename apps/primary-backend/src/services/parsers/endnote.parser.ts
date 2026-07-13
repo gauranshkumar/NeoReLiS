@@ -1,32 +1,37 @@
-import type { ParsedPaper, ParsedAuthor, ParseResult, ParseError } from './types';
+import type {
+  ParsedPaper,
+  ParsedAuthor,
+  ParseResult,
+  ParseError,
+} from "./types";
 
 /**
  * RIS/EndNote format field tags
  * Reference: https://en.wikipedia.org/wiki/RIS_(file_format)
  */
 const RIS_TAGS = {
-  TYPE: 'TY',
-  END: 'ER',
-  TITLE: 'TI',
-  TITLE_ALT: 'T1',
-  AUTHOR: 'AU',
-  AUTHOR_ALT: 'A1',
-  YEAR: 'PY',
-  YEAR_ALT: 'Y1',
-  ABSTRACT: 'AB',
-  ABSTRACT_ALT: 'N2',
-  DOI: 'DO',
-  URL: 'UR',
-  JOURNAL: 'JO',
-  JOURNAL_ALT: 'JF',
-  JOURNAL_T2: 'T2',
-  VOLUME: 'VL',
-  ISSUE: 'IS',
-  PAGES_START: 'SP',
-  PAGES_END: 'EP',
-  KEYWORDS: 'KW',
-  ID: 'ID',
-  LABEL: 'LB',
+  TYPE: "TY",
+  END: "ER",
+  TITLE: "TI",
+  TITLE_ALT: "T1",
+  AUTHOR: "AU",
+  AUTHOR_ALT: "A1",
+  YEAR: "PY",
+  YEAR_ALT: "Y1",
+  ABSTRACT: "AB",
+  ABSTRACT_ALT: "N2",
+  DOI: "DO",
+  URL: "UR",
+  JOURNAL: "JO",
+  JOURNAL_ALT: "JF",
+  JOURNAL_T2: "T2",
+  VOLUME: "VL",
+  ISSUE: "IS",
+  PAGES_START: "SP",
+  PAGES_END: "EP",
+  KEYWORDS: "KW",
+  ID: "ID",
+  LABEL: "LB",
 } as const;
 
 interface RISEntry {
@@ -53,13 +58,13 @@ export function parseEndnoteContent(content: string): ParseResult {
       } else {
         errors.push({
           entry: `Entry ${entryIndex}`,
-          message: 'Missing required title field',
+          message: "Missing required title field",
         });
       }
     } catch (err) {
       errors.push({
         entry: `Entry ${entryIndex}`,
-        message: err instanceof Error ? err.message : 'Failed to parse entry',
+        message: err instanceof Error ? err.message : "Failed to parse entry",
       });
     }
   }
@@ -90,7 +95,7 @@ function parseRISEntries(content: string): RISEntry[] {
     if (!match) continue;
 
     const tag = match[1];
-    const value = match[2] ?? '';
+    const value = match[2] ?? "";
 
     if (!tag) continue;
 
@@ -126,12 +131,16 @@ function convertRISEntry(entry: RISEntry, index: number): ParsedPaper | null {
 
   const authors = parseRISAuthors(entry);
   const year = parseRISYear(entry);
-  const abstract = getFirstValue(entry, [RIS_TAGS.ABSTRACT, RIS_TAGS.ABSTRACT_ALT]);
+  const abstract = getFirstValue(entry, [
+    RIS_TAGS.ABSTRACT,
+    RIS_TAGS.ABSTRACT_ALT,
+  ]);
   const doi = getFirstValue(entry, [RIS_TAGS.DOI]);
   const url = getFirstValue(entry, [RIS_TAGS.URL]);
   const venue = getVenue(entry);
-  const keywords = getAllValues(entry, [RIS_TAGS.KEYWORDS]).join('; ');
-  const bibtexKey = getFirstValue(entry, [RIS_TAGS.ID, RIS_TAGS.LABEL]) || `entry_${index}`;
+  const keywords = getAllValues(entry, [RIS_TAGS.KEYWORDS]).join("; ");
+  const bibtexKey =
+    getFirstValue(entry, [RIS_TAGS.ID, RIS_TAGS.LABEL]) || `entry_${index}`;
 
   const preview = generateRISPreview(title, authors, year, venue);
 
@@ -170,7 +179,10 @@ function getAllValues(entry: RISEntry, tags: string[]): string[] {
 
 function parseRISAuthors(entry: RISEntry): ParsedAuthor[] {
   const authors: ParsedAuthor[] = [];
-  const authorValues = getAllValues(entry, [RIS_TAGS.AUTHOR, RIS_TAGS.AUTHOR_ALT]);
+  const authorValues = getAllValues(entry, [
+    RIS_TAGS.AUTHOR,
+    RIS_TAGS.AUTHOR_ALT,
+  ]);
 
   let order = 1;
   for (const authorStr of authorValues) {
@@ -186,24 +198,26 @@ function parseRISAuthors(entry: RISEntry): ParsedAuthor[] {
 /**
  * Parse RIS author format: "LastName, FirstName" or "FirstName LastName"
  */
-function parseRISAuthorName(name: string): { firstName: string; lastName: string } | null {
+function parseRISAuthorName(
+  name: string,
+): { firstName: string; lastName: string } | null {
   const cleaned = name.trim();
   if (!cleaned) return null;
 
-  if (cleaned.includes(',')) {
+  if (cleaned.includes(",")) {
     // "LastName, FirstName" format
-    const [lastName, firstName] = cleaned.split(',', 2).map((s) => s.trim());
-    return { firstName: firstName || '', lastName: lastName || '' };
+    const [lastName, firstName] = cleaned.split(",", 2).map((s) => s.trim());
+    return { firstName: firstName || "", lastName: lastName || "" };
   }
 
   // "FirstName LastName" format
   const parts = cleaned.split(/\s+/);
   if (parts.length === 1) {
-    return { firstName: '', lastName: parts[0] || '' };
+    return { firstName: "", lastName: parts[0] || "" };
   }
 
-  const lastName = parts.pop() ?? '';
-  const firstName = parts.join(' ');
+  const lastName = parts.pop() ?? "";
+  const firstName = parts.join(" ");
   return { firstName, lastName };
 }
 
@@ -231,12 +245,14 @@ function generateRISPreview(
   title: string,
   authors: ParsedAuthor[],
   year: number | undefined,
-  venue: string | undefined
+  venue: string | undefined,
 ): string {
   const parts: string[] = [];
 
   if (authors.length > 0) {
-    const authorStr = authors.map((a) => `${a.lastName}, ${a.firstName}`).join('; ');
+    const authorStr = authors
+      .map((a) => `${a.lastName}, ${a.firstName}`)
+      .join("; ");
     parts.push(authorStr);
   }
 
@@ -250,10 +266,10 @@ function generateRISPreview(
     parts.push(`In: ${venue}`);
   }
 
-  return parts.join('. ');
+  return parts.join(". ");
 }
 
 function cleanString(str: string): string {
-  if (!str) return '';
-  return str.replace(/\s+/g, ' ').trim();
+  if (!str) return "";
+  return str.replace(/\s+/g, " ").trim();
 }

@@ -127,13 +127,48 @@ async function main() {
   // ── 4. Project Members ──
   console.log("🤝 Assigning project members...");
   const memberData = [
-    { userId: admin.id, projectId: project1.id, role: "ADMIN" as const, addedBy: admin.id },
-    { userId: manager.id, projectId: project1.id, role: "MANAGER" as const, addedBy: admin.id },
-    { userId: reviewer1.id, projectId: project1.id, role: "REVIEWER" as const, addedBy: manager.id },
-    { userId: reviewer2.id, projectId: project1.id, role: "REVIEWER" as const, addedBy: manager.id },
-    { userId: validator.id, projectId: project1.id, role: "VALIDATOR" as const, addedBy: manager.id },
-    { userId: manager.id, projectId: project2.id, role: "MANAGER" as const, addedBy: admin.id },
-    { userId: reviewer1.id, projectId: project2.id, role: "REVIEWER" as const, addedBy: manager.id },
+    {
+      userId: admin.id,
+      projectId: project1.id,
+      role: "ADMIN" as const,
+      addedBy: admin.id,
+    },
+    {
+      userId: manager.id,
+      projectId: project1.id,
+      role: "MANAGER" as const,
+      addedBy: admin.id,
+    },
+    {
+      userId: reviewer1.id,
+      projectId: project1.id,
+      role: "REVIEWER" as const,
+      addedBy: manager.id,
+    },
+    {
+      userId: reviewer2.id,
+      projectId: project1.id,
+      role: "REVIEWER" as const,
+      addedBy: manager.id,
+    },
+    {
+      userId: validator.id,
+      projectId: project1.id,
+      role: "VALIDATOR" as const,
+      addedBy: manager.id,
+    },
+    {
+      userId: manager.id,
+      projectId: project2.id,
+      role: "MANAGER" as const,
+      addedBy: admin.id,
+    },
+    {
+      userId: reviewer1.id,
+      projectId: project2.id,
+      role: "REVIEWER" as const,
+      addedBy: manager.id,
+    },
   ];
   for (const m of memberData) {
     await prisma.projectMember.create({ data: m });
@@ -160,26 +195,56 @@ async function main() {
   // ── 6. Inclusion / Exclusion Criteria ──
   console.log("📋 Creating screening criteria...");
   const ic1 = await prisma.inclusionCriteria.create({
-    data: { configId: config1.id, title: "Peer-reviewed publication", description: "Study is published in a peer-reviewed venue", order: 1 },
+    data: {
+      configId: config1.id,
+      title: "Peer-reviewed publication",
+      description: "Study is published in a peer-reviewed venue",
+      order: 1,
+    },
   });
   const ic2 = await prisma.inclusionCriteria.create({
-    data: { configId: config1.id, title: "AI/ML technique applied to code review", description: "Study applies AI or ML for automated code review", order: 2 },
+    data: {
+      configId: config1.id,
+      title: "AI/ML technique applied to code review",
+      description: "Study applies AI or ML for automated code review",
+      order: 2,
+    },
   });
   await prisma.exclusionCriteria.create({
-    data: { configId: config1.id, title: "Non-English publication", description: "Studies not available in English", order: 1 },
+    data: {
+      configId: config1.id,
+      title: "Non-English publication",
+      description: "Studies not available in English",
+      order: 1,
+    },
   });
   await prisma.exclusionCriteria.create({
-    data: { configId: config1.id, title: "Grey literature / blog posts", description: "Non-academic grey literature", order: 2 },
+    data: {
+      configId: config1.id,
+      title: "Grey literature / blog posts",
+      description: "Non-academic grey literature",
+      order: 2,
+    },
   });
 
   // ── 7. Venues ──
   console.log("🏛️  Creating venues...");
   const venues = await Promise.all([
-    prisma.venue.create({ data: { projectId: project1.id, name: "IEEE TSE", type: "journal" } }),
-    prisma.venue.create({ data: { projectId: project1.id, name: "ACM TOSEM", type: "journal" } }),
-    prisma.venue.create({ data: { projectId: project1.id, name: "ICSE", type: "conference" } }),
-    prisma.venue.create({ data: { projectId: project1.id, name: "FSE", type: "conference" } }),
-    prisma.venue.create({ data: { projectId: project1.id, name: "ASE", type: "conference" } }),
+    prisma.venue.create({
+      data: { projectId: project1.id, name: "IEEE TSE", type: "journal" },
+    }),
+    prisma.venue.create({
+      data: { projectId: project1.id, name: "ACM TOSEM", type: "journal" },
+    }),
+    prisma.venue.create({
+      data: { projectId: project1.id, name: "ICSE", type: "conference" },
+    }),
+    prisma.venue.create({
+      data: { projectId: project1.id, name: "FSE", type: "conference" },
+    }),
+    prisma.venue.create({
+      data: { projectId: project1.id, name: "ASE", type: "conference" },
+    }),
   ]);
 
   // ── 8. Authors ──
@@ -196,14 +261,86 @@ async function main() {
   // ── 9. Papers ──
   console.log("📄 Creating papers...");
   const paperDefs = [
-    { title: "Deep Learning for Automated Code Review: A Survey", abstract: "This paper surveys deep learning approaches applied to automated code review, covering neural program analysis, transformer-based models, and their integration into CI/CD pipelines.", doi: "10.1109/TSE.2024.001", year: 2024, venueIdx: 0, authorIdxs: [0, 1], status: "INCLUDED" as const },
-    { title: "LLM-Based Code Review Assistants: Effectiveness and Limitations", abstract: "We evaluate the effectiveness of large language model-based assistants for code review, measuring defect detection rate, false positive rate, and developer satisfaction across 15 open-source projects.", doi: "10.1145/TOSEM.2024.002", year: 2024, venueIdx: 1, authorIdxs: [2, 3], status: "INCLUDED" as const },
-    { title: "Automated Static Analysis vs AI Review: A Comparative Study", abstract: "This comparative study evaluates traditional static analysis tools against modern AI-powered review systems on a benchmark of 5,000 code changes.", doi: "10.1109/ICSE.2023.003", year: 2023, venueIdx: 2, authorIdxs: [1, 4], status: "IN_REVIEW" as const },
-    { title: "Transformer Models for Code Understanding and Review", abstract: "We propose CodeReviewBERT, a transformer model fine-tuned for code review tasks including defect detection, code smell identification, and improvement suggestion generation.", doi: "10.1145/FSE.2023.004", year: 2023, venueIdx: 3, authorIdxs: [0, 5], status: "IN_REVIEW" as const },
-    { title: "Human-AI Collaboration in Code Review Processes", abstract: "This paper investigates how human reviewers interact with AI-generated code review suggestions, analyzing acceptance rates, trust calibration, and the impact on review quality.", doi: "10.1109/ASE.2024.005", year: 2024, venueIdx: 4, authorIdxs: [4, 5], status: "PENDING" as const },
-    { title: "Bias in AI Code Review Tools: A Systematic Analysis", abstract: "We analyze potential biases in AI code review tools, including language-specific biases, coding style preferences, and demographic factors that may influence review recommendations.", doi: "10.1109/TSE.2024.006", year: 2024, venueIdx: 0, authorIdxs: [2, 3], status: "PENDING" as const },
-    { title: "Privacy-Preserving Code Review with Federated Learning", abstract: "This paper proposes a federated learning approach for building code review models that preserve intellectual property while learning from distributed codebases.", doi: "10.1145/ICSE.2024.007", year: 2024, venueIdx: 2, authorIdxs: [0, 1, 3], status: "EXCLUDED" as const },
-    { title: "Evaluating GPT-4 for Security-Focused Code Review", abstract: "We evaluate GPT-4's capability to identify security vulnerabilities during code review across OWASP Top 10 categories on a curated dataset of 2,000 vulnerable code snippets.", doi: "10.1145/FSE.2024.008", year: 2024, venueIdx: 3, authorIdxs: [1, 5], status: "IN_CONFLICT" as const },
+    {
+      title: "Deep Learning for Automated Code Review: A Survey",
+      abstract:
+        "This paper surveys deep learning approaches applied to automated code review, covering neural program analysis, transformer-based models, and their integration into CI/CD pipelines.",
+      doi: "10.1109/TSE.2024.001",
+      year: 2024,
+      venueIdx: 0,
+      authorIdxs: [0, 1],
+      status: "INCLUDED" as const,
+    },
+    {
+      title: "LLM-Based Code Review Assistants: Effectiveness and Limitations",
+      abstract:
+        "We evaluate the effectiveness of large language model-based assistants for code review, measuring defect detection rate, false positive rate, and developer satisfaction across 15 open-source projects.",
+      doi: "10.1145/TOSEM.2024.002",
+      year: 2024,
+      venueIdx: 1,
+      authorIdxs: [2, 3],
+      status: "INCLUDED" as const,
+    },
+    {
+      title: "Automated Static Analysis vs AI Review: A Comparative Study",
+      abstract:
+        "This comparative study evaluates traditional static analysis tools against modern AI-powered review systems on a benchmark of 5,000 code changes.",
+      doi: "10.1109/ICSE.2023.003",
+      year: 2023,
+      venueIdx: 2,
+      authorIdxs: [1, 4],
+      status: "IN_REVIEW" as const,
+    },
+    {
+      title: "Transformer Models for Code Understanding and Review",
+      abstract:
+        "We propose CodeReviewBERT, a transformer model fine-tuned for code review tasks including defect detection, code smell identification, and improvement suggestion generation.",
+      doi: "10.1145/FSE.2023.004",
+      year: 2023,
+      venueIdx: 3,
+      authorIdxs: [0, 5],
+      status: "IN_REVIEW" as const,
+    },
+    {
+      title: "Human-AI Collaboration in Code Review Processes",
+      abstract:
+        "This paper investigates how human reviewers interact with AI-generated code review suggestions, analyzing acceptance rates, trust calibration, and the impact on review quality.",
+      doi: "10.1109/ASE.2024.005",
+      year: 2024,
+      venueIdx: 4,
+      authorIdxs: [4, 5],
+      status: "PENDING" as const,
+    },
+    {
+      title: "Bias in AI Code Review Tools: A Systematic Analysis",
+      abstract:
+        "We analyze potential biases in AI code review tools, including language-specific biases, coding style preferences, and demographic factors that may influence review recommendations.",
+      doi: "10.1109/TSE.2024.006",
+      year: 2024,
+      venueIdx: 0,
+      authorIdxs: [2, 3],
+      status: "PENDING" as const,
+    },
+    {
+      title: "Privacy-Preserving Code Review with Federated Learning",
+      abstract:
+        "This paper proposes a federated learning approach for building code review models that preserve intellectual property while learning from distributed codebases.",
+      doi: "10.1145/ICSE.2024.007",
+      year: 2024,
+      venueIdx: 2,
+      authorIdxs: [0, 1, 3],
+      status: "EXCLUDED" as const,
+    },
+    {
+      title: "Evaluating GPT-4 for Security-Focused Code Review",
+      abstract:
+        "We evaluate GPT-4's capability to identify security vulnerabilities during code review across OWASP Top 10 categories on a curated dataset of 2,000 vulnerable code snippets.",
+      doi: "10.1145/FSE.2024.008",
+      year: 2024,
+      venueIdx: 3,
+      authorIdxs: [1, 5],
+      status: "IN_CONFLICT" as const,
+    },
   ];
 
   const papers = [];
@@ -226,7 +363,11 @@ async function main() {
     // Link authors
     for (let i = 0; i < p.authorIdxs.length; i++) {
       await prisma.paperAuthor.create({
-        data: { paperId: paper.id, authorId: authors[p.authorIdxs[i]!]!.id, order: i + 1 },
+        data: {
+          paperId: paper.id,
+          authorId: authors[p.authorIdxs[i]!]!.id,
+          order: i + 1,
+        },
       });
     }
   }
@@ -234,19 +375,33 @@ async function main() {
   // ── 10. Screening Phase, Assignments & Decisions ──
   console.log("🔍 Creating screening phases and decisions...");
   const phase1 = await prisma.screeningPhase.create({
-    data: { projectId: project1.id, name: "Title & Abstract Screening", description: "Initial screening based on title and abstract relevance", order: 1 },
+    data: {
+      projectId: project1.id,
+      name: "Title & Abstract Screening",
+      description: "Initial screening based on title and abstract relevance",
+      order: 1,
+    },
   });
 
   // Map inclusion criteria to phase
-  await prisma.screeningInclusionMapping.create({ data: { phaseId: phase1.id, criteriaId: ic1.id, order: 1 } });
-  await prisma.screeningInclusionMapping.create({ data: { phaseId: phase1.id, criteriaId: ic2.id, order: 2 } });
+  await prisma.screeningInclusionMapping.create({
+    data: { phaseId: phase1.id, criteriaId: ic1.id, order: 1 },
+  });
+  await prisma.screeningInclusionMapping.create({
+    data: { phaseId: phase1.id, criteriaId: ic2.id, order: 2 },
+  });
 
   // Create assignments and decisions for first 4 papers (both reviewers)
   for (let i = 0; i < 4; i++) {
     const paper = papers[i]!;
     for (const reviewer of [reviewer1, reviewer2]) {
       const assignment = await prisma.screeningAssignment.create({
-        data: { paperId: paper.id, phaseId: phase1.id, userId: reviewer.id, assignedBy: manager.id },
+        data: {
+          paperId: paper.id,
+          phaseId: phase1.id,
+          userId: reviewer.id,
+          assignedBy: manager.id,
+        },
       });
       // Decisions for INCLUDED/IN_REVIEW papers
       if (i < 2) {
@@ -267,40 +422,141 @@ async function main() {
   // ── 11. QA Template ──
   console.log("✅ Creating QA template...");
   const qaTemplate = await prisma.qATemplate.create({
-    data: { projectId: project1.id, name: "Study Quality Checklist", description: "Standard quality assessment for included studies" },
+    data: {
+      projectId: project1.id,
+      name: "Study Quality Checklist",
+      description: "Standard quality assessment for included studies",
+    },
   });
   const q1 = await prisma.qAQuestion.create({
-    data: { templateId: qaTemplate.id, text: "Are the research objectives clearly stated?", type: "binary", order: 1 },
+    data: {
+      templateId: qaTemplate.id,
+      text: "Are the research objectives clearly stated?",
+      type: "binary",
+      order: 1,
+    },
   });
   await prisma.qAOption.createMany({
     data: [
-      { questionId: q1.id, value: "yes", label: "Yes", weight: 1.0, isPositive: 1 },
-      { questionId: q1.id, value: "no", label: "No", weight: 0.0, isPositive: 0 },
+      {
+        questionId: q1.id,
+        value: "yes",
+        label: "Yes",
+        weight: 1.0,
+        isPositive: 1,
+      },
+      {
+        questionId: q1.id,
+        value: "no",
+        label: "No",
+        weight: 0.0,
+        isPositive: 0,
+      },
     ],
   });
   const q2 = await prisma.qAQuestion.create({
-    data: { templateId: qaTemplate.id, text: "Is the study methodology appropriate and well-described?", type: "binary", order: 2 },
+    data: {
+      templateId: qaTemplate.id,
+      text: "Is the study methodology appropriate and well-described?",
+      type: "binary",
+      order: 2,
+    },
   });
   await prisma.qAOption.createMany({
     data: [
-      { questionId: q2.id, value: "yes", label: "Yes", weight: 1.0, isPositive: 1 },
-      { questionId: q2.id, value: "partial", label: "Partially", weight: 0.5, isPositive: 1 },
-      { questionId: q2.id, value: "no", label: "No", weight: 0.0, isPositive: 0 },
+      {
+        questionId: q2.id,
+        value: "yes",
+        label: "Yes",
+        weight: 1.0,
+        isPositive: 1,
+      },
+      {
+        questionId: q2.id,
+        value: "partial",
+        label: "Partially",
+        weight: 0.5,
+        isPositive: 1,
+      },
+      {
+        questionId: q2.id,
+        value: "no",
+        label: "No",
+        weight: 0.0,
+        isPositive: 0,
+      },
     ],
   });
 
   // ── 12. Extraction Form ──
   console.log("📝 Creating extraction form...");
   const extractionForm = await prisma.extractionForm.create({
-    data: { projectId: project1.id, name: "Data Extraction Form v1", description: "Primary data extraction form for AI code review SLR", isPublished: 1 },
+    data: {
+      projectId: project1.id,
+      name: "Data Extraction Form v1",
+      description: "Primary data extraction form for AI code review SLR",
+      isPublished: 1,
+    },
   });
   await prisma.extractionField.createMany({
     data: [
-      { formId: extractionForm.id, name: "ai_technique", label: "AI/ML Technique Used", fieldType: "select", isRequired: 1, order: 1, config: { options: ["Deep Learning", "NLP/Transformers", "Traditional ML", "LLM", "Hybrid"] } },
-      { formId: extractionForm.id, name: "evaluation_method", label: "Evaluation Methodology", fieldType: "select", isRequired: 1, order: 2, config: { options: ["Controlled Experiment", "Case Study", "Survey", "Mixed Methods"] } },
-      { formId: extractionForm.id, name: "sample_size", label: "Sample Size", fieldType: "number", isRequired: 0, order: 3 },
-      { formId: extractionForm.id, name: "key_findings", label: "Key Findings", fieldType: "textarea", isRequired: 1, order: 4 },
-      { formId: extractionForm.id, name: "limitations", label: "Reported Limitations", fieldType: "textarea", isRequired: 0, order: 5 },
+      {
+        formId: extractionForm.id,
+        name: "ai_technique",
+        label: "AI/ML Technique Used",
+        fieldType: "select",
+        isRequired: 1,
+        order: 1,
+        config: {
+          options: [
+            "Deep Learning",
+            "NLP/Transformers",
+            "Traditional ML",
+            "LLM",
+            "Hybrid",
+          ],
+        },
+      },
+      {
+        formId: extractionForm.id,
+        name: "evaluation_method",
+        label: "Evaluation Methodology",
+        fieldType: "select",
+        isRequired: 1,
+        order: 2,
+        config: {
+          options: [
+            "Controlled Experiment",
+            "Case Study",
+            "Survey",
+            "Mixed Methods",
+          ],
+        },
+      },
+      {
+        formId: extractionForm.id,
+        name: "sample_size",
+        label: "Sample Size",
+        fieldType: "number",
+        isRequired: 0,
+        order: 3,
+      },
+      {
+        formId: extractionForm.id,
+        name: "key_findings",
+        label: "Key Findings",
+        fieldType: "textarea",
+        isRequired: 1,
+        order: 4,
+      },
+      {
+        formId: extractionForm.id,
+        name: "limitations",
+        label: "Reported Limitations",
+        fieldType: "textarea",
+        isRequired: 0,
+        order: 5,
+      },
     ],
   });
 
@@ -325,11 +581,35 @@ async function main() {
   // ── 14. Audit Logs ──
   console.log("📜 Creating audit logs...");
   const logEntries = [
-    { logType: "AUTH" as const, event: "User alice_admin logged in", userId: admin.id },
-    { logType: "PROJECT" as const, event: "Project 'ai_code_review_slr' created", userId: manager.id, projectId: project1.id },
-    { logType: "MEMBERSHIP" as const, event: "carol_reviewer added to ai_code_review_slr as REVIEWER", userId: manager.id, projectId: project1.id },
-    { logType: "IMPORT" as const, event: "Imported 8 papers from scopus_ai_code_review_2024.bib", userId: manager.id, projectId: project1.id },
-    { logType: "SCREENING" as const, event: "Screening phase 'Title & Abstract Screening' created", userId: manager.id, projectId: project1.id },
+    {
+      logType: "AUTH" as const,
+      event: "User alice_admin logged in",
+      userId: admin.id,
+    },
+    {
+      logType: "PROJECT" as const,
+      event: "Project 'ai_code_review_slr' created",
+      userId: manager.id,
+      projectId: project1.id,
+    },
+    {
+      logType: "MEMBERSHIP" as const,
+      event: "carol_reviewer added to ai_code_review_slr as REVIEWER",
+      userId: manager.id,
+      projectId: project1.id,
+    },
+    {
+      logType: "IMPORT" as const,
+      event: "Imported 8 papers from scopus_ai_code_review_2024.bib",
+      userId: manager.id,
+      projectId: project1.id,
+    },
+    {
+      logType: "SCREENING" as const,
+      event: "Screening phase 'Title & Abstract Screening' created",
+      userId: manager.id,
+      projectId: project1.id,
+    },
   ];
   for (const log of logEntries) {
     await prisma.auditLog.create({ data: log });
@@ -339,18 +619,52 @@ async function main() {
   console.log("🔧 Creating system config...");
   await prisma.adminConfig.createMany({
     data: [
-      { label: "app_name", value: "NeoReLiS", description: "Application display name" },
-      { label: "app_version", value: "1.0.0-mvp", description: "Current application version" },
-      { label: "max_upload_size_mb", value: "50", description: "Maximum file upload size in MB" },
-      { label: "default_language", value: "en", description: "Default UI language" },
+      {
+        label: "app_name",
+        value: "NeoReLiS",
+        description: "Application display name",
+      },
+      {
+        label: "app_version",
+        value: "1.0.0-mvp",
+        description: "Current application version",
+      },
+      {
+        label: "max_upload_size_mb",
+        value: "50",
+        description: "Maximum file upload size in MB",
+      },
+      {
+        label: "default_language",
+        value: "en",
+        description: "Default UI language",
+      },
     ],
   });
 
   await prisma.info.createMany({
     data: [
-      { title: "Welcome to NeoReLiS", description: "NeoReLiS is a modern platform for conducting Systematic Literature Reviews collaboratively.", type: "HOME", order: 1 },
-      { title: "Getting Started", description: "Create a project, invite team members, import papers, and begin your review.", type: "HELP", order: 1 },
-      { title: "Screening Workflow", description: "Papers are assigned to reviewers for independent screening. Conflicts are resolved by validators.", type: "HELP", order: 2 },
+      {
+        title: "Welcome to NeoReLiS",
+        description:
+          "NeoReLiS is a modern platform for conducting Systematic Literature Reviews collaboratively.",
+        type: "HOME",
+        order: 1,
+      },
+      {
+        title: "Getting Started",
+        description:
+          "Create a project, invite team members, import papers, and begin your review.",
+        type: "HELP",
+        order: 1,
+      },
+      {
+        title: "Screening Workflow",
+        description:
+          "Papers are assigned to reviewers for independent screening. Conflicts are resolved by validators.",
+        type: "HELP",
+        order: 2,
+      },
     ],
   });
 
@@ -358,8 +672,18 @@ async function main() {
     data: [
       { label: "btn_save", text: "Save", category: "ui", lang: "en" },
       { label: "btn_cancel", text: "Cancel", category: "ui", lang: "en" },
-      { label: "msg_welcome", text: "Welcome to NeoReLiS", category: "message", lang: "en" },
-      { label: "msg_no_papers", text: "No papers found. Import papers to get started.", category: "message", lang: "en" },
+      {
+        label: "msg_welcome",
+        text: "Welcome to NeoReLiS",
+        category: "message",
+        lang: "en",
+      },
+      {
+        label: "msg_no_papers",
+        text: "No papers found. Import papers to get started.",
+        category: "message",
+        lang: "en",
+      },
     ],
   });
 

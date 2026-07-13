@@ -28,9 +28,9 @@ type PageState =
   | { kind: "declining" }
   | { kind: "declined" }
   | {
-      kind: "error"
-      title: string
-      message: string
+      kind: "error";
+      title: string;
+      message: string;
     };
 
 type Action =
@@ -78,7 +78,9 @@ function AcceptInvitationContent() {
   const t = useTranslations("invitations.accept");
   const tCommon = useTranslations("common");
 
-  const [state, dispatch] = useReducer(reducer, { kind: "loading" } as PageState);
+  const [state, dispatch] = useReducer(reducer, {
+    kind: "loading",
+  } as PageState);
 
   // Fetch preview when token is known
   useEffect(() => {
@@ -208,9 +210,7 @@ function AcceptInvitationContent() {
             current: user?.email ?? "",
           })}
         </p>
-        <p className="text-gray-500 text-xs mt-4">
-          {t("emailMismatchHint")}
-        </p>
+        <p className="text-gray-500 text-xs mt-4">{t("emailMismatchHint")}</p>
       </CenteredCard>
     );
   }
@@ -305,8 +305,16 @@ function AcceptInvitationContent() {
       </h2>
 
       <div className="mt-6 w-full text-left space-y-3">
-        <DetailRow icon={User} label={t("invitedBy")} value={preview.invitedBy.name} />
-        <DetailRow icon={Mail} label={t("project")} value={preview.project.title} />
+        <DetailRow
+          icon={User}
+          label={t("invitedBy")}
+          value={preview.invitedBy.name}
+        />
+        <DetailRow
+          icon={Mail}
+          label={t("project")}
+          value={preview.project.title}
+        />
         <DetailRow
           icon={CheckCircle2}
           label={t("role")}
@@ -316,10 +324,10 @@ function AcceptInvitationContent() {
                 preview.role === "MANAGER"
                   ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
                   : preview.role === "REVIEWER"
-                  ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                  : preview.role === "VALIDATOR"
-                  ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
-                  : "bg-gray-500/15 text-gray-400 border-gray-500/30"
+                    ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
+                    : preview.role === "VALIDATOR"
+                      ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
+                      : "bg-gray-500/15 text-gray-400 border-gray-500/30"
               }`}
             >
               {preview.role}

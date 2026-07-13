@@ -1,25 +1,28 @@
-import { prisma } from '@neorelis/db'
+import { prisma } from "@neorelis/db";
 
-export async function findPapersByProject(projectId: string, options?: {
-  skip?: number
-  take?: number
-  search?: string
-  status?: string
-}) {
-  const { skip = 0, take = 50, search, status } = options || {}
+export async function findPapersByProject(
+  projectId: string,
+  options?: {
+    skip?: number;
+    take?: number;
+    search?: string;
+    status?: string;
+  },
+) {
+  const { skip = 0, take = 50, search, status } = options || {};
 
-  const where: any = { projectId, active: 1 }
+  const where: any = { projectId, active: 1 };
 
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { abstract: { contains: search, mode: 'insensitive' } },
-      { doi: { contains: search, mode: 'insensitive' } },
-    ]
+      { title: { contains: search, mode: "insensitive" } },
+      { abstract: { contains: search, mode: "insensitive" } },
+      { doi: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   if (status) {
-    where.screeningStatus = status
+    where.screeningStatus = status;
   }
 
   const [papers, total] = await Promise.all([
@@ -27,41 +30,44 @@ export async function findPapersByProject(projectId: string, options?: {
       where,
       skip,
       take,
-      orderBy: { addedAt: 'desc' },
+      orderBy: { addedAt: "desc" },
       include: {
         venue: { select: { name: true } },
         authors: {
           include: { author: true },
-          orderBy: { order: 'asc' },
+          orderBy: { order: "asc" },
         },
       },
     }),
     prisma.paper.count({ where }),
-  ])
+  ]);
 
-  return { papers, total }
+  return { papers, total };
 }
 
-export async function findPapersByProjectIds(projectIds: string[], options?: {
-  skip?: number
-  take?: number
-  search?: string
-  status?: string
-}) {
-  const { skip = 0, take = 50, search, status } = options || {}
+export async function findPapersByProjectIds(
+  projectIds: string[],
+  options?: {
+    skip?: number;
+    take?: number;
+    search?: string;
+    status?: string;
+  },
+) {
+  const { skip = 0, take = 50, search, status } = options || {};
 
-  const where: any = { projectId: { in: projectIds }, active: 1 }
+  const where: any = { projectId: { in: projectIds }, active: 1 };
 
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { abstract: { contains: search, mode: 'insensitive' } },
-      { doi: { contains: search, mode: 'insensitive' } },
-    ]
+      { title: { contains: search, mode: "insensitive" } },
+      { abstract: { contains: search, mode: "insensitive" } },
+      { doi: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   if (status) {
-    where.screeningStatus = status
+    where.screeningStatus = status;
   }
 
   const [papers, total] = await Promise.all([
@@ -69,19 +75,19 @@ export async function findPapersByProjectIds(projectIds: string[], options?: {
       where,
       skip,
       take,
-      orderBy: { addedAt: 'desc' },
+      orderBy: { addedAt: "desc" },
       include: {
         venue: { select: { name: true } },
         authors: {
           include: { author: true },
-          orderBy: { order: 'asc' },
+          orderBy: { order: "asc" },
         },
       },
     }),
     prisma.paper.count({ where }),
-  ])
+  ]);
 
-  return { papers, total }
+  return { papers, total };
 }
 
 export async function findPaperById(paperId: string) {
@@ -91,32 +97,32 @@ export async function findPaperById(paperId: string) {
       venue: true,
       authors: {
         include: { author: true },
-        orderBy: { order: 'asc' },
+        orderBy: { order: "asc" },
       },
     },
-  })
+  });
 }
 
 export async function createPaper(params: {
-  title: string
-  authors?: string
-  abstract?: string
-  year?: number
-  doi?: string
-  url?: string
-  source?: string
-  projectId: string
-  addedBy: string
+  title: string;
+  authors?: string;
+  abstract?: string;
+  year?: number;
+  doi?: string;
+  url?: string;
+  source?: string;
+  projectId: string;
+  addedBy: string;
 }) {
   // Parse authors if provided as string
-  let authorData: { lastName: string; firstName?: string }[] = []
+  let authorData: { lastName: string; firstName?: string }[] = [];
   if (params.authors) {
-    authorData = params.authors.split(',').map((name) => {
-      const parts = name.trim().split(' ')
-      const lastName = parts.pop() || ''
-      const firstName = parts.join(' ') || undefined
-      return { lastName, firstName }
-    })
+    authorData = params.authors.split(",").map((name) => {
+      const parts = name.trim().split(" ");
+      const lastName = parts.pop() || "";
+      const firstName = parts.join(" ") || undefined;
+      return { lastName, firstName };
+    });
   }
 
   return prisma.paper.create({
@@ -125,42 +131,43 @@ export async function createPaper(params: {
       abstract: params.abstract,
       year: params.year,
       doi: params.doi,
-      source: params.source || 'manual',
+      source: params.source || "manual",
       projectId: params.projectId,
       addedBy: params.addedBy,
-      additionMode: 'manual',
-      authors: authorData.length > 0
-        ? {
-            create: authorData.map((author, index) => ({
-              author: {
-                create: {
-                  lastName: author.lastName,
-                  firstName: author.firstName,
+      additionMode: "manual",
+      authors:
+        authorData.length > 0
+          ? {
+              create: authorData.map((author, index) => ({
+                author: {
+                  create: {
+                    lastName: author.lastName,
+                    firstName: author.firstName,
+                  },
                 },
-              },
-              order: index,
-            })),
-          }
-        : undefined,
+                order: index,
+              })),
+            }
+          : undefined,
     },
     include: {
       authors: {
         include: { author: true },
       },
     },
-  })
+  });
 }
 
 export async function updatePaper(
   paperId: string,
   data: {
-    title?: string
-    authors?: string
-    abstract?: string
-    year?: number
-    doi?: string
-    url?: string
-  }
+    title?: string;
+    authors?: string;
+    abstract?: string;
+    year?: number;
+    doi?: string;
+    url?: string;
+  },
 ) {
   return prisma.paper.update({
     where: { id: paperId },
@@ -170,20 +177,23 @@ export async function updatePaper(
       year: data.year,
       doi: data.doi,
     },
-  })
+  });
 }
 
 export async function deletePaper(paperId: string) {
   return prisma.paper.update({
     where: { id: paperId },
     data: { active: 0 },
-  })
+  });
 }
 
-export async function findPaperByProjectAndBibtexKey(projectId: string, bibtexKey: string) {
+export async function findPaperByProjectAndBibtexKey(
+  projectId: string,
+  bibtexKey: string,
+) {
   return prisma.paper.findUnique({
     where: {
       projectId_bibtexKey: { projectId, bibtexKey },
     },
-  })
+  });
 }

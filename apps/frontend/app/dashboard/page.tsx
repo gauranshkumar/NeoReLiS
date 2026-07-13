@@ -90,8 +90,8 @@ export default function DashboardPage() {
   const completionRate =
     stats?.screening?.completed && stats?.screening?.totalAssigned
       ? Math.round(
-        (stats.screening.completed / stats.screening.totalAssigned) * 100
-      )
+          (stats.screening.completed / stats.screening.totalAssigned) * 100,
+        )
       : 0;
 
   return (
@@ -106,8 +106,14 @@ export default function DashboardPage() {
             label={t("totalPapers")}
             badge={
               papersScreened > 0
-                ? { text: t("badgeActive"), color: "bg-green-500/10 text-green-500" }
-                : { text: t("badgeNone"), color: "bg-[#222] text-gray-400 border border-[#333]" }
+                ? {
+                    text: t("badgeActive"),
+                    color: "bg-green-500/10 text-green-500",
+                  }
+                : {
+                    text: t("badgeNone"),
+                    color: "bg-[#222] text-gray-400 border border-[#333]",
+                  }
             }
           />
           <MetricCard
@@ -116,15 +122,24 @@ export default function DashboardPage() {
             label={t("dataExtracted")}
             badge={
               dataExtracted > 0
-                ? { text: t("badgeActive"), color: "bg-green-500/10 text-green-500" }
-                : { text: t("badgeStable"), color: "bg-[#222] text-gray-400 border border-[#333]" }
+                ? {
+                    text: t("badgeActive"),
+                    color: "bg-green-500/10 text-green-500",
+                  }
+                : {
+                    text: t("badgeStable"),
+                    color: "bg-[#222] text-gray-400 border border-[#333]",
+                  }
             }
           />
           <MetricCard
             icon={<Users className="w-5 h-5 text-cyan-500" />}
             value={String(totalCollaborators)}
             label={t("projects")}
-            badge={{ text: t("badgeActive"), color: "bg-cyan-500/10 text-cyan-500" }}
+            badge={{
+              text: t("badgeActive"),
+              color: "bg-cyan-500/10 text-cyan-500",
+            }}
           />
           <MetricCard
             icon={<TrendingUp className="w-5 h-5 text-cyan-500" />}
@@ -132,10 +147,19 @@ export default function DashboardPage() {
             label={t("completionRate")}
             badge={
               completionRate >= 80
-                ? { text: t("badgeHigh"), color: "bg-green-500/10 text-green-500" }
+                ? {
+                    text: t("badgeHigh"),
+                    color: "bg-green-500/10 text-green-500",
+                  }
                 : completionRate >= 50
-                  ? { text: t("badgeModerate"), color: "bg-yellow-500/10 text-yellow-500" }
-                  : { text: t("badgeNone"), color: "bg-[#222] text-gray-400 border border-[#333]" }
+                  ? {
+                      text: t("badgeModerate"),
+                      color: "bg-yellow-500/10 text-yellow-500",
+                    }
+                  : {
+                      text: t("badgeNone"),
+                      color: "bg-[#222] text-gray-400 border border-[#333]",
+                    }
             }
           />
         </div>
@@ -144,7 +168,9 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white">{t("activeReviews")}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {t("activeReviews")}
+              </h2>
               <span className="bg-[#1A1D21] text-cyan-500 text-xs font-bold px-2 py-0.5 rounded border border-cyan-900/30">
                 {projects.length} {t("total")}
               </span>
@@ -163,9 +189,7 @@ export default function DashboardPage() {
               </div>
             ) : projects.length === 0 ? (
               <div className="col-span-2 bg-[#0F1115] border border-[#262626] rounded-xl p-12 text-center">
-                <p className="text-gray-400 mb-4">
-                  {t("noProjectsYet")}
-                </p>
+                <p className="text-gray-400 mb-4">{t("noProjectsYet")}</p>
                 <Link
                   href="/dashboard/projects"
                   className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-6 py-2.5 rounded-lg transition-colors text-sm"
@@ -174,17 +198,19 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              projects.slice(0, 4).map((project) => (
-                <ReviewCard
-                  key={project.id}
-                  title={project.title}
-                  desc={project.description || t("noDescription")}
-                  time={formatRelativeTime(project.createdAt)}
-                  status={project.status}
-                  projectId={project.id}
-                  creator={project.creator}
-                />
-              ))
+              projects
+                .slice(0, 4)
+                .map((project) => (
+                  <ReviewCard
+                    key={project.id}
+                    title={project.title}
+                    desc={project.description || t("noDescription")}
+                    time={formatRelativeTime(project.createdAt)}
+                    status={project.status}
+                    projectId={project.id}
+                    creator={project.creator}
+                  />
+                ))
             )}
           </div>
         </div>
@@ -192,7 +218,9 @@ export default function DashboardPage() {
         {/* Recent Papers — fetched from backend */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">{t("recentPapers")}</h2>
+            <h2 className="text-xl font-bold text-white">
+              {t("recentPapers")}
+            </h2>
             <Link
               href="/dashboard/library"
               className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
@@ -207,17 +235,15 @@ export default function DashboardPage() {
               </div>
             ) : recentPapers.length === 0 ? (
               <div className="bg-[#0F1115] border border-[#262626] rounded-xl p-8 text-center">
-                <p className="text-gray-400 text-sm">
-                  {t("noPapersImported")}
-                </p>
+                <p className="text-gray-400 text-sm">{t("noPapersImported")}</p>
               </div>
             ) : (
               recentPapers.map((paper) => {
                 const authors =
                   paper.authors && paper.authors.length > 0
                     ? paper.authors
-                      .map((a) => `${a.firstName} ${a.lastName}`)
-                      .join(", ")
+                        .map((a) => `${a.firstName} ${a.lastName}`)
+                        .join(", ")
                     : "Unknown";
                 return (
                   <PaperRow
@@ -256,15 +282,15 @@ export default function DashboardPage() {
                   initials={
                     project.creator
                       ? project.creator.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
                       : user?.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase() || "U"
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase() || "U"
                   }
                   bg="bg-blue-500"
                   name={project.creator?.name || user?.name || "You"}
@@ -284,16 +310,19 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 blur-2xl rounded-full pointer-events-none"></div>
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-cyan-400">{t("aiInsights")}</h3>
+            <h3 className="text-sm font-bold text-cyan-400">
+              {t("aiInsights")}
+            </h3>
           </div>
           <p className="text-sm text-gray-300 leading-relaxed italic">
             {projects.length > 0
               ? t("aiInsightsActive", {
                   count: projects.length,
                   papers: papersScreened,
-                  rateMsg: completionRate > 0
-                    ? t("aiRateMsg", { rate: completionRate })
-                    : t("aiStartScreening")
+                  rateMsg:
+                    completionRate > 0
+                      ? t("aiRateMsg", { rate: completionRate })
+                      : t("aiStartScreening"),
                 })
               : t("aiInsightsEmpty")}
           </p>
@@ -339,7 +368,9 @@ function MetricCard({
         <div className="p-2 bg-[#1A1D21] rounded-lg group-hover:bg-cyan-900/20 transition-colors">
           {icon}
         </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${badge.color}`}>
+        <span
+          className={`text-[10px] font-bold px-2 py-0.5 rounded ${badge.color}`}
+        >
           {badge.text}
         </span>
       </div>
@@ -396,16 +427,16 @@ function ReviewCard({
           <div className="flex items-center gap-4 text-xs text-gray-500 mb-6">
             <span className="flex items-center gap-1">⏰ {time}</span>
             {creator && (
-              <span className="flex items-center gap-1">
-                👤 {creator.name}
-              </span>
+              <span className="flex items-center gap-1">👤 {creator.name}</span>
             )}
           </div>
         </div>
 
         <div>
           <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2">
-            <span>{t("phase")} {phase}</span>
+            <span>
+              {t("phase")} {phase}
+            </span>
             <span className="text-cyan-500">{progress}%</span>
           </div>
           <div className="h-1 bg-[#222] rounded-full overflow-hidden mb-6">
@@ -452,7 +483,10 @@ function PaperRow({
           <span className="text-lg font-bold text-white">{year}</span>
         </div>
         <div className="flex-1 p-5 relative">
-          <Bookmark className="absolute top-5 right-5 w-5 h-5 text-gray-600 hover:text-cyan-500 cursor-pointer" onClick={(e) => e.preventDefault()} />
+          <Bookmark
+            className="absolute top-5 right-5 w-5 h-5 text-gray-600 hover:text-cyan-500 cursor-pointer"
+            onClick={(e) => e.preventDefault()}
+          />
           <h3 className="text-base font-bold text-white mb-2 pr-8 line-clamp-1 group-hover:text-cyan-400 transition-colors">
             {title}
           </h3>

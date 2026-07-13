@@ -3,15 +3,18 @@
  * Keeps response shape in one place (MVC View).
  */
 
-export function projectSummary(project: {
-  id: string
-  label: string
-  title: string
-  description: string | null
-  status: string
-  createdAt: Date
-  creator?: { id: string; username: string; name: string } | null
-}, role?: string) {
+export function projectSummary(
+  project: {
+    id: string;
+    label: string;
+    title: string;
+    description: string | null;
+    status: string;
+    createdAt: Date;
+    creator?: { id: string; username: string; name: string } | null;
+  },
+  role?: string,
+) {
   return {
     id: project.id,
     label: project.label,
@@ -21,28 +24,28 @@ export function projectSummary(project: {
     createdAt: project.createdAt.toISOString(),
     ...(role && { role }),
     ...(project.creator && { creator: project.creator }),
-  }
+  };
 }
 
 export function projectDetail(project: {
-  id: string
-  label: string
-  title: string
-  description: string | null
+  id: string;
+  label: string;
+  title: string;
+  description: string | null;
 }) {
   return {
     id: project.id,
     label: project.label,
     title: project.title,
     description: project.description,
-  }
+  };
 }
 
 export function projectMember(member: {
-  id: string
-  role: string
-  addedAt: Date
-  user: { id: string; username: string; email: string | null; name: string }
+  id: string;
+  role: string;
+  addedAt: Date;
+  user: { id: string; username: string; email: string | null; name: string };
 }) {
   return {
     id: member.id,
@@ -52,21 +55,21 @@ export function projectMember(member: {
     name: member.user.name,
     role: member.role,
     joinedAt: member.addedAt.toISOString(),
-  }
+  };
 }
 
 export function projectInvitation(inv: {
-  id: string
-  projectId: string
-  email: string
-  role: string
-  status: string
-  expiresAt: Date
-  createdAt?: Date
-  acceptedAt?: Date | null
-  declinedAt?: Date | null
-  invitedBy?: { id: string; name: string; username: string }
-  acceptedBy?: { id: string; name: string; username: string } | null
+  id: string;
+  projectId: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAt: Date;
+  createdAt?: Date;
+  acceptedAt?: Date | null;
+  declinedAt?: Date | null;
+  invitedBy?: { id: string; name: string; username: string };
+  acceptedBy?: { id: string; name: string; username: string } | null;
 }) {
   return {
     id: inv.id,
@@ -75,30 +78,32 @@ export function projectInvitation(inv: {
     role: inv.role,
     status: inv.status,
     expiresAt: inv.expiresAt.toISOString(),
-    createdAt: inv.createdAt ? inv.createdAt.toISOString() : new Date().toISOString(),
+    createdAt: inv.createdAt
+      ? inv.createdAt.toISOString()
+      : new Date().toISOString(),
     acceptedAt: inv.acceptedAt ? inv.acceptedAt.toISOString() : null,
     declinedAt: inv.declinedAt ? inv.declinedAt.toISOString() : null,
     invitedBy: inv.invitedBy ?? null,
     acceptedBy: inv.acceptedBy ?? null,
-  }
+  };
 }
 
 export function projectSettings(config: {
-  projectId: string
-  configType: string
-  importPapersOn: number
-  sourcePapersOn: number
-  searchStrategyOn: number
-  assignPapersOn: number
-  screeningReviewerNum: number
-  screeningOn: number
-  screeningValidationOn: number
-  screeningResultOn: number
-  screeningConflictType: string
-  screeningConflictRes: string
-  screeningStatusToValidate: string
-  validationDefaultPercent: number
-  classificationOn: number
+  projectId: string;
+  configType: string;
+  importPapersOn: number;
+  sourcePapersOn: number;
+  searchStrategyOn: number;
+  assignPapersOn: number;
+  screeningReviewerNum: number;
+  screeningOn: number;
+  screeningValidationOn: number;
+  screeningResultOn: number;
+  screeningConflictType: string;
+  screeningConflictRes: string;
+  screeningStatusToValidate: string;
+  validationDefaultPercent: number;
+  classificationOn: number;
 }) {
   return {
     projectId: config.projectId,
@@ -116,5 +121,5 @@ export function projectSettings(config: {
     screeningStatusToValidate: config.screeningStatusToValidate,
     validationDefaultPercent: config.validationDefaultPercent,
     classificationOn: config.classificationOn === 1,
-  }
+  };
 }

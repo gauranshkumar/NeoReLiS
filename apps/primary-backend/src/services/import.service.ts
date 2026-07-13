@@ -1,4 +1,4 @@
-import { prisma, ScreeningStatus, ClassificationStatus } from '@neorelis/db';
+import { prisma, ScreeningStatus, ClassificationStatus } from "@neorelis/db";
 import {
   parseBibtexContent,
   parseCSVContent,
@@ -6,7 +6,7 @@ import {
   type ParsedPaper,
   type ParsedAuthor,
   type CSVColumnMapping,
-} from './parsers';
+} from "./parsers";
 
 // Database column length limits (from Prisma schema)
 const DB_LIMITS = {
@@ -26,7 +26,10 @@ const BATCH_SIZE = 50;
 /**
  * Truncate a string to fit within a database varchar limit
  */
-function truncate(value: string | undefined | null, maxLength: number): string | undefined {
+function truncate(
+  value: string | undefined | null,
+  maxLength: number,
+): string | undefined {
   if (!value) return undefined;
   return value.length > maxLength ? value.substring(0, maxLength) : value;
 }
@@ -34,13 +37,16 @@ function truncate(value: string | undefined | null, maxLength: number): string |
 /**
  * Truncate and ensure a non-empty string
  */
-function truncateRequired(value: string | undefined | null, maxLength: number): string {
-  if (!value) return '';
+function truncateRequired(
+  value: string | undefined | null,
+  maxLength: number,
+): string {
+  if (!value) return "";
   return value.length > maxLength ? value.substring(0, maxLength) : value;
 }
 
 export interface ImportOptions {
-  format: 'bibtex' | 'csv' | 'endnote';
+  format: "bibtex" | "csv" | "endnote";
   content: string;
   projectId: string;
   userId: string;
@@ -61,8 +67,19 @@ export interface ImportResult {
  * Import papers from various formats (BibTeX, CSV, EndNote)
  * Uses batch processing for performance
  */
-export async function importPapers(options: ImportOptions): Promise<ImportResult> {
-  const { format, content, projectId, userId, columnMapping, startRow, source, searchStrategy } = options;
+export async function importPapers(
+  options: ImportOptions,
+): Promise<ImportResult> {
+  const {
+    format,
+    content,
+    projectId,
+    userId,
+    columnMapping,
+    startRow,
+    source,
+    searchStrategy,
+  } = options;
 
   // Phase 1: Parse content
   const parseResult = parseContent(format, content, columnMapping, startRow);
@@ -74,7 +91,7 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
       projectId,
       filename: `import_${format}_${Date.now()}`,
       fileType: format,
-      status: 'PARSING',
+      status: "PARSING",
       totalRows: parseResult.totalParsed,
       createdBy: userId,
     },
@@ -83,13 +100,15 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
   try {
     // Phase 2: Bulk duplicate detection
     // let { nonDuplicates, duplicateCount } = await filterDuplicates(projectId, parseResult.papers);
-    let { nonDuplicates, duplicateCount } = await filterDuplicates(parseResult.papers);
+    let { nonDuplicates, duplicateCount } = await filterDuplicates(
+      parseResult.papers,
+    );
 
     if (nonDuplicates.length === 0) {
       await prisma.importJob.update({
         where: { id: importJob.id },
         data: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           processedRows: parseResult.papers.length,
           successRows: 0,
           duplicateRows: duplicateCount,
@@ -111,8 +130,16 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
     const authorMap = await batchUpsertAuthors(nonDuplicates);
 
     // Phase 4: Batch insert papers
-    const operationCode = truncateRequired(`${userId}_${Date.now()}`, DB_LIMITS.operationCode);
-    const { insertedCount, duplicateCount: insertDuplicates, paperAuthorLinks, insertErrors } = await batchInsertPapers(
+    const operationCode = truncateRequired(
+      `${userId}_${Date.now()}`,
+      DB_LIMITS.operationCode,
+    );
+    const {
+      insertedCount,
+      duplicateCount: insertDuplicates,
+      paperAuthorLinks,
+      insertErrors,
+    } = await batchInsertPapers(
       projectId,
       userId,
       nonDuplicates,
@@ -120,7 +147,7 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
       authorMap,
       operationCode,
       source,
-      searchStrategy
+      searchStrategy,
     );
 
     errors.push(...insertErrors);
@@ -135,7 +162,7 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
     await prisma.importJob.update({
       where: { id: importJob.id },
       data: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         processedRows: parseResult.papers.length,
         successRows: insertedCount,
         duplicateRows: duplicateCount,
@@ -155,8 +182,10 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
     await prisma.importJob.update({
       where: { id: importJob.id },
       data: {
-        status: 'VALIDATED',
-        errors: JSON.stringify([{ message: err instanceof Error ? err.message : 'Import failed' }]),
+        status: "VALIDATED",
+        errors: JSON.stringify([
+          { message: err instanceof Error ? err.message : "Import failed" },
+        ]),
       },
     });
     throw err;
@@ -164,20 +193,20 @@ export async function importPapers(options: ImportOptions): Promise<ImportResult
 }
 
 function parseContent(
-  format: 'bibtex' | 'csv' | 'endnote',
+  format: "bibtex" | "csv" | "endnote",
   content: string,
   columnMapping?: CSVColumnMapping,
-  startRow?: number
+  startRow?: number,
 ) {
   switch (format) {
-    case 'bibtex':
+    case "bibtex":
       return parseBibtexContent(content);
-    case 'csv':
+    case "csv":
       if (!columnMapping) {
-        throw new Error('Column mapping is required for CSV import');
+        throw new Error("Column mapping is required for CSV import");
       }
       return parseCSVContent(content, columnMapping, startRow ?? 1);
-    case 'endnote':
+    case "endnote":
       return parseEndnoteContent(content);
     default:
       throw new Error(`Unsupported format: ${format}`);
@@ -372,7 +401,7 @@ function filterDuplicates(papers: ParsedPaper[]): {
 function buildTitleAuthorKey(paper: ParsedPaper): string {
   const title = paper.title.toLowerCase().trim();
   const authors = paper.authors
-    .map(a => a.lastName.toLowerCase().trim())
+    .map((a) => a.lastName.toLowerCase().trim())
     .sort()
     .join(",");
   return `${title}|${authors}`;
@@ -384,13 +413,16 @@ function buildTitleAuthorKey(paper: ParsedPaper): string {
  */
 async function batchUpsertVenues(
   projectId: string,
-  papers: ParsedPaper[]
+  papers: ParsedPaper[],
 ): Promise<Map<string, string>> {
   // Collect unique venue names, normalized (trimmed, deduped case-insensitively)
   const venueNameMap = new Map<string, string>(); // lowercased -> original (first seen form)
   for (const paper of papers) {
     if (paper.venue) {
-      const venueName = truncateRequired(paper.venue.trim(), DB_LIMITS.venueName);
+      const venueName = truncateRequired(
+        paper.venue.trim(),
+        DB_LIMITS.venueName,
+      );
       if (venueName) {
         const key = venueName.toLowerCase();
         if (!venueNameMap.has(key)) {
@@ -410,7 +442,7 @@ async function batchUpsertVenues(
   const existingVenues = await prisma.venue.findMany({
     where: {
       projectId,
-      name: { in: venueNames, mode: 'insensitive' },
+      name: { in: venueNames, mode: "insensitive" },
     },
     select: { id: true, name: true },
   });
@@ -425,16 +457,18 @@ async function batchUpsertVenues(
   }
 
   // Create missing venues in a single transaction
-  const missingVenues = venueNames.filter(name => !existingLowerNames.has(name.toLowerCase()));
+  const missingVenues = venueNames.filter(
+    (name) => !existingLowerNames.has(name.toLowerCase()),
+  );
 
   if (missingVenues.length > 0) {
     const created = await prisma.$transaction(
-      missingVenues.map(name =>
+      missingVenues.map((name) =>
         prisma.venue.create({
           data: { projectId, name },
           select: { id: true, name: true },
-        })
-      )
+        }),
+      ),
     );
 
     for (const v of created) {
@@ -449,17 +483,26 @@ async function batchUpsertVenues(
  * Phase 3B: Batch upsert authors
  * Returns a map of "lastName|firstName" -> author ID
  */
-async function batchUpsertAuthors(papers: ParsedPaper[]): Promise<Map<string, string>> {
+async function batchUpsertAuthors(
+  papers: ParsedPaper[],
+): Promise<Map<string, string>> {
   // Collect unique authors
-  const uniqueAuthors = new Map<string, { lastName: string; firstName: string | null }>();
+  const uniqueAuthors = new Map<
+    string,
+    { lastName: string; firstName: string | null }
+  >();
 
   for (const paper of papers) {
     for (const author of paper.authors) {
-      const lastName = truncateRequired(author.lastName, DB_LIMITS.authorLastName);
-      const firstName = truncate(author.firstName, DB_LIMITS.authorFirstName) || null;
+      const lastName = truncateRequired(
+        author.lastName,
+        DB_LIMITS.authorLastName,
+      );
+      const firstName =
+        truncate(author.firstName, DB_LIMITS.authorFirstName) || null;
       if (!lastName) continue;
 
-      const key = `${lastName}|${firstName || ''}`;
+      const key = `${lastName}|${firstName || ""}`;
       if (!uniqueAuthors.has(key)) {
         uniqueAuthors.set(key, { lastName, firstName });
       }
@@ -492,7 +535,7 @@ async function batchUpsertAuthors(papers: ParsedPaper[]): Promise<Map<string, st
 
     const existingKeys = new Set<string>();
     for (const a of existing) {
-      const key = `${a.lastName}|${a.firstName || ''}`;
+      const key = `${a.lastName}|${a.firstName || ""}`;
       authorMap.set(key, a.id);
       existingKeys.add(key);
     }
@@ -506,12 +549,12 @@ async function batchUpsertAuthors(papers: ParsedPaper[]): Promise<Map<string, st
           prisma.author.create({
             data: { lastName: author.lastName, firstName: author.firstName },
             select: { id: true, lastName: true, firstName: true },
-          })
-        )
+          }),
+        ),
       );
 
       for (const a of created) {
-        const key = `${a.lastName}|${a.firstName || ''}`;
+        const key = `${a.lastName}|${a.firstName || ""}`;
         authorMap.set(key, a.id);
       }
     }
@@ -532,7 +575,7 @@ async function batchInsertPapers(
   authorMap: Map<string, string>,
   operationCode: string,
   source?: string,
-  searchStrategy?: string
+  searchStrategy?: string,
 ): Promise<{
   insertedCount: number;
   duplicateCount: number;
@@ -586,7 +629,10 @@ async function batchInsertPapers(
 
     try {
       // Generate unique bibtex key (case-insensitive comparison)
-      let bibtexKey = truncateRequired(paper.bibtexKey || generateBibtexKey(paper), DB_LIMITS.bibtexKey);
+      let bibtexKey = truncateRequired(
+        paper.bibtexKey || generateBibtexKey(paper),
+        DB_LIMITS.bibtexKey,
+      );
 
       // Ensure uniqueness using lowercased comparison
       let keyAttempt = 0;
@@ -602,7 +648,10 @@ async function batchInsertPapers(
       // Get venue ID
       let venueId: string | undefined;
       if (paper.venue) {
-        const venueName = truncateRequired(paper.venue.trim(), DB_LIMITS.venueName);
+        const venueName = truncateRequired(
+          paper.venue.trim(),
+          DB_LIMITS.venueName,
+        );
         venueId = venueMap.get(venueName.toLowerCase());
       }
 
@@ -617,15 +666,15 @@ async function batchInsertPapers(
           year: paper.year,
           doi: truncate(paper.doi, DB_LIMITS.doi),
           venueId,
-          source: truncate(source, DB_LIMITS.source) || 'import',
+          source: truncate(source, DB_LIMITS.source) || "import",
           searchStrategy: truncate(searchStrategy, DB_LIMITS.searchStrategy),
           addedBy: userId,
-          additionMode: 'import',
+          additionMode: "import",
           operationCode,
           screeningStatus: ScreeningStatus.PENDING,
           classificationStatus: ClassificationStatus.WAITING,
         },
-        authors: paper.authors.map(a => ({
+        authors: paper.authors.map((a) => ({
           lastName: truncateRequired(a.lastName, DB_LIMITS.authorLastName),
           firstName: truncate(a.firstName, DB_LIMITS.authorFirstName) || null,
         })),
@@ -636,13 +685,17 @@ async function batchInsertPapers(
       insertErrors.push({
         row: i + 1,
         entry: paper.bibtexKey,
-        message: err instanceof Error ? err.message : 'Failed to prepare paper',
+        message: err instanceof Error ? err.message : "Failed to prepare paper",
       });
     }
   }
 
   // Insert papers in batches using createMany
-  const paperAuthorLinks: { paperId: string; authorId: string; order: number }[] = [];
+  const paperAuthorLinks: {
+    paperId: string;
+    authorId: string;
+    order: number;
+  }[] = [];
   let insertedCount = 0;
 
   for (let i = 0; i < papersToInsert.length; i += BATCH_SIZE) {
@@ -651,7 +704,7 @@ async function batchInsertPapers(
     try {
       // Use createMany to insert papers in batch
       await prisma.paper.createMany({
-        data: batch.map(p => p.data),
+        data: batch.map((p) => p.data),
         skipDuplicates: true,
       });
 
@@ -660,7 +713,7 @@ async function batchInsertPapers(
         where: {
           projectId,
           operationCode,
-          bibtexKey: { in: batch.map(p => p.data.bibtexKey) },
+          bibtexKey: { in: batch.map((p) => p.data.bibtexKey) },
         },
         select: { id: true, bibtexKey: true },
       });
@@ -684,7 +737,7 @@ async function batchInsertPapers(
           const author = paperData.authors[order];
           if (!author || !author.lastName) continue;
 
-          const authorKey = `${author.lastName}|${author.firstName || ''}`;
+          const authorKey = `${author.lastName}|${author.firstName || ""}`;
           const authorId = authorMap.get(authorKey);
 
           if (authorId) {
@@ -706,23 +759,31 @@ async function batchInsertPapers(
             const author = paper.authors[order];
             if (!author || !author.lastName) continue;
 
-            const authorKey = `${author.lastName}|${author.firstName || ''}`;
+            const authorKey = `${author.lastName}|${author.firstName || ""}`;
             const authorId = authorMap.get(authorKey);
 
             if (authorId) {
-              paperAuthorLinks.push({ paperId: created.id, authorId, order: order + 1 });
+              paperAuthorLinks.push({
+                paperId: created.id,
+                authorId,
+                order: order + 1,
+              });
             }
           }
         } catch (individualErr) {
-          const errMsg = individualErr instanceof Error ? individualErr.message : '';
+          const errMsg =
+            individualErr instanceof Error ? individualErr.message : "";
           // Treat unique constraint violations on bibtexKey as duplicates, not errors
-          if (errMsg.includes('Unique constraint') && errMsg.includes('bibtexKey')) {
+          if (
+            errMsg.includes("Unique constraint") &&
+            errMsg.includes("bibtexKey")
+          ) {
             duplicateCount++;
           } else {
             insertErrors.push({
               row: paper.originalIndex + 1,
               entry: paper.bibtexEntry,
-              message: errMsg || 'Failed to insert paper',
+              message: errMsg || "Failed to insert paper",
             });
           }
         }
@@ -737,7 +798,7 @@ async function batchInsertPapers(
  * Phase 5: Batch create paper-author links
  */
 async function batchCreatePaperAuthors(
-  links: { paperId: string; authorId: string; order: number }[]
+  links: { paperId: string; authorId: string; order: number }[],
 ): Promise<void> {
   // Insert in batches
   for (let i = 0; i < links.length; i += BATCH_SIZE * 2) {
@@ -753,20 +814,20 @@ async function batchCreatePaperAuthors(
  * Generate a bibtex key from paper metadata
  */
 function generateBibtexKey(paper: ParsedPaper): string {
-  const yearPart = paper.year ? String(paper.year) : 'unknown';
+  const yearPart = paper.year ? String(paper.year) : "unknown";
   const firstAuthor = paper.authors[0];
 
   if (firstAuthor) {
     const lastName = firstAuthor.lastName
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
+      .replace(/[^a-z0-9]/g, "")
       .substring(0, 20);
     return `${lastName}_${yearPart}`;
   }
 
   const titlePart = paper.title
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '_')
+    .replace(/[^a-z0-9]/g, "_")
     .substring(0, 20);
   return `${titlePart}_${yearPart}`;
 }
@@ -786,7 +847,7 @@ export async function getImportJob(jobId: string) {
 export async function listImportJobs(projectId: string) {
   return prisma.importJob.findMany({
     where: { projectId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: 50,
   });
 }

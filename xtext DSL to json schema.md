@@ -1,14 +1,14 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+"$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://www.xtext.org/language/relis/Relis",
-  "title": "Relis DSL Schema",
-  "description": "JSON Schema representation of the Relis Xtext grammar for systematic literature review configuration",
-  "type": "object",
-  "required": ["project"],
-  "additionalProperties": false,
-  "properties": {
-    "project": {
-      "$ref": "#/definitions/Project"
+"title": "Relis DSL Schema",
+"description": "JSON Schema representation of the Relis Xtext grammar for systematic literature review configuration",
+"type": "object",
+"required": ["project"],
+"additionalProperties": false,
+"properties": {
+"project": {
+"$ref": "#/definitions/Project"
     }
   },
   "definitions": {
@@ -22,25 +22,25 @@
           "type": "string",
           "description": "ID - short identifier for the project",
           "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "name": {
-          "type": "string",
-          "description": "STRING - full name of the project"
-        },
-        "screening": {
-          "$ref": "#/definitions/Screening",
+},
+"name": {
+"type": "string",
+"description": "STRING - full name of the project"
+},
+"screening": {
+"$ref": "#/definitions/Screening",
           "description": "Optional SCREENING block"
         },
         "quality_assess": {
           "$ref": "#/definitions/QA",
-          "description": "Optional QA block (only valid if screening is present)"
-        },
-        "category": {
-          "type": "array",
-          "description": "DATA EXTRACTION - one or more Category entries",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/Category"
+"description": "Optional QA block (only valid if screening is present)"
+},
+"category": {
+"type": "array",
+"description": "DATA EXTRACTION - one or more Category entries",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/Category"
           }
         },
         "reporting": {
@@ -48,34 +48,34 @@
           "description": "Optional SYNTHESIS block containing Report entries",
           "items": {
             "$ref": "#/definitions/Report"
-          }
-        }
-      }
-    },
-    "Screening": {
-      "type": "object",
-      "description": "SCREENING block with review, conflict, criteria, sources, strategies, validation, and phases",
-      "required": ["review_per_paper", "conflict_type", "conflict_resolution", "exclusion_criteria"],
-      "additionalProperties": false,
-      "properties": {
-        "review_per_paper": {
-          "type": "integer",
-          "description": "Reviews - number of reviews per paper (INT)"
-        },
-        "conflict_type": {
-          "$ref": "#/definitions/ConflictType",
+}
+}
+}
+},
+"Screening": {
+"type": "object",
+"description": "SCREENING block with review, conflict, criteria, sources, strategies, validation, and phases",
+"required": ["review_per_paper", "conflict_type", "conflict_resolution", "exclusion_criteria"],
+"additionalProperties": false,
+"properties": {
+"review*per_paper": {
+"type": "integer",
+"description": "Reviews - number of reviews per paper (INT)"
+},
+"conflict_type": {
+"$ref": "#/definitions/ConflictType",
           "description": "Conflict 'we' conflict_type"
         },
         "conflict_resolution": {
           "$ref": "#/definitions/ConflictResolution",
-          "description": "'resolved_by' conflict_resolution"
-        },
-        "exclusion_criteria": {
-          "type": "array",
-          "description": "Criteria = [ Values, ... ]",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/Values"
+"description": "'resolved_by' conflict_resolution"
+},
+"exclusion_criteria": {
+"type": "array",
+"description": "Criteria = [ Values, ... ]",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/Values"
           }
         },
         "source_papers": {
@@ -83,13 +83,13 @@
           "description": "Optional Sources = [ Values, ... ]",
           "items": {
             "$ref": "#/definitions/Values"
-          }
-        },
-        "search_strategy": {
-          "type": "array",
-          "description": "Optional Strategies = [ Values, ... ]",
-          "items": {
-            "$ref": "#/definitions/Values"
+}
+},
+"search_strategy": {
+"type": "array",
+"description": "Optional Strategies = [ Values, ... ]",
+"items": {
+"$ref": "#/definitions/Values"
           }
         },
         "validation_percentage": {
@@ -100,13 +100,13 @@
         },
         "validation_assignment_mode": {
           "$ref": "#/definitions/AssignmentMode",
-          "description": "Optional assignment mode for validation (only valid if validation_percentage is present)"
-        },
-        "phases": {
-          "type": "array",
-          "description": "Optional Phases ( Phase, ... )",
-          "items": {
-            "$ref": "#/definitions/Phase"
+"description": "Optional assignment mode for validation (only valid if validation_percentage is present)"
+},
+"phases": {
+"type": "array",
+"description": "Optional Phases ( Phase, ... )",
+"items": {
+"$ref": "#/definitions/Phase"
           }
         }
       }
@@ -131,10 +131,10 @@
           "minItems": 1,
           "items": {
             "$ref": "#/definitions/Response"
-          }
-        },
-        "min_score": {
-          "$ref": "#/definitions/DOUBLE",
+}
+},
+"min_score": {
+"$ref": "#/definitions/DOUBLE",
           "description": "Min_score - minimum score threshold (DOUBLE)"
         }
       }
@@ -151,41 +151,41 @@
         },
         "score": {
           "$ref": "#/definitions/DOUBLE",
-          "description": "DOUBLE - score value for this response"
-        }
-      }
-    },
-    "Report": {
-      "description": "SimpleGraph | CompareGraph",
-      "oneOf": [
-        { "$ref": "#/definitions/SimpleGraph" },
-        { "$ref": "#/definitions/CompareGraph" }
-      ]
-    },
-    "SimpleGraph": {
-      "type": "object",
-      "description": "Simple name (title)? we value charts(...)",
-      "required": ["report_type", "name", "value", "chart"],
-      "additionalProperties": false,
-      "properties": {
-        "report_type": {
-          "type": "string",
-          "const": "Simple",
-          "description": "Discriminator: identifies this as a SimpleGraph"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the graph",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title for the graph"
-        },
-        "value": {
-          "type": "string",
-          "description": "Reference to a Category by ID (cross-reference [Category|ID])",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+"description": "DOUBLE - score value for this response"
+}
+}
+},
+"Report": {
+"description": "SimpleGraph | CompareGraph",
+"oneOf": [
+{ "$ref": "#/definitions/SimpleGraph" },
+{ "$ref": "#/definitions/CompareGraph" }
+]
+},
+"SimpleGraph": {
+"type": "object",
+"description": "Simple name (title)? we value charts(...)",
+"required": ["report_type", "name", "value", "chart"],
+"additionalProperties": false,
+"properties": {
+"report_type": {
+"type": "string",
+"const": "Simple",
+"description": "Discriminator: identifies this as a SimpleGraph"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the graph",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title for the graph"
+},
+"value": {
+"type": "string",
+"description": "Reference to a Category by ID (cross-reference [Category|ID])",
+"pattern": "^[a-zA-Z\_][a-zA-Z0-9_]_$"
         },
         "chart": {
           "type": "array",
@@ -193,46 +193,46 @@
           "minItems": 1,
           "items": {
             "$ref": "#/definitions/GraphType"
-          }
-        }
-      }
-    },
-    "CompareGraph": {
-      "type": "object",
-      "description": "Compared name (title)? we value with reference charts(...)",
-      "required": ["report_type", "name", "value", "reference", "chart"],
-      "additionalProperties": false,
-      "properties": {
-        "report_type": {
-          "type": "string",
-          "const": "Compared",
-          "description": "Discriminator: identifies this as a CompareGraph"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the graph",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title for the graph"
-        },
-        "value": {
-          "type": "string",
-          "description": "Reference to a Category by ID (cross-reference [Category|ID])",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+}
+}
+}
+},
+"CompareGraph": {
+"type": "object",
+"description": "Compared name (title)? we value with reference charts(...)",
+"required": ["report_type", "name", "value", "reference", "chart"],
+"additionalProperties": false,
+"properties": {
+"report*type": {
+"type": "string",
+"const": "Compared",
+"description": "Discriminator: identifies this as a CompareGraph"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the graph",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title for the graph"
+},
+"value": {
+"type": "string",
+"description": "Reference to a Category by ID (cross-reference [Category|ID])",
+"pattern": "^[a-zA-Z\_][a-zA-Z0-9_]_$"
         },
         "reference": {
           "type": "string",
           "description": "Reference to a Category by ID for comparison (cross-reference [Category|ID])",
           "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "chart": {
-          "type": "array",
-          "description": "charts( GraphType, ... )",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/GraphType"
+},
+"chart": {
+"type": "array",
+"description": "charts( GraphType, ... )",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/GraphType"
           }
         }
       }
@@ -256,101 +256,101 @@
           "description": "Optional Fields ( Fields, ... )",
           "items": {
             "$ref": "#/definitions/Fields"
-          }
-        }
-      }
-    },
-    "Category": {
-      "description": "FreeCategory | StaticCategory | IndependentDynamicCategory | DependentDynamicCategory",
-      "oneOf": [
-        { "$ref": "#/definitions/FreeCategory" },
-        { "$ref": "#/definitions/StaticCategory" },
-        { "$ref": "#/definitions/IndependentDynamicCategory" },
-        { "$ref": "#/definitions/DependentDynamicCategory" }
-      ]
-    },
-    "FreeCategory": {
-      "type": "object",
-      "description": "Simple name (title)? (mandatory)? ([numberOfValues])? : type (max_char)? (style(pattern))? (= [initial_value])? { sub_categories }?",
-      "required": ["category_type", "name", "type"],
-      "additionalProperties": false,
-      "properties": {
-        "category_type": {
-          "type": "string",
-          "const": "Simple",
-          "description": "Discriminator: identifies this as a FreeCategory"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the category",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title"
-        },
-        "mandatory": {
-          "type": "boolean",
-          "description": "Whether this field is mandatory (marked with '*')",
-          "default": false
-        },
-        "numberOfValues": {
-          "$ref": "#/definitions/nValues",
+}
+}
+}
+},
+"Category": {
+"description": "FreeCategory | StaticCategory | IndependentDynamicCategory | DependentDynamicCategory",
+"oneOf": [
+{ "$ref": "#/definitions/FreeCategory" },
+{ "$ref": "#/definitions/StaticCategory" },
+{ "$ref": "#/definitions/IndependentDynamicCategory" },
+{ "$ref": "#/definitions/DependentDynamicCategory" }
+]
+},
+"FreeCategory": {
+"type": "object",
+"description": "Simple name (title)? (mandatory)? ([numberOfValues])? : type (max*char)? (style(pattern))? (= [initial_value])? { sub_categories }?",
+"required": ["category_type", "name", "type"],
+"additionalProperties": false,
+"properties": {
+"category_type": {
+"type": "string",
+"const": "Simple",
+"description": "Discriminator: identifies this as a FreeCategory"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the category",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title"
+},
+"mandatory": {
+"type": "boolean",
+"description": "Whether this field is mandatory (marked with '_')",
+"default": false
+},
+"numberOfValues": {
+"$ref": "#/definitions/nValues",
           "description": "Optional [nValues] - number of values allowed"
         },
         "type": {
           "$ref": "#/definitions/SimpleType",
-          "description": "SimpleType - the data type of this category"
-        },
-        "max_char": {
-          "type": "integer",
-          "description": "Optional (INT) - maximum character length"
-        },
-        "pattern": {
-          "type": "string",
-          "description": "Optional style(STRING) - display style pattern"
-        },
-        "initial_value": {
-          "type": "string",
-          "description": "Optional = [STRING] - initial/default value"
-        },
-        "sub_categories": {
-          "type": "array",
-          "description": "Optional nested { Category+ }",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/Category"
-          }
-        }
-      }
-    },
-    "StaticCategory": {
-      "type": "object",
-      "description": "List name (title)? (mandatory)? ([numberOfValues])? = [ Values, Values+ ]  { sub_categories }?",
-      "required": ["category_type", "name", "values"],
-      "additionalProperties": false,
-      "properties": {
-        "category_type": {
-          "type": "string",
-          "const": "List",
-          "description": "Discriminator: identifies this as a StaticCategory"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the category",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title"
-        },
-        "mandatory": {
-          "type": "boolean",
-          "description": "Whether this field is mandatory (marked with '*')",
-          "default": false
-        },
-        "numberOfValues": {
-          "$ref": "#/definitions/nValues",
+"description": "SimpleType - the data type of this category"
+},
+"max*char": {
+"type": "integer",
+"description": "Optional (INT) - maximum character length"
+},
+"pattern": {
+"type": "string",
+"description": "Optional style(STRING) - display style pattern"
+},
+"initial_value": {
+"type": "string",
+"description": "Optional = [STRING] - initial/default value"
+},
+"sub_categories": {
+"type": "array",
+"description": "Optional nested { Category+ }",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/Category"
+}
+}
+}
+},
+"StaticCategory": {
+"type": "object",
+"description": "List name (title)? (mandatory)? ([numberOfValues])? = [ Values, Values+ ] { sub_categories }?",
+"required": ["category_type", "name", "values"],
+"additionalProperties": false,
+"properties": {
+"category_type": {
+"type": "string",
+"const": "List",
+"description": "Discriminator: identifies this as a StaticCategory"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the category",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title"
+},
+"mandatory": {
+"type": "boolean",
+"description": "Whether this field is mandatory (marked with '_')",
+"default": false
+},
+"numberOfValues": {
+"$ref": "#/definitions/nValues",
           "description": "Optional [nValues] - number of values allowed"
         },
         "values": {
@@ -359,50 +359,50 @@
           "minItems": 2,
           "items": {
             "$ref": "#/definitions/Values"
-          }
-        },
-        "sub_categories": {
-          "type": "array",
-          "description": "Optional nested { Category+ }",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/Category"
-          }
-        }
-      }
-    },
-    "IndependentDynamicCategory": {
-      "type": "object",
-      "description": "DynamicList name (title)? (mandatory)? ([numberOfValues])? (reference_name)? = [ initial_values, ... ] { sub_categories }?",
-      "required": ["category_type", "name", "initial_values"],
-      "additionalProperties": false,
-      "properties": {
-        "category_type": {
-          "type": "string",
-          "const": "DynamicList",
-          "description": "Discriminator: identifies this as an IndependentDynamicCategory"
-        },
-        "dynamic_subtype": {
-          "type": "string",
-          "const": "Independent",
-          "description": "Discriminator: distinguishes from DependentDynamicCategory"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the category",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title"
-        },
-        "mandatory": {
-          "type": "boolean",
-          "description": "Whether this field is mandatory (marked with '*')",
-          "default": false
-        },
-        "numberOfValues": {
-          "$ref": "#/definitions/nValues",
+}
+},
+"sub*categories": {
+"type": "array",
+"description": "Optional nested { Category+ }",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/Category"
+}
+}
+}
+},
+"IndependentDynamicCategory": {
+"type": "object",
+"description": "DynamicList name (title)? (mandatory)? ([numberOfValues])? (reference_name)? = [ initial_values, ... ] { sub_categories }?",
+"required": ["category_type", "name", "initial_values"],
+"additionalProperties": false,
+"properties": {
+"category_type": {
+"type": "string",
+"const": "DynamicList",
+"description": "Discriminator: identifies this as an IndependentDynamicCategory"
+},
+"dynamic_subtype": {
+"type": "string",
+"const": "Independent",
+"description": "Discriminator: distinguishes from DependentDynamicCategory"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the category",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title"
+},
+"mandatory": {
+"type": "boolean",
+"description": "Whether this field is mandatory (marked with '_')",
+"default": false
+},
+"numberOfValues": {
+"$ref": "#/definitions/nValues",
           "description": "Optional [nValues] - number of values allowed"
         },
         "reference_name": {
@@ -423,55 +423,55 @@
           "minItems": 1,
           "items": {
             "$ref": "#/definitions/Category"
-          }
-        }
-      }
-    },
-    "DependentDynamicCategory": {
-      "type": "object",
-      "description": "DynamicList name (title)? (mandatory)? ([numberOfValues])? depends_on Category_ref { sub_categories }?",
-      "required": ["category_type", "name", "depends_on"],
-      "additionalProperties": false,
-      "properties": {
-        "category_type": {
-          "type": "string",
-          "const": "DynamicList",
-          "description": "Discriminator: identifies this as a DependentDynamicCategory"
-        },
-        "dynamic_subtype": {
-          "type": "string",
-          "const": "Dependent",
-          "description": "Discriminator: distinguishes from IndependentDynamicCategory"
-        },
-        "name": {
-          "type": "string",
-          "description": "ID - identifier for the category",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "title": {
-          "type": "string",
-          "description": "Optional STRING - display title"
-        },
-        "mandatory": {
-          "type": "boolean",
-          "description": "Whether this field is mandatory (marked with '*')",
-          "default": false
-        },
-        "numberOfValues": {
-          "$ref": "#/definitions/nValues",
+}
+}
+}
+},
+"DependentDynamicCategory": {
+"type": "object",
+"description": "DynamicList name (title)? (mandatory)? ([numberOfValues])? depends*on Category_ref { sub_categories }?",
+"required": ["category_type", "name", "depends_on"],
+"additionalProperties": false,
+"properties": {
+"category_type": {
+"type": "string",
+"const": "DynamicList",
+"description": "Discriminator: identifies this as a DependentDynamicCategory"
+},
+"dynamic_subtype": {
+"type": "string",
+"const": "Dependent",
+"description": "Discriminator: distinguishes from IndependentDynamicCategory"
+},
+"name": {
+"type": "string",
+"description": "ID - identifier for the category",
+"pattern": "^[a-zA-Z*][a-zA-Z0-9_]_$"
+},
+"title": {
+"type": "string",
+"description": "Optional STRING - display title"
+},
+"mandatory": {
+"type": "boolean",
+"description": "Whether this field is mandatory (marked with '_')",
+"default": false
+},
+"numberOfValues": {
+"$ref": "#/definitions/nValues",
           "description": "Optional [nValues] - number of values allowed"
         },
         "depends_on": {
           "type": "string",
           "description": "Cross-reference to a Category by ID ([Category|ID])",
           "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-        },
-        "sub_categories": {
-          "type": "array",
-          "description": "Optional nested { Category+ }",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/Category"
+},
+"sub_categories": {
+"type": "array",
+"description": "Optional nested { Category+ }",
+"minItems": 1,
+"items": {
+"$ref": "#/definitions/Category"
           }
         }
       }
@@ -550,23 +550,23 @@
         {
           "type": "string",
           "pattern": "^[0-9]+(\\.[0-9]+)?$"
-        }
-      ]
-    },
-    "nValues": {
-      "description": "nValues: '-1' | INT - number of values (-1 means unlimited)",
-      "oneOf": [
-        {
-          "type": "integer",
-          "const": -1,
-          "description": "-1 means unlimited/variable number of values"
-        },
-        {
-          "type": "integer",
-          "minimum": 0,
-          "description": "INT - specific number of values"
-        }
-      ]
-    }
-  }
+}
+]
+},
+"nValues": {
+"description": "nValues: '-1' | INT - number of values (-1 means unlimited)",
+"oneOf": [
+{
+"type": "integer",
+"const": -1,
+"description": "-1 means unlimited/variable number of values"
+},
+{
+"type": "integer",
+"minimum": 0,
+"description": "INT - specific number of values"
+}
+]
+}
+}
 }

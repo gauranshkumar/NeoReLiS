@@ -52,7 +52,8 @@ export async function sendProjectMemberAddedEmail(params: {
   role: string;
   addedByName: string;
 }) {
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@neorelis.app";
+  const from =
+    process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@neorelis.app";
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
   try {
@@ -87,9 +88,16 @@ export async function sendProjectInvitationEmail(params: {
   acceptUrl: string;
   expiresInSeconds: number;
 }) {
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@neorelis.app";
-  const expiresInHours = Math.max(1, Math.round(params.expiresInSeconds / 3600));
-  const expiresInDays = Math.max(1, Math.round(params.expiresInSeconds / 86400));
+  const from =
+    process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@neorelis.app";
+  const expiresInHours = Math.max(
+    1,
+    Math.round(params.expiresInSeconds / 3600),
+  );
+  const expiresInDays = Math.max(
+    1,
+    Math.round(params.expiresInSeconds / 86400),
+  );
 
   try {
     await getTransporter().sendMail({

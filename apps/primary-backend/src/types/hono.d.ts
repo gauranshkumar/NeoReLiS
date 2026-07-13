@@ -1,21 +1,20 @@
-import type { AuthContext } from '../middleware/auth'
-import type { ProjectRole } from '../middleware/project-access'
+import type { AuthContext } from "../middleware/auth";
+import type { ProjectRole } from "../middleware/project-access";
 
-declare module 'hono' {
+declare module "hono" {
   interface ContextVariableMap {
-    user: AuthContext
+    user: AuthContext;
     project: {
-      id: string
-      label: string
-      title: string
-      description: string | null
-    }
+      id: string;
+      label: string;
+      title: string;
+      description: string | null;
+    };
     projectMembership: {
-      projectId: string
-      userId: string
-      role: ProjectRole
-      joinedAt: Date
-    }
+      projectId: string;
+      userId: string;
+      role: ProjectRole;
+      joinedAt: Date;
+    };
   }
 }
-

@@ -1,8 +1,11 @@
-import { prisma } from '@neorelis/db'
-import { ReviewProtocolSchema, type ReviewProtocol } from '../lib/protocol-schema'
-import { compileProtocol, type CompileResult } from '../lib/protocol-compiler'
+import { prisma } from "@neorelis/db";
+import {
+  ReviewProtocolSchema,
+  type ReviewProtocol,
+} from "../lib/protocol-schema";
+import { compileProtocol, type CompileResult } from "../lib/protocol-compiler";
 
-type UserRole = 'ADMIN' | 'MANAGER' | 'REVIEWER' | 'VALIDATOR' | 'VIEWER'
+type UserRole = "ADMIN" | "MANAGER" | "REVIEWER" | "VALIDATOR" | "VIEWER";
 
 export async function findProjectsByUserId(userId: string) {
   return prisma.projectMember.findMany({
@@ -22,21 +25,21 @@ export async function findProjectsByUserId(userId: string) {
         },
       },
     },
-    orderBy: { addedAt: 'desc' },
-  })
+    orderBy: { addedAt: "desc" },
+  });
 }
 
 export async function findProjectByLabel(label: string) {
   return prisma.project.findUnique({
     where: { label },
-  })
+  });
 }
 
 export async function createProject(params: {
-  label: string
-  title: string
-  description?: string
-  creatorId: string
+  label: string;
+  title: string;
+  description?: string;
+  creatorId: string;
 }) {
   return prisma.project.create({
     data: {
@@ -44,16 +47,16 @@ export async function createProject(params: {
       title: params.title,
       description: params.description,
       creatorId: params.creatorId,
-      status: 'DRAFT',
+      status: "DRAFT",
       members: {
         create: {
           userId: params.creatorId,
-          role: 'ADMIN',
+          role: "ADMIN",
           addedBy: params.creatorId,
         },
       },
       config: {
-        create: { configType: 'default' },
+        create: { configType: "default" },
       },
     },
     include: {
@@ -61,7 +64,7 @@ export async function createProject(params: {
         select: { id: true, username: true, name: true },
       },
     },
-  })
+  });
 }
 
 export async function findProjectById(id: string) {
@@ -78,7 +81,7 @@ export async function findProjectById(id: string) {
         select: { id: true, username: true, name: true },
       },
     },
-  })
+  });
 }
 
 export async function findProjectMembership(projectId: string, userId: string) {
@@ -94,12 +97,16 @@ export async function findProjectMembership(projectId: string, userId: string) {
         },
       },
     },
-  })
+  });
 }
 
 export async function updateProject(
   projectId: string,
-  data: { title?: string; description?: string; status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' }
+  data: {
+    title?: string;
+    description?: string;
+    status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  },
 ) {
   return prisma.project.update({
     where: { id: projectId },
@@ -111,21 +118,21 @@ export async function updateProject(
     include: {
       creator: { select: { id: true, username: true, name: true } },
     },
-  })
+  });
 }
 
 export async function archiveProject(projectId: string) {
   return prisma.project.update({
     where: { id: projectId },
-    data: { status: 'ARCHIVED', active: 0 },
-  })
+    data: { status: "ARCHIVED", active: 0 },
+  });
 }
 
 export async function deleteProjectPermanently(projectId: string) {
   // Cascade delete: Prisma schema has onDelete: Cascade on child relations
   return prisma.project.delete({
     where: { id: projectId },
-  })
+  });
 }
 
 export async function findProjectMembers(projectId: string) {
@@ -136,8 +143,8 @@ export async function findProjectMembers(projectId: string) {
         select: { id: true, username: true, email: true, name: true },
       },
     },
-    orderBy: { addedAt: 'desc' },
-  })
+    orderBy: { addedAt: "desc" },
+  });
 }
 
 export async function findProjectMemberById(memberId: string) {
@@ -148,14 +155,14 @@ export async function findProjectMemberById(memberId: string) {
         select: { id: true, username: true, email: true, name: true },
       },
     },
-  })
+  });
 }
 
 export async function addProjectMember(params: {
-  projectId: string
-  userId: string
-  role: UserRole
-  addedBy: string
+  projectId: string;
+  userId: string;
+  role: UserRole;
+  addedBy: string;
 }) {
   return prisma.projectMember.create({
     data: {
@@ -169,10 +176,13 @@ export async function addProjectMember(params: {
         select: { id: true, username: true, email: true, name: true },
       },
     },
-  })
+  });
 }
 
-export async function updateProjectMemberRole(memberId: string, role: UserRole) {
+export async function updateProjectMemberRole(
+  memberId: string,
+  role: UserRole,
+) {
   return prisma.projectMember.update({
     where: { id: memberId },
     data: { role },
@@ -181,28 +191,31 @@ export async function updateProjectMemberRole(memberId: string, role: UserRole) 
         select: { id: true, username: true, email: true, name: true },
       },
     },
-  })
+  });
 }
 
 export async function deactivateProjectMember(memberId: string) {
   return prisma.projectMember.update({
     where: { id: memberId },
     data: { active: 0 },
-  })
+  });
 }
 
-export async function findExistingMembership(projectId: string, userId: string) {
+export async function findExistingMembership(
+  projectId: string,
+  userId: string,
+) {
   return prisma.projectMember.findUnique({
     where: {
       userId_projectId: { userId, projectId },
     },
-  })
+  });
 }
 
 export async function reactivateProjectMember(
   memberId: string,
   role: UserRole,
-  addedBy: string
+  addedBy: string,
 ) {
   return prisma.projectMember.update({
     where: { id: memberId },
@@ -212,46 +225,48 @@ export async function reactivateProjectMember(
         select: { id: true, username: true, email: true, name: true },
       },
     },
-  })
+  });
 }
 
 export async function findProjectConfig(projectId: string) {
   return prisma.projectConfig.findUnique({
     where: { projectId },
-  })
+  });
 }
 
 export async function updateProjectConfig(
   projectId: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ) {
-  const scalar: Record<string, number | string> = {}
+  const scalar: Record<string, number | string> = {};
   const boolKeys = [
-    'importPapersOn',
-    'sourcePapersOn',
-    'searchStrategyOn',
-    'assignPapersOn',
-    'screeningOn',
-    'screeningValidationOn',
-    'screeningResultOn',
-    'classificationOn',
-  ]
+    "importPapersOn",
+    "sourcePapersOn",
+    "searchStrategyOn",
+    "assignPapersOn",
+    "screeningOn",
+    "screeningValidationOn",
+    "screeningResultOn",
+    "classificationOn",
+  ];
   for (const key of boolKeys) {
-    if (data[key] !== undefined) scalar[key] = data[key] ? 1 : 0
+    if (data[key] !== undefined) scalar[key] = data[key] ? 1 : 0;
   }
   if (data.screeningReviewerNum !== undefined)
-    scalar.screeningReviewerNum = Number(data.screeningReviewerNum)
-  if (data.screeningConflictType != null) scalar.screeningConflictType = String(data.screeningConflictType)
-  if (data.screeningConflictRes != null) scalar.screeningConflictRes = String(data.screeningConflictRes)
+    scalar.screeningReviewerNum = Number(data.screeningReviewerNum);
+  if (data.screeningConflictType != null)
+    scalar.screeningConflictType = String(data.screeningConflictType);
+  if (data.screeningConflictRes != null)
+    scalar.screeningConflictRes = String(data.screeningConflictRes);
   if (data.screeningStatusToValidate != null)
-    scalar.screeningStatusToValidate = String(data.screeningStatusToValidate)
+    scalar.screeningStatusToValidate = String(data.screeningStatusToValidate);
   if (data.validationDefaultPercent !== undefined)
-    scalar.validationDefaultPercent = Number(data.validationDefaultPercent)
+    scalar.validationDefaultPercent = Number(data.validationDefaultPercent);
 
   return prisma.projectConfig.update({
     where: { projectId },
     data: scalar as never,
-  })
+  });
 }
 
 // ─── Protocol-based project creation ───────────────────────────────
@@ -269,17 +284,21 @@ export async function updateProjectConfig(
  */
 export async function createProjectFromProtocol(
   rawJson: unknown,
-  creatorId: string
+  creatorId: string,
 ): Promise<CompileResult> {
   // 1. Parse & validate
-  const protocol: ReviewProtocol = ReviewProtocolSchema.parse(rawJson)
+  const protocol: ReviewProtocol = ReviewProtocolSchema.parse(rawJson);
 
   // 2. Check label uniqueness
-  const existing = await findProjectByLabel(protocol.project.short_name.toLowerCase())
+  const existing = await findProjectByLabel(
+    protocol.project.short_name.toLowerCase(),
+  );
   if (existing) {
-    throw new Error(`Project label "${protocol.project.short_name}" already exists`)
+    throw new Error(
+      `Project label "${protocol.project.short_name}" already exists`,
+    );
   }
 
   // 3. Compile into DB entities
-  return compileProtocol(protocol, creatorId)
+  return compileProtocol(protocol, creatorId);
 }

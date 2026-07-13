@@ -1,13 +1,13 @@
-import type { Context, Next } from 'hono'
-import { prisma } from '@neorelis/db'
-import type { AuthContext } from './auth'
+import type { Context, Next } from "hono";
+import { prisma } from "@neorelis/db";
+import type { AuthContext } from "./auth";
 
 export enum ProjectRole {
-  ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
-  REVIEWER = 'REVIEWER',
-  VALIDATOR = 'VALIDATOR',
-  VIEWER = 'VIEWER',
+  ADMIN = "ADMIN",
+  MANAGER = "MANAGER",
+  REVIEWER = "REVIEWER",
+  VALIDATOR = "VALIDATOR",
+  VIEWER = "VIEWER",
 }
 
 /**
@@ -16,29 +16,30 @@ export enum ProjectRole {
  */
 export function requireProjectAccess(requiredRoles?: ProjectRole[]) {
   return async (c: Context, next: Next) => {
-    const authContext = c.get('user') as AuthContext | undefined
+    const authContext = c.get("user") as AuthContext | undefined;
 
     if (!authContext) {
       return c.json(
         {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
         },
-        401
-      )
+        401,
+      );
     }
 
     // Try to get projectId from various possible param names
-    const projectId = c.req.param('projectId') || c.req.param('id') || c.req.query('projectId')
+    const projectId =
+      c.req.param("projectId") || c.req.param("id") || c.req.query("projectId");
 
     if (!projectId) {
       return c.json(
         {
-          code: 'BAD_REQUEST',
-          message: 'Project ID is required',
+          code: "BAD_REQUEST",
+          message: "Project ID is required",
         },
-        400
-      )
+        400,
+      );
     }
 
     try {
@@ -47,7 +48,7 @@ export function requireProjectAccess(requiredRoles?: ProjectRole[]) {
         where: {
           projectId,
           userId: authContext.userId,
-          active: 1,  // Only active memberships grant access
+          active: 1, // Only active memberships grant access
         },
         include: {
           project: {
@@ -61,72 +62,72 @@ export function requireProjectAccess(requiredRoles?: ProjectRole[]) {
             },
           },
         },
-      })
+      });
 
       if (!membership) {
         return c.json(
           {
-            code: 'FORBIDDEN',
-            message: 'You do not have access to this project',
+            code: "FORBIDDEN",
+            message: "You do not have access to this project",
           },
-          403
-        )
+          403,
+        );
       }
 
       // Check role requirements if specified
       if (requiredRoles && requiredRoles.length > 0) {
-        const userRole = membership.role as ProjectRole
+        const userRole = membership.role as ProjectRole;
         if (!requiredRoles.includes(userRole)) {
           return c.json(
             {
-              code: 'FORBIDDEN',
-              message: `This action requires one of the following roles: ${requiredRoles.join(', ')}`,
+              code: "FORBIDDEN",
+              message: `This action requires one of the following roles: ${requiredRoles.join(", ")}`,
             },
-            403
-          )
+            403,
+          );
         }
       }
 
       // Attach project and membership info to context
-      c.set('project', membership.project)
-      c.set('projectMembership', {
+      c.set("project", membership.project);
+      c.set("projectMembership", {
         projectId: membership.projectId,
         userId: membership.userId,
         role: membership.role as ProjectRole,
         joinedAt: membership.addedAt,
-      })
+      });
 
-      await next()
+      await next();
     } catch (error) {
-      console.error('Project access check error:', error)
+      console.error("Project access check error:", error);
       return c.json(
         {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to verify project access',
+          code: "INTERNAL_ERROR",
+          message: "Failed to verify project access",
         },
-        500
-      )
+        500,
+      );
     }
-  }
+  };
 }
 
 /**
  * Middleware to require specific project roles
  */
 export function requireRole(...roles: ProjectRole[]) {
-  return requireProjectAccess(roles)
+  return requireProjectAccess(roles);
 }
 
 /**
  * Middleware to require manager or admin role
  */
 export function requireManagerOrAdmin() {
-  return requireProjectAccess([ProjectRole.ADMIN, ProjectRole.MANAGER])
+  return requireProjectAccess([ProjectRole.ADMIN, ProjectRole.MANAGER]);
 }
 
 /**
  * Middleware to require admin role only
  */
 export function requireAdmin() {
-  return requireProjectAccess([ProjectRole.ADMIN])
+  return requireProjectAccess([ProjectRole.ADMIN]);
 }

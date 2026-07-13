@@ -1,8 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
-import { authApi, api, User } from '@/lib/api';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react";
+import { useTranslations } from "next-intl";
+import { authApi, api, User } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -10,17 +17,32 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (
     email: string,
-    password: string
-  ) => Promise<{ success: boolean; error?: string; requiresEmailVerification?: boolean; email?: string }>;
+    password: string,
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    requiresEmailVerification?: boolean;
+    email?: string;
+  }>;
   logout: () => Promise<void>;
-  register: (
-    data: { email: string; password: string; username: string; name: string }
-  ) => Promise<{ success: boolean; error?: string; requiresEmailVerification?: boolean; email?: string }>;
+  register: (data: {
+    email: string;
+    password: string;
+    username: string;
+    name: string;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    requiresEmailVerification?: boolean;
+    email?: string;
+  }>;
   verifyEmail: (
     email: string,
-    code: string
+    code: string,
   ) => Promise<{ success: boolean; error?: string }>;
-  resendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerificationCode: (
+    email: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,11 +50,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const t = useTranslations('errors');
+  const t = useTranslations("errors");
 
   const fetchCurrentUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       if (!token) {
         return;
       }
@@ -43,12 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.data?.user?.isEmailVerified) {
         setUser(response.data.user);
       } else {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem("auth_token");
         api.setToken(null);
       }
     } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      localStorage.removeItem('auth_token');
+      console.error("Failed to fetch current user:", error);
+      localStorage.removeItem("auth_token");
       api.setToken(null);
     } finally {
       setIsLoading(false);
@@ -63,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await authApi.login({ email, password });
 
     if (response.error) {
-      if (response.error.code === 'EMAIL_NOT_VERIFIED') {
+      if (response.error.code === "EMAIL_NOT_VERIFIED") {
         return {
           success: false,
           error: response.error.message,
@@ -79,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    return { success: false, error: t('loginFailed') };
+    return { success: false, error: t("loginFailed") };
   };
 
   const logout = async () => {
@@ -87,7 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const register = async (data: { email: string; password: string; username: string; name: string }) => {
+  const register = async (data: {
+    email: string;
+    password: string;
+    username: string;
+    name: string;
+  }) => {
     const response = await authApi.register(data);
 
     if (response.error) {
@@ -102,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    return { success: false, error: t('registrationFailed') };
+    return { success: false, error: t("registrationFailed") };
   };
 
   const verifyEmail = async (email: string, code: string) => {
@@ -117,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    return { success: false, error: t('emailVerificationFailed') };
+    return { success: false, error: t("emailVerificationFailed") };
   };
 
   const resendVerificationCode = async (email: string) => {
@@ -149,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

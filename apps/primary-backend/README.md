@@ -100,11 +100,11 @@ INVITATION_EXPIRY_SECONDS=86400
 
 Run from this folder or via Turbo from the repo root.
 
-| Command              | What it does                                              |
-| -------------------- | --------------------------------------------------------- |
-| `bun run dev`        | `bun --hot src/server.ts` — hot reload on file changes.   |
-| `bun run start`      | `bun run src/server.ts` — production start (no reload).   |
-| `bun run test`       | `bun test` — run all `*.test.ts` files.                   |
+| Command         | What it does                                            |
+| --------------- | ------------------------------------------------------- |
+| `bun run dev`   | `bun --hot src/server.ts` — hot reload on file changes. |
+| `bun run start` | `bun run src/server.ts` — production start (no reload). |
+| `bun run test`  | `bun test` — run all `*.test.ts` files.                 |
 
 ## Adding a new endpoint
 

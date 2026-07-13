@@ -1,4 +1,4 @@
-declare module '@retorquere/bibtex-parser' {
+declare module "@retorquere/bibtex-parser" {
   interface Creator {
     creatorType?: string;
     firstName?: string;

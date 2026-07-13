@@ -2,7 +2,17 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Loader2, ChevronRight, Save, FileText, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  ChevronRight,
+  Save,
+  FileText,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { projectApi, draftApi, ProtocolDraft } from "@/lib/api";
 import { useTranslations } from "next-intl";
@@ -197,7 +207,7 @@ export default function NewProjectPage() {
     };
 
     loadDrafts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // ─── Restore draft into form state ──────────────────────────────
@@ -206,7 +216,8 @@ export default function NewProjectPage() {
     setDraftId(draft.id);
     setStep(draft.currentStep);
     if (fd.protocol) setProtocol(fd.protocol as ReviewProtocol);
-    if (fd.enableScreening !== undefined) setEnableScreening(fd.enableScreening as boolean);
+    if (fd.enableScreening !== undefined)
+      setEnableScreening(fd.enableScreening as boolean);
     if (fd.enableQA !== undefined) setEnableQA(fd.enableQA as boolean);
   };
 
@@ -228,7 +239,10 @@ export default function NewProjectPage() {
       setIsSaving(true);
       setSaveStatus("");
       const res = await draftApi.save(id, {
-        name: protocol.project.name || protocol.project.short_name || "Untitled Draft",
+        name:
+          protocol.project.name ||
+          protocol.project.short_name ||
+          "Untitled Draft",
         currentStep: currentStep ?? step,
         formData: buildFormData(),
       });
@@ -250,7 +264,7 @@ export default function NewProjectPage() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => setSaveStatus(""), 3000);
     },
-    [draftId, protocol, step, buildFormData]
+    [draftId, protocol, step, buildFormData],
   );
 
   // ─── Auto-save on step change ───────────────────────────────────
@@ -262,7 +276,7 @@ export default function NewProjectPage() {
         saveDraft(newStep);
       }
     },
-    [draftId, saveDraft]
+    [draftId, saveDraft],
   );
 
   // ─── Resume modal handlers ─────────────────────────────────────
@@ -292,7 +306,7 @@ export default function NewProjectPage() {
         project: { ...prev.project, [field]: value },
       }));
     },
-    []
+    [],
   );
 
   const updateScreening = useCallback(
@@ -304,7 +318,7 @@ export default function NewProjectPage() {
           : undefined,
       }));
     },
-    []
+    [],
   );
 
   const handleSubmit = async () => {
@@ -314,27 +328,29 @@ export default function NewProjectPage() {
     // Build final payload
     const payload: Record<string, unknown> = {
       project: protocol.project,
-      category: protocol.category.length > 0
-        ? protocol.category
-        : [
-            {
-              category_type: "Simple" as const,
-              name: "notes",
-              title: "Notes",
-              type: "text",
-              mandatory: false,
-            },
-          ],
+      category:
+        protocol.category.length > 0
+          ? protocol.category
+          : [
+              {
+                category_type: "Simple" as const,
+                name: "notes",
+                title: "Notes",
+                type: "text",
+                mandatory: false,
+              },
+            ],
     };
 
     if (enableScreening && protocol.screening) {
       // Filter out empty criteria
       const criteria = protocol.screening.exclusion_criteria.filter(
-        (c) => c.name.trim() !== ""
+        (c) => c.name.trim() !== "",
       );
       payload.screening = {
         ...protocol.screening,
-        exclusion_criteria: criteria.length > 0 ? criteria : [{ name: "Not relevant" }],
+        exclusion_criteria:
+          criteria.length > 0 ? criteria : [{ name: "Not relevant" }],
       };
     }
 
@@ -385,8 +401,13 @@ export default function NewProjectPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#1A1D21] border border-[#262626] rounded-xl w-full max-w-lg p-6 mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white text-lg font-bold">{t("resumeADraft")}</h2>
-              <button onClick={handleStartFresh} className="text-gray-500 hover:text-white transition-colors">
+              <h2 className="text-white text-lg font-bold">
+                {t("resumeADraft")}
+              </h2>
+              <button
+                onClick={handleStartFresh}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -405,7 +426,9 @@ export default function NewProjectPage() {
                   >
                     <FileText className="w-4 h-4 text-cyan-500 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{d.name}</p>
+                      <p className="text-white text-sm font-medium truncate">
+                        {d.name}
+                      </p>
                       <p className="text-gray-500 text-xs">
                         Step {d.currentStep + 1} of 6 · Updated{" "}
                         {new Date(d.updatedAt).toLocaleDateString("en-US", {
@@ -452,9 +475,7 @@ export default function NewProjectPage() {
         </button>
         <div className="flex-1">
           <h1 className="text-white text-2xl font-bold">{t("newReview")}</h1>
-          <p className="text-gray-500 text-sm">
-            {t("configureProtocol")}
-          </p>
+          <p className="text-gray-500 text-sm">{t("configureProtocol")}</p>
         </div>
         {/* Save status indicator */}
         {saveStatus === "saved" && (
@@ -477,8 +498,8 @@ export default function NewProjectPage() {
               step === i
                 ? "bg-cyan-500/10 text-cyan-500 border border-cyan-500/30"
                 : step > i
-                ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                : "bg-[#1A1D21] text-gray-500 border border-[#262626] hover:text-gray-300"
+                  ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                  : "bg-[#1A1D21] text-gray-500 border border-[#262626] hover:text-gray-300"
             }`}
           >
             {step > i ? (
@@ -586,7 +607,9 @@ export default function NewProjectPage() {
 
           {step < STEPS.length - 1 ? (
             <button
-              onClick={() => handleStepChange(Math.min(STEPS.length - 1, step + 1))}
+              onClick={() =>
+                handleStepChange(Math.min(STEPS.length - 1, step + 1))
+              }
               className="px-6 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition-colors"
             >
               <span className="flex items-center gap-2">
@@ -596,7 +619,11 @@ export default function NewProjectPage() {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || !protocol.project.short_name || !protocol.project.name}
+              disabled={
+                isSubmitting ||
+                !protocol.project.short_name ||
+                !protocol.project.name
+              }
               className="px-8 py-2.5 rounded-lg text-sm font-bold bg-cyan-500 text-black hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? (
@@ -629,10 +656,10 @@ function StepGeneral({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">{t("projectInformation")}</h2>
-        <p className="text-gray-500 text-sm">
-          {t("projectInfoDesc")}
-        </p>
+        <h2 className="text-white text-lg font-bold mb-1">
+          {t("projectInformation")}
+        </h2>
+        <p className="text-gray-500 text-sm">{t("projectInfoDesc")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -646,15 +673,13 @@ function StepGeneral({
             onChange={(e) =>
               updateProject(
                 "short_name",
-                e.target.value.replace(/[^a-zA-Z0-9_]/g, "")
+                e.target.value.replace(/[^a-zA-Z0-9_]/g, ""),
               )
             }
             placeholder={t("shortNamePlaceholder")}
             className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors"
           />
-          <p className="text-gray-600 text-xs mt-1">
-            {t("shortNameHint")}
-          </p>
+          <p className="text-gray-600 text-xs mt-1">{t("shortNameHint")}</p>
         </div>
 
         <div>
@@ -723,15 +748,13 @@ function StepScreening({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white text-lg font-bold mb-1">{t("screeningConfiguration")}</h2>
-          <p className="text-gray-500 text-sm">
-            {t("screeningConfigDesc")}
-          </p>
+          <h2 className="text-white text-lg font-bold mb-1">
+            {t("screeningConfiguration")}
+          </h2>
+          <p className="text-gray-500 text-sm">{t("screeningConfigDesc")}</p>
         </div>
         <label className="flex items-center gap-3 cursor-pointer">
-          <span className="text-sm text-gray-400">
-            {t("enableScreening")}
-          </span>
+          <span className="text-sm text-gray-400">{t("enableScreening")}</span>
           <div
             onClick={() => setEnabled(!enabled)}
             className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${
@@ -762,7 +785,7 @@ function StepScreening({
                 onChange={(e) =>
                   updateScreening(
                     "review_per_paper",
-                    parseInt(e.target.value) || 1
+                    parseInt(e.target.value) || 1,
                   )
                 }
                 className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500"
@@ -780,7 +803,7 @@ function StepScreening({
                 onChange={(e) =>
                   updateScreening(
                     "validation_percentage",
-                    parseInt(e.target.value) || 0
+                    parseInt(e.target.value) || 0,
                   )
                 }
                 className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500"
@@ -915,10 +938,10 @@ function StepQA({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white text-lg font-bold mb-1">{t("qaConfiguration")}</h2>
-          <p className="text-gray-500 text-sm">
-            {t("qaConfigDesc")}
-          </p>
+          <h2 className="text-white text-lg font-bold mb-1">
+            {t("qaConfiguration")}
+          </h2>
+          <p className="text-gray-500 text-sm">{t("qaConfigDesc")}</p>
         </div>
         <label className="flex items-center gap-3 cursor-pointer">
           <span className="text-sm text-gray-400">
@@ -979,9 +1002,7 @@ function StepQA({
               ))}
             </div>
             <button
-              onClick={() =>
-                update({ question: [...current.question, ""] })
-              }
+              onClick={() => update({ question: [...current.question, ""] })}
               className="mt-3 text-xs text-cyan-500 hover:text-cyan-400 font-medium"
             >
               + {t("addQuestion")}
@@ -1133,17 +1154,15 @@ function StepExtraction({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">{t("dataExtractionConfig")}</h2>
-        <p className="text-gray-500 text-sm">
-          {t("dataExtractionConfigDesc")}
-        </p>
+        <h2 className="text-white text-lg font-bold mb-1">
+          {t("dataExtractionConfig")}
+        </h2>
+        <p className="text-gray-500 text-sm">{t("dataExtractionConfigDesc")}</p>
       </div>
 
       {categories.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-[#262626] rounded-xl">
-          <p className="text-gray-500 mb-4">
-            {t("noFieldsYet")}
-          </p>
+          <p className="text-gray-500 mb-4">{t("noFieldsYet")}</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => addField("Simple")}
@@ -1178,8 +1197,8 @@ function StepExtraction({
                     cat.category_type === "Simple"
                       ? "bg-blue-500/20 text-blue-400"
                       : cat.category_type === "List"
-                      ? "bg-purple-500/20 text-purple-400"
-                      : "bg-orange-500/20 text-orange-400"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : "bg-orange-500/20 text-orange-400"
                   }`}
                 >
                   {cat.category_type === "DynamicList"
@@ -1232,7 +1251,9 @@ function StepExtraction({
                       <select
                         value={cat.type}
                         onChange={(e) =>
-                          updateField(i, { type: e.target.value } as Partial<FreeCategory>)
+                          updateField(i, {
+                            type: e.target.value,
+                          } as Partial<FreeCategory>)
                         }
                         className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
                       >
@@ -1254,7 +1275,9 @@ function StepExtraction({
                       }
                       className="accent-cyan-500"
                     />
-                    <span className="text-xs text-gray-400">{t("required")}</span>
+                    <span className="text-xs text-gray-400">
+                      {t("required")}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -1274,7 +1297,9 @@ function StepExtraction({
                           onChange={(e) => {
                             const updated = [...cat.values];
                             updated[vi] = { name: e.target.value };
-                            updateField(i, { values: updated } as Partial<StaticCategory>);
+                            updateField(i, {
+                              values: updated,
+                            } as Partial<StaticCategory>);
                           }}
                           placeholder={`Value ${vi + 1}`}
                           className="w-32 bg-[#1A1D21] border border-[#333] rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-cyan-500"
@@ -1334,7 +1359,7 @@ function StepExtraction({
                             onClick={() => {
                               updateField(i, {
                                 initial_values: cat.initial_values.filter(
-                                  (_, j) => j !== vi
+                                  (_, j) => j !== vi,
                                 ),
                               } as Partial<DynamicCategory>);
                             }}
@@ -1440,10 +1465,10 @@ function StepReporting({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">{t("reportingConfiguration")}</h2>
-        <p className="text-gray-500 text-sm">
-          {t("reportingConfigDesc")}
-        </p>
+        <h2 className="text-white text-lg font-bold mb-1">
+          {t("reportingConfiguration")}
+        </h2>
+        <p className="text-gray-500 text-sm">{t("reportingConfigDesc")}</p>
       </div>
 
       {categoryNames.length === 0 && (
@@ -1490,9 +1515,7 @@ function StepReporting({
                   {report.report_type}
                 </span>
                 <button
-                  onClick={() =>
-                    setReports(reports.filter((_, j) => j !== i))
-                  }
+                  onClick={() => setReports(reports.filter((_, j) => j !== i))}
                   className="text-gray-500 hover:text-red-400 text-sm"
                 >
                   Remove
@@ -1523,9 +1546,7 @@ function StepReporting({
                   <input
                     type="text"
                     value={report.title || ""}
-                    onChange={(e) =>
-                      updateReport(i, { title: e.target.value })
-                    }
+                    onChange={(e) => updateReport(i, { title: e.target.value })}
                     placeholder="Display Title"
                     className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
                   />
@@ -1545,9 +1566,7 @@ function StepReporting({
                   </label>
                   <select
                     value={report.value}
-                    onChange={(e) =>
-                      updateReport(i, { value: e.target.value })
-                    }
+                    onChange={(e) => updateReport(i, { value: e.target.value })}
                     className="w-full bg-[#1A1D21] border border-[#333] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select a field</option>
@@ -1701,7 +1720,7 @@ function StepReview({
               {
                 label: "Questions",
                 value: String(
-                  protocol.quality_assess.question.filter(Boolean).length
+                  protocol.quality_assess.question.filter(Boolean).length,
                 ),
               },
               {
@@ -1744,7 +1763,9 @@ function StepReview({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-white text-lg font-bold mb-1">Review Configuration</h2>
+        <h2 className="text-white text-lg font-bold mb-1">
+          Review Configuration
+        </h2>
         <p className="text-gray-500 text-sm">
           Verify your protocol settings before creating the project.
         </p>
@@ -1788,7 +1809,7 @@ function StepReview({
                       ...protocol.screening,
                       exclusion_criteria:
                         protocol.screening.exclusion_criteria.filter(
-                          (c) => c.name.trim() !== ""
+                          (c) => c.name.trim() !== "",
                         ),
                     },
                   }
@@ -1813,7 +1834,7 @@ function StepReview({
                 : {}),
             },
             null,
-            2
+            2,
           )}
         </pre>
       </details>

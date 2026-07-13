@@ -1,5 +1,10 @@
-import { parse as parseBibtex } from '@retorquere/bibtex-parser';
-import type { ParsedPaper, ParsedAuthor, ParseResult, ParseError } from './types';
+import { parse as parseBibtex } from "@retorquere/bibtex-parser";
+import type {
+  ParsedPaper,
+  ParsedAuthor,
+  ParseResult,
+  ParseError,
+} from "./types";
 
 /**
  * Parse BibTeX content into normalized paper objects.
@@ -10,11 +15,13 @@ export function parseBibtexContent(content: string): ParseResult {
   const papers: ParsedPaper[] = [];
   const errors: ParseError[] = [];
 
-  const startIdx = content.indexOf('@');
+  const startIdx = content.indexOf("@");
   if (startIdx === -1) {
     return {
       papers: [],
-      errors: [{ message: 'File is corrupted — no valid BibTeX entries detected' }],
+      errors: [
+        { message: "File is corrupted — no valid BibTeX entries detected" },
+      ],
       totalParsed: 0,
     };
   }
@@ -24,12 +31,14 @@ export function parseBibtexContent(content: string): ParseResult {
   // Split into individual entries at each @type{ boundary
   const rawEntries = cleanedContent
     .split(/(?=@\w+\s*\{)/)
-    .filter(s => s.trim().length > 0);
+    .filter((s) => s.trim().length > 0);
 
   if (rawEntries.length === 0) {
     return {
       papers: [],
-      errors: [{ message: 'File is corrupted — no valid BibTeX entries detected' }],
+      errors: [
+        { message: "File is corrupted — no valid BibTeX entries detected" },
+      ],
       totalParsed: 0,
     };
   }
@@ -47,7 +56,9 @@ export function parseBibtexContent(content: string): ParseResult {
     }
 
     try {
-      const result = parseBibtex(raw, { verbatimFields: ['abstract', 'keywords'] });
+      const result = parseBibtex(raw, {
+        verbatimFields: ["abstract", "keywords"],
+      });
 
       for (const entry of result.entries) {
         try {
@@ -58,7 +69,8 @@ export function parseBibtexContent(content: string): ParseResult {
         } catch (err) {
           errors.push({
             entry: entry.key || entryKey,
-            message: err instanceof Error ? err.message : 'Failed to convert entry',
+            message:
+              err instanceof Error ? err.message : "Failed to convert entry",
           });
         }
       }
@@ -74,7 +86,11 @@ export function parseBibtexContent(content: string): ParseResult {
   if (papers.length === 0 && errors.length > 0) {
     return {
       papers: [],
-      errors: [{ message: 'File is corrupted — all entries have invalid BibTeX syntax' }],
+      errors: [
+        {
+          message: "File is corrupted — all entries have invalid BibTeX syntax",
+        },
+      ],
       totalParsed: rawEntries.length,
     };
   }
@@ -83,18 +99,18 @@ export function parseBibtexContent(content: string): ParseResult {
 }
 
 function convertBibtexEntry(entry: any): ParsedPaper | null {
-  const title = extractField(entry, 'title');
+  const title = extractField(entry, "title");
   if (!title) {
     return null;
   }
 
   const authors = parseAuthors(entry.creators || []);
   const year = extractYear(entry);
-  const abstract = extractField(entry, 'abstract');
+  const abstract = extractField(entry, "abstract");
   const doi = extractDoi(entry);
-  const url = extractField(entry, 'url') || extractField(entry, 'paper');
+  const url = extractField(entry, "url") || extractField(entry, "paper");
   const venue = extractVenue(entry);
-  const keywords = extractField(entry, 'keywords');
+  const keywords = extractField(entry, "keywords");
 
   // Generate preview text (formatted citation)
   const preview = generatePreview(entry, authors, year, venue);
@@ -120,7 +136,7 @@ function convertBibtexEntry(entry: any): ParsedPaper | null {
 function extractField(entry: any, field: string): string | undefined {
   const value = entry.fields?.[field];
   if (!value) return undefined;
-  if (Array.isArray(value)) return value.join(', ');
+  if (Array.isArray(value)) return value.join(", ");
   return String(value);
 }
 
@@ -132,14 +148,14 @@ function extractYear(entry: any): number | undefined {
 }
 
 function extractDoi(entry: any): string | undefined {
-  return extractField(entry, 'doi') || extractField(entry, 'DOI');
+  return extractField(entry, "doi") || extractField(entry, "DOI");
 }
 
 function extractVenue(entry: any): string | undefined {
   return (
-    extractField(entry, 'journal') ||
-    extractField(entry, 'booktitle') ||
-    extractField(entry, 'publisher')
+    extractField(entry, "journal") ||
+    extractField(entry, "booktitle") ||
+    extractField(entry, "publisher")
   );
 }
 
@@ -148,9 +164,11 @@ function parseAuthors(creators: any[]): ParsedAuthor[] {
   let order = 1;
 
   for (const creator of creators) {
-    if (creator.creatorType === 'author' || !creator.creatorType) {
-      const firstName = cleanString(creator.firstName || creator.given || '');
-      const lastName = cleanString(creator.lastName || creator.family || creator.literal || '');
+    if (creator.creatorType === "author" || !creator.creatorType) {
+      const firstName = cleanString(creator.firstName || creator.given || "");
+      const lastName = cleanString(
+        creator.lastName || creator.family || creator.literal || "",
+      );
 
       if (lastName || firstName) {
         authors.push({
@@ -169,13 +187,15 @@ function generatePreview(
   entry: any,
   authors: ParsedAuthor[],
   year: number | undefined,
-  venue: string | undefined
+  venue: string | undefined,
 ): string {
   const parts: string[] = [];
 
   // Authors
   if (authors.length > 0) {
-    const authorStr = authors.map((a) => `${a.lastName}, ${a.firstName}`).join('; ');
+    const authorStr = authors
+      .map((a) => `${a.lastName}, ${a.firstName}`)
+      .join("; ");
     parts.push(authorStr);
   }
 
@@ -185,7 +205,7 @@ function generatePreview(
   }
 
   // Title
-  const title = extractField(entry, 'title');
+  const title = extractField(entry, "title");
   if (title) {
     parts.push(cleanString(title));
   }
@@ -196,24 +216,26 @@ function generatePreview(
   }
 
   // Volume/Pages
-  const volume = extractField(entry, 'volume');
-  const pages = extractField(entry, 'pages');
+  const volume = extractField(entry, "volume");
+  const pages = extractField(entry, "pages");
   if (volume || pages) {
-    const volPages = [volume, pages].filter(Boolean).join(':');
+    const volPages = [volume, pages].filter(Boolean).join(":");
     parts.push(volPages);
   }
 
-  return parts.join('. ');
+  return parts.join(". ");
 }
 
 function reconstructBibtex(entry: any): string {
-  const type = entry.type || 'misc';
-  const key = entry.key || 'unknown';
+  const type = entry.type || "misc";
+  const key = entry.key || "unknown";
   const fields: string[] = [];
 
   for (const [fieldName, fieldValue] of Object.entries(entry.fields || {})) {
     if (fieldValue !== undefined && fieldValue !== null) {
-      const value = Array.isArray(fieldValue) ? fieldValue.join(' and ') : String(fieldValue);
+      const value = Array.isArray(fieldValue)
+        ? fieldValue.join(" and ")
+        : String(fieldValue);
       fields.push(`  ${fieldName} = {${value}}`);
     }
   }
@@ -221,26 +243,26 @@ function reconstructBibtex(entry: any): string {
   // Add authors if present
   if (entry.creators && entry.creators.length > 0) {
     const authorStr = entry.creators
-      .filter((c: any) => c.creatorType === 'author' || !c.creatorType)
+      .filter((c: any) => c.creatorType === "author" || !c.creatorType)
       .map((c: any) => {
         if (c.literal) return c.literal;
-        return `${c.lastName || ''}, ${c.firstName || ''}`.trim();
+        return `${c.lastName || ""}, ${c.firstName || ""}`.trim();
       })
-      .join(' and ');
+      .join(" and ");
     if (authorStr) {
       fields.push(`  author = {${authorStr}}`);
     }
   }
 
-  return `@${type}{${key},\n${fields.join(',\n')}\n}`;
+  return `@${type}{${key},\n${fields.join(",\n")}\n}`;
 }
 
 function cleanString(str: string): string {
-  if (!str) return '';
+  if (!str) return "";
   return str
-    .replace(/\{/g, '')
-    .replace(/\}/g, '')
-    .replace(/\\/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\{/g, "")
+    .replace(/\}/g, "")
+    .replace(/\\/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }

@@ -71,10 +71,10 @@ export default function VerifyEmailPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-900/30 bg-cyan-950/20 px-3 py-1 text-xs font-medium text-cyan-400 mb-4">
             <MailCheck className="w-3 h-3" /> {t("badge")}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">{t("title")}</h1>
-          <p className="text-gray-400 text-sm mt-2">
-            {t("subtitle")}
-          </p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {t("title")}
+          </h1>
+          <p className="text-gray-400 text-sm mt-2">{t("subtitle")}</p>
         </div>
 
         {error && (
@@ -91,7 +91,10 @@ export default function VerifyEmailPage() {
 
         <form onSubmit={handleVerify} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300" htmlFor="email">
+            <label
+              className="text-sm font-medium text-gray-300"
+              htmlFor="email"
+            >
               {t("email")}
             </label>
             <input
@@ -116,7 +119,9 @@ export default function VerifyEmailPage() {
               pattern="[0-9]{6}"
               maxLength={6}
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               placeholder="123456"
               required
               className="w-full bg-[#1A1D21] border border-[#333] rounded-lg px-4 py-2.5 text-sm tracking-[0.3em] text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
@@ -125,7 +130,11 @@ export default function VerifyEmailPage() {
 
           <button
             type="submit"
-            disabled={isVerifying || code.trim().length !== 6 || email.trim().length === 0}
+            disabled={
+              isVerifying ||
+              code.trim().length !== 6 ||
+              email.trim().length === 0
+            }
             className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-700 disabled:cursor-not-allowed text-black font-semibold rounded-lg py-2.5 transition-colors flex items-center justify-center gap-2 mt-2"
           >
             {isVerifying ? (
@@ -157,7 +166,10 @@ export default function VerifyEmailPage() {
 
         <p className="text-gray-500 text-sm text-center mt-6">
           {t("backTo")}{" "}
-          <Link href="/login" className="text-cyan-500 hover:text-cyan-400 font-medium">
+          <Link
+            href="/login"
+            className="text-cyan-500 hover:text-cyan-400 font-medium"
+          >
             {t("signIn")}
           </Link>
         </p>

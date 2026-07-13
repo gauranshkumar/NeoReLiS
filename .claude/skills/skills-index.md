@@ -1,20 +1,22 @@
 # ReLiS Skills Index
 
 ## Quick Map (Task -> Skill)
-| Task | Skill |
-|---|---|
-| Plan roadmap, slices, priorities | `relis-rewrite-orchestrator` |
-| Convert legacy behavior to parity specs | `relis-domain-parity-mapper` |
-| Implement slice end-to-end (DB/API/UI/tests) | `relis-pern-slice-implementer` |
-| Security and release go/no-go review | `relis-migration-quality-gate` |
-| Auth, roles, project isolation | `relis-auth-rbac-enforcer` |
-| CSV/BibTeX import, dedupe, export stability | `relis-import-export-hardening` |
-| Screening assignments/decisions/conflicts | `relis-screening-conflict-engine` |
-| Extraction form schema/versioning/entries | `relis-extraction-form-versioning` |
-| Deterministic fixtures and regression scenarios | `relis-test-fixture-harness` |
-| Logging, metrics, rollout checks | `relis-release-observability` |
+
+| Task                                            | Skill                              |
+| ----------------------------------------------- | ---------------------------------- |
+| Plan roadmap, slices, priorities                | `relis-rewrite-orchestrator`       |
+| Convert legacy behavior to parity specs         | `relis-domain-parity-mapper`       |
+| Implement slice end-to-end (DB/API/UI/tests)    | `relis-pern-slice-implementer`     |
+| Security and release go/no-go review            | `relis-migration-quality-gate`     |
+| Auth, roles, project isolation                  | `relis-auth-rbac-enforcer`         |
+| CSV/BibTeX import, dedupe, export stability     | `relis-import-export-hardening`    |
+| Screening assignments/decisions/conflicts       | `relis-screening-conflict-engine`  |
+| Extraction form schema/versioning/entries       | `relis-extraction-form-versioning` |
+| Deterministic fixtures and regression scenarios | `relis-test-fixture-harness`       |
+| Logging, metrics, rollout checks                | `relis-release-observability`      |
 
 ## Copy-Paste Prompt Templates
+
 1. `Use relis-rewrite-orchestrator to generate rewrite-feature-matrix, slice plan, and risk register for next 2 weeks.`
 2. `Use relis-domain-parity-mapper to produce parity spec for screening including states, transitions, role checks, and audit events.`
 3. `Use relis-auth-rbac-enforcer to implement RBAC guards for /api/v1/projects/:projectId/* and add allow/deny tests for all 5 roles.`
@@ -27,10 +29,10 @@
 10. `Use relis-release-observability to add request-id logs, key workflow metrics, and release smoke checklist for staging cutover.`
 
 ## Recommended Execution Loop
+
 1. Plan slice with `relis-rewrite-orchestrator`.
 2. Lock behavior with `relis-domain-parity-mapper`.
 3. Implement with `relis-pern-slice-implementer` + feature skill(s).
 4. Add coverage with `relis-test-fixture-harness`.
 5. Gate with `relis-migration-quality-gate`.
 6. Prepare rollout with `relis-release-observability`.
-

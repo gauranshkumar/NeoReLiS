@@ -39,12 +39,15 @@ export default function ProjectSettingsPage({
   // General form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">("DRAFT");
+  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">(
+    "DRAFT",
+  );
 
   // Workflow form state
   const [screeningOn, setScreeningOn] = useState(false);
   const [screeningReviewerNum, setScreeningReviewerNum] = useState(2);
-  const [screeningConflictType, setScreeningConflictType] = useState("INCLUDE_EXCLUDE");
+  const [screeningConflictType, setScreeningConflictType] =
+    useState("INCLUDE_EXCLUDE");
   const [screeningConflictRes, setScreeningConflictRes] = useState("UNANIMITY");
   const [screeningValidationOn, setScreeningValidationOn] = useState(true);
   const [validationDefaultPercent, setValidationDefaultPercent] = useState(20);
@@ -210,7 +213,9 @@ export default function ProjectSettingsPage({
           <ArrowLeft className="w-4 h-4" /> Back to Projects
         </Link>
         <div className="p-12 bg-[#1A1D21] border border-[#262626] rounded-xl text-center">
-          <h2 className="text-xl font-bold text-white mb-2">{tErr("notFound")}</h2>
+          <h2 className="text-xl font-bold text-white mb-2">
+            {tErr("notFound")}
+          </h2>
           <p className="text-gray-400 text-sm">
             {error || tErr("projectNotFoundOrNoAccess")}
           </p>
@@ -220,9 +225,21 @@ export default function ProjectSettingsPage({
   }
 
   const tabs: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { key: "general", label: t("general"), icon: <Settings2 className="w-4 h-4" /> },
-    { key: "workflow", label: t("workflow"), icon: <Sliders className="w-4 h-4" /> },
-    { key: "danger", label: t("dangerZone"), icon: <Shield className="w-4 h-4" /> },
+    {
+      key: "general",
+      label: t("general"),
+      icon: <Settings2 className="w-4 h-4" />,
+    },
+    {
+      key: "workflow",
+      label: t("workflow"),
+      icon: <Sliders className="w-4 h-4" />,
+    },
+    {
+      key: "danger",
+      label: t("dangerZone"),
+      icon: <Shield className="w-4 h-4" />,
+    },
   ];
 
   const hasGeneralChanges =
@@ -254,7 +271,9 @@ export default function ProjectSettingsPage({
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-1">{t("projectSettings")}</h1>
+        <h1 className="text-2xl font-bold text-white mb-1">
+          {t("projectSettings")}
+        </h1>
         <p className="text-gray-500 text-sm">{project.title}</p>
       </div>
 
@@ -346,7 +365,9 @@ export default function ProjectSettingsPage({
                   <select
                     value={status}
                     onChange={(e) =>
-                      setStatus(e.target.value as "DRAFT" | "PUBLISHED" | "ARCHIVED")
+                      setStatus(
+                        e.target.value as "DRAFT" | "PUBLISHED" | "ARCHIVED",
+                      )
                     }
                     className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                   >
@@ -441,7 +462,10 @@ export default function ProjectSettingsPage({
                           value={screeningReviewerNum}
                           onChange={(e) =>
                             setScreeningReviewerNum(
-                              Math.max(1, Math.min(10, parseInt(e.target.value) || 1))
+                              Math.max(
+                                1,
+                                Math.min(10, parseInt(e.target.value) || 1),
+                              ),
                             )
                           }
                           className="w-32 bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
@@ -454,11 +478,17 @@ export default function ProjectSettingsPage({
                         </label>
                         <select
                           value={screeningConflictType}
-                          onChange={(e) => setScreeningConflictType(e.target.value)}
+                          onChange={(e) =>
+                            setScreeningConflictType(e.target.value)
+                          }
                           className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                         >
-                          <option value="INCLUDE_EXCLUDE">{t("includeExclude")}</option>
-                          <option value="CRITERIA_BASED">{t("criteriaBased")}</option>
+                          <option value="INCLUDE_EXCLUDE">
+                            {t("includeExclude")}
+                          </option>
+                          <option value="CRITERIA_BASED">
+                            {t("criteriaBased")}
+                          </option>
                         </select>
                       </div>
 
@@ -468,7 +498,9 @@ export default function ProjectSettingsPage({
                         </label>
                         <select
                           value={screeningConflictRes}
-                          onChange={(e) => setScreeningConflictRes(e.target.value)}
+                          onChange={(e) =>
+                            setScreeningConflictRes(e.target.value)
+                          }
                           className="w-full bg-[#0A0A0A] border border-[#333] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
                         >
                           <option value="UNANIMITY">{t("unanimity")}</option>
@@ -496,7 +528,9 @@ export default function ProjectSettingsPage({
                               step={5}
                               value={validationDefaultPercent}
                               onChange={(e) =>
-                                setValidationDefaultPercent(parseInt(e.target.value))
+                                setValidationDefaultPercent(
+                                  parseInt(e.target.value),
+                                )
                               }
                               className="flex-1 accent-cyan-500"
                             />
@@ -582,7 +616,9 @@ export default function ProjectSettingsPage({
                     </h3>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
                       {t("deleteDescription")}{" "}
-                      <span className="text-red-400 font-medium">{t("cannotBeUndone")}</span>
+                      <span className="text-red-400 font-medium">
+                        {t("cannotBeUndone")}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -603,7 +639,9 @@ export default function ProjectSettingsPage({
                     </div>
                     <p className="text-gray-400 text-sm mb-3">
                       {t("typeToConfirm")}{" "}
-                      <span className="text-white font-mono bg-[#0A0A0A] px-1.5 py-0.5 rounded">{project.title}</span>
+                      <span className="text-white font-mono bg-[#0A0A0A] px-1.5 py-0.5 rounded">
+                        {project.title}
+                      </span>
                     </p>
                     <input
                       type="text"
